@@ -1,0 +1,20 @@
+{
+  "default": {
+    "fonts": {
+      "latin": "Inter, Helvetica, Arial, sans-serif",
+      "devanagari": "Noto Sans Devanagari, sans-serif"
+    },
+    "colors": {
+      "background": "#0B0B10",
+      "text": "#FFFFFF",
+      "accent": "#FFD23F",
+      "captionActive": "#FFD23F",
+      "captionInactive": "#FFFFFF"
+    },
+    "logo": null,
+    "safeZones": {
+      "reel": { "top": 250, "bottom": 250, "left": 100, "right": 100 },
+      "long": { "top": 60, "bottom": 60, "left": 100, "right": 100 }
+    }
+  }
+}

@@ -1,0 +1,5 @@
+{
+  "name": "video-pipeline",
+  "private": true,
+  "workspaces": ["template"]
+}

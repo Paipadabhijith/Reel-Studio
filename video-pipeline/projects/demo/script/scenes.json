@@ -1,0 +1,53 @@
+{
+  "project": "demo",
+  "format": "reel",
+  "brand": "default",
+  "language": "hinglish",
+  "reels": [
+    {
+      "id": "reel_01",
+      "scene_ids": [
+        1,
+        2,
+        3
+      ],
+      "hook_scene": 1
+    }
+  ],
+  "scenes": [
+    {
+      "id": 1,
+      "text": "Ek second ruko, yeh baat sabko pata honi chahiye.",
+      "emphasis": [
+        "ruko"
+      ],
+      "visual": {
+        "type": "photo",
+        "file": "assets/images/scene_01.jpg",
+        "motion": "slow-zoom-in"
+      }
+    },
+    {
+      "id": 2,
+      "text": "Aaj hum dekhenge ki yeh pipeline kaise kaam karti hai.",
+      "emphasis": [
+        "pipeline"
+      ],
+      "visual": {
+        "type": "photo",
+        "file": "assets/images/scene_02.jpg",
+        "motion": "slow-zoom-out"
+      }
+    },
+    {
+      "id": 3,
+      "text": "Bas ek voice record karo, baaki sab automatic.",
+      "emphasis": [
+        "automatic"
+      ],
+      "visual": {
+        "type": "text_card"
+      }
+    }
+  ]
+}
