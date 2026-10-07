@@ -1,4 +1,4 @@
-"""`reel fetch`: download visuals from Pexels, Unsplash and Wikimedia Commons only.
+"""`reel fetch`: download visuals from Pexels, Pixabay, Unsplash and Wikimedia Commons only.
 
 Anything that can't be matched above the relevance threshold is downgraded to a
 manual scene and listed in inbox/README.txt.
@@ -151,6 +151,58 @@ def unsplash_photos(http: httpx.Client, query: str, orientation: str | None) -> 
     return out
 
 
+PIXABAY_ORIENT = {"portrait": "vertical", "landscape": "horizontal", "square": "all"}
+
+
+def pixabay_photos(http: httpx.Client, query: str, orientation: str | None) -> list[Candidate]:
+    key = os.getenv("PIXABAY_API_KEY")
+    if not key:
+        return []
+    r = http.get("https://pixabay.com/api/", params={
+        "key": key, "q": query[:100], "image_type": "photo", "per_page": 20, "safesearch": "true",
+        "orientation": PIXABAY_ORIENT.get(orientation or "", "all"),
+    })
+    r.raise_for_status()
+    out = []
+    for h in r.json().get("hits", []):
+        if h.get("isAiGenerated") or h.get("isLowQuality"):
+            continue  # no AI-made pictures in factual videos
+        w, ht = h.get("imageWidth", 0), h.get("imageHeight", 0)
+        scale = min(1.0, 1280 / max(w, ht, 1))  # largeImageURL is capped at 1280 px on the long edge
+        out.append(Candidate(
+            url=h["largeImageURL"], page_url=h["pageURL"], text=h.get("tags", "").replace(",", " "),
+            width=int(w * scale), height=int(ht * scale), source="Pixabay", license="Pixabay Content License",
+            attribution=f"Image by {h.get('user', 'unknown')} from Pixabay",
+        ))
+    return out
+
+
+def pixabay_videos(http: httpx.Client, query: str, orientation: str | None) -> list[Candidate]:
+    key = os.getenv("PIXABAY_API_KEY")
+    if not key:
+        return []
+    r = http.get("https://pixabay.com/api/videos/", params={
+        "key": key, "q": query[:100], "video_type": "film", "per_page": 20, "safesearch": "true",
+    })
+    r.raise_for_status()
+    out = []
+    for h in r.json().get("hits", []):
+        if h.get("isAiGenerated"):
+            continue
+        files = [f for f in (h.get("videos") or {}).values() if f.get("url") and f.get("width")]
+        small_enough = [f for f in files if max(f["width"], f["height"]) <= 1920] or files
+        if not small_enough:
+            continue
+        best = max(small_enough, key=lambda f: f["width"] * f["height"])
+        out.append(Candidate(
+            url=best["url"], page_url=h["pageURL"], text=h.get("tags", "").replace(",", " "),
+            width=best["width"], height=best["height"], source="Pixabay", license="Pixabay Content License",
+            attribution=f"Video by {h.get('user', 'unknown')} from Pixabay", ext="mp4",
+            duration_s=float(h.get("duration") or 0),
+        ))
+    return out
+
+
 def _strip_html(s: str) -> str:
     return html.unescape(re.sub(r"<[^>]+>", "", s or "")).strip()
 
@@ -188,7 +240,18 @@ def wikimedia_photos(http: httpx.Client, query: str, orientation: str | None) ->
     return out
 
 
-PHOTO_ORDER = {"stock": [pexels_photos, unsplash_photos], "wikimedia": [wikimedia_photos, pexels_photos, unsplash_photos]}
+# Unsplash last: its free tier allows 50 requests an hour, Pixabay 100 a minute
+PHOTO_ORDER = {
+    "stock": [pexels_photos, pixabay_photos, unsplash_photos],
+    "wikimedia": [wikimedia_photos, pexels_photos, pixabay_photos, unsplash_photos],
+}
+VIDEO_ORDER = [pexels_videos, pixabay_videos]
+STOCK_KEYS = ("PEXELS_API_KEY", "PIXABAY_API_KEY", "UNSPLASH_ACCESS_KEY")
+
+
+def _redact(msg: str) -> str:
+    """Pixabay takes its key in the URL; keep it out of logs and the Studio UI."""
+    return re.sub(r"(key=)[^&\s']+", r"\1***", str(msg))
 
 
 def best_candidate(
@@ -198,7 +261,7 @@ def best_candidate(
         try:
             cands = provider(http, query, orientation)
         except httpx.HTTPError as e:
-            log(f"  {provider.__name__}: {e}")
+            log(f"  {provider.__name__}: {_redact(e)}")
             continue
         if min_duration:
             cands = [c for c in cands if (c.duration_s or 0) >= min_duration] or cands
@@ -312,7 +375,7 @@ def fetch_scene(
             _downgrade(scene, "No search query")
             return "manual"
         if v.type == "video":
-            providers = [pexels_videos]
+            providers = VIDEO_ORDER
         else:
             providers = PHOTO_ORDER[v.source or "stock"]
         found = best_candidate(http, providers, v.query, v.orientation, _est_duration(scene) if v.type == "video" else 0, log)
@@ -349,8 +412,9 @@ def fetch(
 ) -> dict[str, int]:
     scenes_path = project / "script" / "scenes.json"
     sf = load_scenes(scenes_path)
-    if not os.getenv("PEXELS_API_KEY") and not os.getenv("UNSPLASH_ACCESS_KEY"):
-        log("warning: no PEXELS_API_KEY or UNSPLASH_ACCESS_KEY in .env; only Wikimedia and charts will work")
+    if not any(os.getenv(k) for k in STOCK_KEYS):
+        log("warning: no PEXELS_API_KEY, PIXABAY_API_KEY or UNSPLASH_ACCESS_KEY in .env; "
+            "only Wikimedia and charts will work")
     own = http is None
     http = http or httpx.Client(timeout=30)
     summary: dict[str, int] = {}
@@ -361,7 +425,7 @@ def fetch(
             try:
                 status = fetch_scene(project, sf, scene, http, force, downgrade, log)
             except (httpx.HTTPError, ValueError) as e:
-                log(f"scene {scene.id}: error: {e}")
+                log(f"scene {scene.id}: error: {_redact(e)}")
                 status = "error"
             summary[status] = summary.get(status, 0) + 1
     finally:

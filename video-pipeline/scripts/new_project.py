@@ -27,6 +27,20 @@ BRIEF_TEMPLATE = """# Brief
 """
 
 
+BRIEF_FIELDS = ("topic", "angle", "target_audience", "formats", "reel_count", "tone", "language")
+
+
+def render_brief(fields: dict, urls: list[str]) -> str:
+    """Brief in the same `- key: value` format `parse_brief` reads."""
+    lines = ["# Brief", ""]
+    for k in BRIEF_FIELDS:
+        val = str(fields.get(k) or "").replace("\n", " ").strip()
+        lines.append(f"- {k}: {val}")
+    lines.append("- source_urls:")
+    lines += [f"  - {u}" for u in urls]
+    return "\n".join(lines) + "\n"
+
+
 def starter_scenes(slug: str, language: str) -> dict:
     return {
         "project": slug,
@@ -57,10 +71,10 @@ def starter_scenes(slug: str, language: str) -> dict:
     }
 
 
-def scaffold(slug: str, language: str = "hinglish", open_brief: bool = True) -> Path:
+def scaffold(slug: str, language: str = "hinglish", open_brief: bool = True, root: Path = PROJECTS_DIR) -> Path:
     if not re.fullmatch(r"[a-z0-9][a-z0-9_-]*", slug):
         raise ValueError("slug must be lowercase letters, digits, '-' or '_'")
-    root = PROJECTS_DIR / slug
+    root = Path(root) / slug
     if root.exists():
         raise FileExistsError(f"{root} already exists")
     for d in SUBDIRS:

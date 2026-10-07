@@ -14,20 +14,19 @@ from rapidfuzz import fuzz, process
 
 from . import analyze_tone
 from .lib import cache
+from .lib.progress import report
 from .lib.config import WHISPER_LANG, WHISPER_MODEL, heavy_lock
 from .lib.schema import ScenesFile, Timeline, TimelineScene, Word, dump_json
+from .lib.targets import get_target
 
 DEVANAGARI = re.compile(r"[ऀ-ॿ]")
 GAP = -0.35
 MIN_MATCH = 0.55
 
 
-def narration_scene_ids(sf: ScenesFile, reel_id: str | None = None) -> list[int]:
+def narration_scene_ids(sf: ScenesFile, target_id: str | None = None) -> list[int]:
     """Scenes in the order they are narrated."""
-    if sf.reels:
-        reel = next((r for r in sf.reels if r.id == reel_id), sf.reels[0]) if reel_id else sf.reels[0]
-        return reel.scene_ids
-    return [s.id for s in sf.scenes]
+    return get_target(sf, target_id).scene_ids
 
 
 def normalize(word: str) -> str:
@@ -125,29 +124,34 @@ def _fill_times(times: list[tuple[float, float] | None], lo: float, hi: float) -
 
 
 def align(
-    project: Path, sf: ScenesFile, reel_id: str | None = None, log=print,
+    project: Path, sf: ScenesFile, target_id: str | None = None, log=print,
 ) -> Timeline:
-    audio = project / "audio" / "narration.m4a"
+    """Align one video's recording (a reel id or "long") to its scenes. Default: the first video."""
+    target = get_target(sf, target_id)
+    audio = project / target.audio
     if not audio.exists():
-        raise FileNotFoundError(f"missing {audio}; record narration first")
-    ids = narration_scene_ids(sf, reel_id)
+        raise FileNotFoundError(f"missing {audio}; record narration for {target.label} first")
+    ids = target.scene_ids
     scenes = [sf.scene(i) for i in ids]
 
     cache_dir = project / "build" / "cache"
-    timeline_path = project / "build" / "timeline.json"
+    timeline_path = project / target.timeline
+    tone_path = project / target.tone
+    stage = f"align_{target.id}"
     digest = cache.hash_inputs(
         [s.text for s in scenes], sf.language, WHISPER_MODEL, ids, files=[audio],
     )
-    if cache.is_fresh(cache_dir, "align", digest, [timeline_path, project / "build" / "tone.json"]):
-        log("align: cached")
+    if cache.is_fresh(cache_dir, stage, digest, [timeline_path, tone_path]):
+        log(f"align {target.id}: cached")
         return Timeline.model_validate_json(timeline_path.read_text())
 
-    wav = cache_dir / "narration_16k.wav"
+    wav = cache_dir / f"narration_{target.id}_16k.wav"
     to_wav(audio, wav)
     dur = duration_s(audio)
 
     lang = WHISPER_LANG[sf.language]
     log(f"align: transcribing ({WHISPER_MODEL}, language={lang})")
+    report(None, "transcribing narration with Whisper")
     heard = transcribe(audio, lang)
     if not heard:
         raise RuntimeError("Whisper returned no words; is the recording silent?")
@@ -184,12 +188,13 @@ def align(
         a.end_s = max(b.start_s, a.start_s)
     tl_scenes[-1].end_s = max(dur, tl_scenes[-1].start_s)
 
+    report(None, "analyzing emphasis and pauses")
     marks = analyze_tone.analyze(wav, tl_scenes, {s.id: s.emphasis for s in scenes})
-    analyze_tone.write_tone(project / "build" / "tone.json", marks)
+    analyze_tone.write_tone(tone_path, marks)
 
     timeline = Timeline(
-        audio_file="audio/narration.m4a", duration_s=round(dur, 3), scenes=tl_scenes, emphasis_marks=marks,
+        audio_file=target.audio, duration_s=round(dur, 3), scenes=tl_scenes, emphasis_marks=marks,
     )
     dump_json(timeline, timeline_path)
-    cache.mark(cache_dir, "align", digest)
+    cache.mark(cache_dir, stage, digest)
     return timeline

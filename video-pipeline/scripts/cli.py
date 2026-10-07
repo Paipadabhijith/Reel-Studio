@@ -29,59 +29,55 @@ def new(slug: str, language: str = typer.Option("hinglish", help="en / hi / hing
 
 
 @app.command()
-def final(slug: str, reel: str = typer.Option(None, help="Reel id (default: first reel)")):
+def final(
+    slug: str,
+    video: str = typer.Option(None, "--video", "-v", help="One video: a reel id (reel_01) or 'long'. Default: every video that has a recording"),
+):
     """Align recorded narration, then render the final video(s)."""
     from .align_audio import align
-    from .render_final import render_reel
+    from .lib.targets import audio_exists, get_target, list_targets
+    from .render_final import render_target
 
     proj = project_dir(slug)
     sf = load_scenes(proj / "script" / "scenes.json")
-    if sf.format == "long":
-        _not_yet("final (long-form)", 3)
     try:
-        tl = align(proj, sf, reel, _log)
-        rid = reel or (sf.reels[0].id if sf.reels else "reel_01")
-        out = render_reel(proj, sf, tl, rid, _log)
-    except (FileNotFoundError, RuntimeError) as e:
+        targets = [get_target(sf, video)] if video else [t for t in list_targets(sf) if audio_exists(proj, t)]
+        if not targets:
+            raise FileNotFoundError("no narration recordings yet; record at least one video first")
+        for t in targets:
+            tl = align(proj, sf, t.id, _log)
+            out = render_target(proj, sf, tl, t, _log)
+            _log(f"done: {out}")
+    except (FileNotFoundError, RuntimeError, ValueError) as e:
         typer.echo(f"error: {e}", err=True)
         raise typer.Exit(1)
-    _log(f"done: {out}")
 
 
 @app.command()
-def align(slug: str, reel: str = typer.Option(None)):
+def align(slug: str, video: str = typer.Option(None, "--video", "-v", help="reel id or 'long'")):
     """Only run audio alignment and tone analysis."""
     from .align_audio import align as run
 
     proj = project_dir(slug)
-    tl = run(proj, load_scenes(proj / "script" / "scenes.json"), reel, _log)
+    try:
+        tl = run(proj, load_scenes(proj / "script" / "scenes.json"), video, _log)
+    except (FileNotFoundError, ValueError) as e:
+        typer.echo(f"error: {e}", err=True)
+        raise typer.Exit(1)
     _log(f"timeline: {len(tl.scenes)} scenes, {tl.duration_s}s")
 
 
 @app.command()
 def status():
     """List projects and their stage."""
+    from .lib.state import project_state, stage_label
+
     if not PROJECTS_DIR.exists():
         return
     for p in sorted(PROJECTS_DIR.iterdir()):
         if not (p / "script").is_dir():
             continue
-        outs = [o.name for o in (p / "out").glob("*.mp4")]
-        if any(not o.startswith("draft_") for o in outs):
-            stage = "rendered"
-        elif (p / "build" / "timeline.json").exists():
-            stage = "aligned"
-        elif (p / "audio" / "narration.m4a").exists():
-            stage = "recorded"
-        elif outs:
-            stage = "drafted"
-        elif (p / "build" / "cache" / "fetch.json").exists():
-            stage = "fetched"
-        elif (p / "script" / "script.md").exists() and (p / "script" / "script.md").read_text().strip():
-            stage = "scripted"
-        else:
-            stage = "new"
-        typer.echo(f"{p.name:30s} {stage}")
+        typer.echo(f"{p.name:30s} {stage_label(project_state(p))}")
 
 
 @app.command()
@@ -139,7 +135,7 @@ def fetch(
     scene: list[int] = typer.Option(None, "--scene", help="Only these scene ids (repeatable)"),
     force: bool = typer.Option(False, help="Re-download even if an asset exists"),
 ):
-    """Auto-fetch visuals (Pexels, Unsplash, Wikimedia) and list manual gaps."""
+    """Auto-fetch visuals (Pexels, Pixabay, Unsplash, Wikimedia) and list manual gaps."""
     from .fetch_assets import fetch as run
 
     proj = project_dir(slug)
@@ -163,13 +159,17 @@ def inbox(slug: str, watch: bool = typer.Option(False, help="Keep watching until
 
 
 @app.command()
-def draft(slug: str, cont: bool = typer.Option(False, "--continue", help="Ingest inbox/ first, then re-render")):
-    """Render draft Reels (timed at 150 wpm, no audio). Missing manual scenes show as labelled cards."""
+def draft(
+    slug: str,
+    cont: bool = typer.Option(False, "--continue", help="Ingest inbox/ first, then re-render"),
+    video: str = typer.Option(None, "--video", "-v", help="reel id or 'long' (default: all)"),
+):
+    """Render draft videos (timed at 150 wpm, no audio). Missing manual scenes show as labelled cards."""
     from .draft import draft as run
 
     proj = project_dir(slug)
     try:
-        outs, missing = run(proj, cont=cont, ask=_ask_rights, log=_log)
+        outs, missing = run(proj, cont=cont, ask=_ask_rights, log=_log, only=video)
     except RuntimeError as e:
         typer.echo(f"error: {e}", err=True)
         raise typer.Exit(1)
@@ -181,11 +181,20 @@ def draft(slug: str, cont: bool = typer.Option(False, "--continue", help="Ingest
 
 
 @app.command()
-def review(slug: str, port: int = typer.Option(7788)):
-    """Local review page: Keep / Replace / Refetch per scene."""
-    from .review_server import serve
+def studio(port: int = typer.Option(7788)):
+    """Web UI at http://127.0.0.1:7788 : start projects, run every step, watch progress."""
+    from .studio import serve
 
-    serve(project_dir(slug), port)
+    serve(port)
+
+
+@app.command()
+def review(slug: str, port: int = typer.Option(7788)):
+    """Open the Studio's scene review page (Keep / Replace / Refetch) for one project."""
+    from .studio import serve
+
+    project_dir(slug)
+    serve(port, f"/p/{slug}/review/")
 
 
 def _stub(name: str, phase: int) -> None:

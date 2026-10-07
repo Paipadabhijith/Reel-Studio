@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block body %}
+{% for w in warnings %}<div class="warn">⚠ {{ w }}</div>{% endfor %}
+
+<div style="display:grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr); gap: 20px;" class="homegrid">
+<section>
+  <h1>Projects</h1>
+  <p class="muted" style="margin-top:0">Saved in <code>projects/</code>. Newest first.</p>
+  {% if not projects %}<div class="card muted">No projects yet. Start one on the right.</div>{% endif %}
+  <div style="display:flex; flex-direction:column; gap:10px">
+  {% for p in projects %}
+    <a class="card" href="{{ url_for('project_page', slug=p.slug) }}" style="text-decoration:none; color:inherit; display:block">
+      <div class="row" style="justify-content:space-between">
+        <strong>{{ p.slug }}</strong>
+        <span class="pill {{ 'done' if p.stage == 'rendered' else 'todo' }}">{{ p.stage }}</span>
+      </div>
+    </a>
+  {% endfor %}
+  </div>
+</section>
+
+<section class="card">
+  <h2>New project</h2>
+  <p class="muted" style="margin:4px 0 8px">Give the topic and your sources. You can add more articles later.</p>
+  <form method="post" action="{{ url_for('new_project') }}">
+    <div class="grid2">
+      <div><label>Project name (folder)</label><input name="slug" required placeholder="monsoon-delay" pattern="[a-z0-9][a-z0-9_\-]*"></div>
+      <div><label>Language</label><select name="language">
+        <option value="hinglish" selected>Hinglish</option><option value="en">English</option><option value="hi">Hindi</option></select></div>
+    </div>
+    <label>Topic</label><input name="topic" required placeholder="Why the monsoon arrived late this year">
+    <div class="grid2">
+      <div><label>Angle</label><input name="angle" placeholder="What it means for farmers"></div>
+      <div><label>Audience</label><input name="target_audience" placeholder="Young urban viewers"></div>
+      <div><label>Formats</label><select name="formats">
+        <option value="reel" selected>Reels only (long-form is Phase 3)</option><option value="both">Reels + long-form</option><option value="long">Long-form only</option></select></div>
+      <div><label>Number of reels</label><select name="reel_count"><option>1</option><option>2</option><option>3</option></select></div>
+    </div>
+    <label>Tone</label><input name="tone" placeholder="curious, calm, a bit witty">
+    <label>Source links (one per line)</label>
+    <textarea name="urls" placeholder="https://…&#10;https://…"></textarea>
+    <label>Or paste article text</label>
+    <textarea name="article_text" placeholder="Paste the text of an article here if the link is paywalled or won't download."></textarea>
+    <div class="row" style="margin-top:12px"><button class="primary">Create project</button></div>
+  </form>
+</section>
+</div>
+<style>@media (max-width: 860px) { .homegrid { grid-template-columns: 1fr !important; } }</style>
+{% endblock %}

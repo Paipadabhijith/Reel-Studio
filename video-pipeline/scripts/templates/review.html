@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% block title %}Review · {{ slug }}{% endblock %}
+{% block crumbs %}<span class="crumb">/ <a href="{{ url_for('project_page', slug=slug) }}">{{ slug }}</a> / review</span>{% endblock %}
+{% block head %}
+<style>
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 16px; }
+.scard { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; display: flex; flex-direction: column; }
+.scard.kept { border-color: var(--done); }
+.thumb { aspect-ratio: 9/16; max-height: 380px; background: #000; display: flex; align-items: center; justify-content: center; }
+.thumb img, .thumb video { width: 100%; height: 100%; object-fit: cover; }
+.thumb .none { color: var(--muted); padding: 16px; text-align: center; }
+.sbody { padding: 12px; display: flex; flex-direction: column; gap: 8px; flex: 1; }
+.meta { display: flex; gap: 6px; flex-wrap: wrap; }
+.tag { padding: 2px 8px; border-radius: 99px; background: var(--line); color: var(--muted); font-size: 12px; }
+.tag.manual { background: #4a2323; color: #fecaca; }
+.tag.kept { background: #1f3b2f; color: #a7f3d0; }
+.credit { color: var(--muted); font-size: 12px; }
+.sbody form { display: flex; flex-direction: column; gap: 6px; margin: 0; }
+details { border-top: 1px solid var(--line); padding-top: 6px; }
+summary { cursor: pointer; color: var(--accent); }
+.two { display: flex; gap: 6px; } .two > * { flex: 1; }
+</style>
+{% endblock %}
+{% block body %}
+<div class="row" style="justify-content:space-between; margin-bottom:14px">
+  <div><h1>Review visuals</h1><div class="muted">{{ scenes|length }} scenes · {{ kept }} kept · {{ pending }} manual pending</div></div>
+  <a class="btn" href="{{ url_for('project_page', slug=slug) }}#review">← Back to pipeline</a>
+</div>
+<div class="grid">
+{% for s in scenes %}
+<div class="scard {{ 'kept' if s.kept else '' }}" id="s{{ s.id }}">
+  <div class="thumb">
+    {% if s.kind == 'photo' %}<img src="{{ url_for('file', slug=slug, rel=s.file) }}?v={{ s.mtime }}" alt="scene {{ s.id }}">
+    {% elif s.kind == 'video' %}<video src="{{ url_for('file', slug=slug, rel=s.file) }}?v={{ s.mtime }}" muted loop playsinline controls></video>
+    {% else %}<div class="none">{{ s.placeholder }}</div>{% endif %}
+  </div>
+  <div class="sbody">
+    <div class="meta"><span class="tag">#{{ s.id }}</span><span class="tag {{ 'manual' if s.type == 'manual' else '' }}">{{ s.type }}</span>
+      {% if s.kept %}<span class="tag kept">kept</span>{% endif %}</div>
+    <p style="margin:0">{{ s.text }}</p>
+    {% if s.credit %}<div class="credit">{{ s.credit }}</div>{% endif %}
+    {% if s.file %}<form method="post" action="{{ url_for('review.keep', slug=slug, sid=s.id) }}"><button class="primary">Keep</button></form>{% endif %}
+    <details {{ 'open' if s.type == 'manual' and not s.file else '' }}><summary>Replace</summary>
+      <form method="post" action="{{ url_for('review.replace', slug=slug, sid=s.id) }}" enctype="multipart/form-data">
+        <input type="file" name="file" accept="image/*,video/mp4,video/quicktime">
+        {% if inbox %}<select name="inbox_file"><option value="">…or pick from inbox/</option>
+          {% for f in inbox %}<option>{{ f }}</option>{% endfor %}</select>{% endif %}
+        <div class="two"><select name="rights">{% for r in rights %}<option>{{ r }}</option>{% endfor %}</select>
+          <input name="source" placeholder="source / credit"></div>
+        <button>Replace</button>
+      </form></details>
+    {% if s.type != 'text_card' %}
+    <details><summary>Refetch</summary>
+      <form method="post" action="{{ url_for('review.refetch', slug=slug, sid=s.id) }}">
+        <input name="query" value="{{ s.query or '' }}" placeholder="search words">
+        <div class="two"><select name="type">{% for t in ['photo', 'video'] %}<option {{ 'selected' if t == s.fetch_type else '' }}>{{ t }}</option>{% endfor %}</select>
+          <select name="source">{% for t in ['stock', 'wikimedia'] %}<option {{ 'selected' if t == s.source else '' }}>{{ t }}</option>{% endfor %}</select></div>
+        <button>Refetch</button>
+      </form></details>
+    {% endif %}
+  </div>
+</div>
+{% endfor %}
+</div>
+{% endblock %}

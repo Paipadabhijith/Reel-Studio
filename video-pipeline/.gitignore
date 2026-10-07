@@ -8,3 +8,6 @@ projects/*/build/
 projects/*/out/
 !projects/demo/
 *.lock
+# generated on first use: downloaded boundary data and the .blend built from it
+blender/data/
+blender/templates/*.blend

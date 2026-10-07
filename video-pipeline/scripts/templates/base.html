@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% block title %}Reel Studio{% endblock %}</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎬</text></svg>">
+<style>
+:root {
+  --bg: #0f1117; --panel: #171a23; --panel2: #1d212c; --line: #2a2f3d;
+  --text: #e8e8ef; --muted: #9aa0b4; --accent: #ffd23f; --accent-ink: #141414;
+  --done: #34d399; --todo: #fbbf24; --waiting: #60a5fa; --stale: #f97316; --blocked: #6b7280; --err: #f87171;
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; scroll-padding-top: 90px; }
+body { margin: 0; background: var(--bg); color: var(--text); font: 15px/1.5 -apple-system, BlinkMacSystemFont, Inter, Helvetica, sans-serif; }
+a { color: var(--accent); }
+code, pre, .mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13px; }
+.topbar { position: sticky; top: 0; z-index: 10; background: rgba(15,17,23,.92); backdrop-filter: blur(8px);
+  border-bottom: 1px solid var(--line); padding: 10px 20px; display: flex; gap: 16px; align-items: center; flex-wrap: wrap; }
+.topbar .brand { font-weight: 700; text-decoration: none; color: var(--text); }
+.topbar .crumb { color: var(--muted); }
+.wrap { max-width: 1180px; margin: 0 auto; padding: 20px; }
+.flash { margin: 0 0 16px; padding: 10px 14px; border-radius: 8px; background: #1f3b2f; border: 1px solid #2f5b46; }
+.flash.err { background: #3d1f22; border-color: #6b2d33; }
+.warn { margin: 0 0 16px; padding: 10px 14px; border-radius: 8px; background: #3a2f12; border: 1px solid #6b5418; color: #fde68a; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 16px 18px; }
+h1 { font-size: 22px; margin: 0 0 4px; } h2 { font-size: 17px; margin: 0; } h3 { font-size: 14px; margin: 14px 0 6px; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
+.muted { color: var(--muted); }
+label { display: block; font-size: 13px; color: var(--muted); margin: 8px 0 4px; }
+input, select, textarea, button { font: inherit; color: var(--text); background: #11131a; border: 1px solid var(--line); border-radius: 8px; padding: 7px 10px; }
+input, select, textarea { width: 100%; }
+textarea { min-height: 90px; resize: vertical; }
+button, .btn { cursor: pointer; background: var(--panel2); display: inline-flex; align-items: center; gap: 6px; text-decoration: none; color: var(--text); border: 1px solid var(--line); border-radius: 8px; padding: 7px 12px; font-size: 14px; }
+button.primary, .btn.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); font-weight: 600; }
+button:disabled { opacity: .5; cursor: not-allowed; }
+.row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 16px; }
+@media (max-width: 720px) { .grid2 { grid-template-columns: 1fr; } }
+.pill { display: inline-block; font-size: 12px; font-weight: 600; padding: 2px 9px; border-radius: 99px; background: var(--line); color: var(--muted); white-space: nowrap; }
+.pill.done { background: rgba(52,211,153,.15); color: var(--done); }
+.pill.todo { background: rgba(251,191,36,.15); color: var(--todo); }
+.pill.waiting { background: rgba(96,165,250,.15); color: var(--waiting); }
+.pill.stale { background: rgba(249,115,22,.15); color: var(--stale); }
+.pill.running, .pill.queued { background: rgba(96,165,250,.15); color: var(--waiting); }
+.pill.failed { background: rgba(248,113,113,.15); color: var(--err); }
+/* job panel */
+#jobpanel { display: none; margin-bottom: 18px; border-color: #2c4a7a; }
+#jobpanel.show { display: block; }
+#jobpanel.failed { border-color: #6b2d33; }
+#jobpanel.done { border-color: #2f5b46; }
+.bar { height: 8px; background: #0b0d12; border-radius: 99px; overflow: hidden; margin: 10px 0 6px; }
+.bar > div { height: 100%; width: 0; background: var(--accent); transition: width .4s; }
+.bar.indet > div { width: 30%; animation: slide 1.2s ease-in-out infinite; }
+@keyframes slide { 0% { margin-left: -30%; } 100% { margin-left: 100%; } }
+#joblog { max-height: 220px; overflow: auto; background: #0b0d12; border-radius: 8px; padding: 10px; margin: 8px 0 0; white-space: pre-wrap; color: #c9cede; }
+</style>
+{% block head %}{% endblock %}
+</head>
+<body>
+<div class="topbar">
+  <a class="brand" href="{{ url_for('home') }}">🎬 Reel Studio</a>
+  {% block crumbs %}{% endblock %}
+  <span style="flex:1"></span>
+  <span id="globaljob" class="muted" style="font-size:13px">
+    {% if active_jobs %}⏳ {{ active_jobs[0].slug }}: {{ active_jobs[0].label }}{% if active_jobs|length > 1 %} (+{{ active_jobs|length - 1 }} queued){% endif %}{% else %}idle{% endif %}
+  </span>
+</div>
+<div class="wrap">
+  {% if msg %}<div class="flash {{ 'err' if err else '' }}">{{ msg }}</div>{% endif %}
+  {% block body %}{% endblock %}
+</div>
+<script>
+// Shared job watcher: shows the running job for this page's project (or any job on the home page),
+// and reloads the page once a job this page started has finished so step statuses refresh.
+const PAGE_SLUG = {{ (slug if slug is defined else None)|tojson }};
+let watching = new Set({{ ((active_jobs|selectattr('slug', 'equalto', slug)|map(attribute='id')|list) if slug is defined else (active_jobs|map(attribute='id')|list))|tojson }});
+
+function fmtStatus(j) {
+  return j.status === 'running' ? 'running' : j.status;
+}
+function renderJob(j) {
+  const panel = document.getElementById('jobpanel');
+  if (!panel) return;
+  panel.classList.add('show');
+  panel.classList.toggle('failed', j.status === 'failed');
+  panel.classList.toggle('done', j.status === 'done');
+  document.getElementById('jobtitle').textContent = j.label;
+  const st = document.getElementById('jobstatus');
+  st.textContent = fmtStatus(j); st.className = 'pill ' + j.status;
+  document.getElementById('jobmeta').textContent =
+    (j.progress_label ? j.progress_label + ' · ' : '') + (j.elapsed ? Math.round(j.elapsed) + 's' : '');
+  const bar = document.getElementById('jobbar');
+  const indet = j.status === 'running' && (j.progress === null || j.progress === undefined);
+  bar.classList.toggle('indet', indet);
+  bar.firstElementChild.style.width = indet ? '' : Math.round((j.status === 'done' ? 1 : (j.progress || 0)) * 100) + '%';
+  const log = document.getElementById('joblog');
+  const atBottom = log.scrollTop + log.clientHeight >= log.scrollHeight - 20;
+  log.textContent = (j.lines || []).join('\n') + (j.error ? '\n\n' + j.error : '');
+  if (atBottom) log.scrollTop = log.scrollHeight;
+  const res = document.getElementById('jobresult');
+  res.textContent = j.status === 'done' ? (j.result ? '✓ ' + j.result : '✓ finished')
+                  : j.status === 'failed' ? '✗ ' + j.error : '';
+}
+async function poll() {
+  let delay = 4000;
+  try {
+    const q = PAGE_SLUG ? '?slug=' + encodeURIComponent(PAGE_SLUG) : '';
+    const r = await fetch('/api/jobs' + q);
+    const data = await r.json();
+    const mine = data.active.filter(j => !PAGE_SLUG || j.slug === PAGE_SLUG);
+    const g = document.getElementById('globaljob');
+    g.textContent = data.active.length ? '⏳ ' + data.active[0].slug + ': ' + data.active[0].label +
+      (data.active.length > 1 ? ' (+' + (data.active.length - 1) + ' queued)' : '') : 'idle';
+    if (mine.length) {
+      mine.forEach(j => watching.add(j.id));
+      renderJob(mine[0]);
+      delay = 1000;
+    } else if (watching.size) {
+      // a job we were watching finished: show its result briefly, then refresh the page
+      const finished = data.recent.find(j => watching.has(j.id));
+      if (finished) renderJob(finished);
+      watching.clear();
+      setTimeout(() => location.reload(), finished && finished.status === 'failed' ? 2500 : 900);
+      return;
+    }
+  } catch (e) { delay = 5000; }
+  setTimeout(poll, delay);
+}
+poll();
+
+async function reveal(rel) {
+  const body = new URLSearchParams({rel: rel || ''});
+  await fetch('{{ url_for("reveal", slug=slug) if slug is defined else "" }}', {method: 'POST', body});
+}
+</script>
+{% block scripts %}{% endblock %}
+</body>
+</html>

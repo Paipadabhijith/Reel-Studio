@@ -12,7 +12,7 @@ from .lib import cache
 from .lib.schema import ScenesFile, dump_json, load_scenes
 
 MODEL = "claude-opus-5-5"
-PROMPT_VERSION = "script-v1"
+PROMPT_VERSION = "script-v2"
 MAX_TOKENS = 64000
 USER_AGENT = "Mozilla/5.0 (Macintosh; video-pipeline personal research tool)"
 
@@ -121,8 +121,12 @@ Visuals (be concrete; these are search queries and shot requests)
   Never plan scraped celebrity photos or match footage.
 - Recent events, screenshots, documents, or a specific person that stock sites won't have: `type: "manual"` with a
   `prompt` telling the creator exactly what to find (e.g. "Screenshot of the ministry's press release headline").
-- chart: fill `chart` with numbers taken from the articles only. stat: a single big number (put it in `overlay`).
-- blender: only for a map scene; `template: "india_map"` with states in `blender.highlight_states` (2-letter codes).
+- chart: an animated bar, line or pie chart; fill `chart` with numbers taken from the articles only (2-6 values, short labels).
+- stat: one big count-up number on its own card (`value` like "76%" or "1,20,000", plus a short `label`), put in `overlay`.
+  An `overlay` of type stat on a photo or video scene shows the same number as a small badge over the picture.
+- blender: a 3D map of India; only for a scene about places. `template: "india_map"`, `blender.highlight_states` lists the
+  states to light up in order, as 2-letter codes (e.g. KA, TN, KL, TS, MH, UP; Telangana is TS, Odisha is OD, Uttarakhand is UK),
+  `camera` is one of top_down_tilt, top_down, orbit. Use at most one or two per video.
 - Never plan AI-generated likenesses of real people.
 - Orientation: "portrait" for scenes used in a reel, "landscape" for long-form-only scenes.
 
@@ -271,7 +275,7 @@ def to_scenes_file(slug: str, brief: dict, data: dict) -> ScenesFile:
             params = chart
         if blender:
             v["template"] = blender.pop("template")
-            params = blender
+            params = {k: val for k, val in blender.items() if val is not None}
         if v["type"] == "manual":
             v["fallback"] = "text_card"
         v["params"] = params
@@ -448,6 +452,6 @@ def generate_manual(project: Path, force: bool = False, log=print) -> ScenesFile
     copied = _copy_to_clipboard(text)
     log(f"script: prompt written to {prompt_path}" + (" and copied to the clipboard" if copied else ""))
     log("  1. open claude.ai, start a new chat, paste the prompt and send")
-    log(f"  2. copy Claude's whole reply into {response_path}")
-    log(f"  3. run `reel script {project.name} --manual` again to import it")
+    log("  2. Studio: paste Claude's whole reply into the box under the prompt and press Import")
+    log(f"     Terminal: save the reply as {response_path}, then run `reel script {project.name} --manual` again")
     return None

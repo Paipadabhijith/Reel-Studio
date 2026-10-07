@@ -14,7 +14,7 @@ def pexels_photo(alt, url_slug, w=2000, h=3000):
             "photographer": "Asha", "src": {"original": f"https://images.pexels.com/{url_slug}.jpeg"}}
 
 
-def make_transport(pexels=(), unsplash=(), wikimedia=None, calls=None):
+def make_transport(pexels=(), unsplash=(), wikimedia=None, calls=None, pixabay=(), pixabay_videos=(), pixabay_status=200):
     calls = calls if calls is not None else []
 
     def handler(req: httpx.Request) -> httpx.Response:
@@ -26,9 +26,13 @@ def make_transport(pexels=(), unsplash=(), wikimedia=None, calls=None):
             return httpx.Response(200, json={"videos": []})
         if host == "api.unsplash.com" and req.url.path == "/search/photos":
             return httpx.Response(200, json={"results": list(unsplash)})
+        if host == "pixabay.com" and req.url.path == "/api/":
+            return httpx.Response(pixabay_status, json={"hits": list(pixabay)})
+        if host == "pixabay.com" and req.url.path == "/api/videos/":
+            return httpx.Response(pixabay_status, json={"hits": list(pixabay_videos)})
         if host == "commons.wikimedia.org":
             return httpx.Response(200, json=wikimedia or {})
-        if host in ("images.pexels.com", "images.unsplash.com", "upload.wikimedia.org"):
+        if host in ("images.pexels.com", "images.unsplash.com", "upload.wikimedia.org", "cdn.pixabay.com"):
             return httpx.Response(200, content=JPEG)
         if host == "api.unsplash.com" and "download" in req.url.path:
             return httpx.Response(200, json={})
@@ -125,3 +129,50 @@ def test_chart_rendered_without_network(project_factory):
     assert F.fetch(proj, http=http, log=lambda *_: None) == {"chart": 1}
     assert (proj / "assets/images/scene_01_chart.png").stat().st_size > 1000
     assert not calls
+
+
+def pixabay_hit(tags, ai=False, w=3000, h=4000):
+    return {"tags": tags, "isAiGenerated": ai, "isLowQuality": False, "imageWidth": w, "imageHeight": h,
+            "largeImageURL": f"https://cdn.pixabay.com/photo/{tags.split(',')[0]}.jpg",
+            "pageURL": "https://pixabay.com/photos/x-1/", "user": "Meena"}
+
+
+def test_pixabay_used_before_unsplash_and_skips_ai_images(project_factory):
+    proj = project_factory([photo_scene(1, "monsoon rain india")])
+    unsplash = [{"alt_description": "monsoon rain india", "width": 3000, "height": 4000, "user": {"name": "U"},
+                 "urls": {"raw": "https://images.unsplash.com/u?x"}, "links": {"html": "https://unsplash.com/u",
+                 "download_location": "https://api.unsplash.com/photos/u/download"}}]
+    pixabay = [pixabay_hit("monsoon, rain, india, clouds", ai=True), pixabay_hit("monsoon, rain, india, street")]
+    http, calls = make_transport(pexels=[pexels_photo("a bowl of fruit", "fruit")], pixabay=pixabay, unsplash=unsplash)
+    F.fetch(proj, http=http, log=lambda *_: None)
+    credit = json.loads((proj / "assets/credits.json").read_text())[0]
+    assert credit["source"] == "Pixabay" and credit["attribution_text"] == "Image by Meena from Pixabay"
+    assert not any("api.unsplash.com/search" in c for c in calls), "Unsplash quota is saved when Pixabay matches"
+    assert any("monsoon/" not in c and "cdn.pixabay.com/photo/monsoon.jpg" in c for c in calls)
+
+
+def test_only_ai_images_means_no_match(project_factory):
+    proj = project_factory([photo_scene(1, "monsoon rain india")])
+    http, _ = make_transport(pixabay=[pixabay_hit("monsoon, rain, india", ai=True)])
+    assert F.fetch(proj, http=http, log=lambda *_: None) == {"manual": 1}
+
+
+def test_pixabay_video(project_factory):
+    proj = project_factory([{"id": 1, "text": "rain on a street at night here", "visual": {
+        "type": "video", "query": "rain street night", "orientation": "landscape"}}])
+    vid = {"tags": "rain, street, night", "duration": 20, "pageURL": "https://pixabay.com/videos/r-1/", "user": "Ravi",
+           "videos": {"large": {"url": "https://cdn.pixabay.com/video/large.mp4", "width": 3840, "height": 2160},
+                      "medium": {"url": "https://cdn.pixabay.com/video/medium.mp4", "width": 1920, "height": 1080}}}
+    http, calls = make_transport(pixabay_videos=[vid])
+    assert F.fetch(proj, http=http, log=lambda *_: None) == {"fetched": 1}
+    assert any(c.endswith("medium.mp4") for c in calls), "4K is skipped to keep memory sane on 8 GB"
+    assert (proj / "assets/videos/scene_01.mp4").exists()
+
+
+def test_api_key_never_reaches_the_log(project_factory):
+    proj = project_factory([photo_scene(1, "monsoon rain india")])
+    http, _ = make_transport(pixabay_status=500)
+    lines = []
+    F.fetch(proj, http=http, log=lines.append)
+    joined = "\n".join(lines)
+    assert "pixabay" in joined.lower() and "test-pixabay-secret" not in joined and "key=***" in joined

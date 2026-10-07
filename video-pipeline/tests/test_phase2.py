@@ -138,30 +138,34 @@ def test_draft_props_label_missing_manual(project_factory):
 
     proj = project_factory([{"id": 1, "text": "hello there", "visual": {"type": "manual", "prompt": "a map"}}])
     sf = load_scenes(proj / "script/scenes.json")
-    props = build_props(proj, sf, D.estimate_timeline(sf, "reel_01"), "reel_01", "draft", log=lambda *_: None)
+    from scripts.lib.targets import get_target
+
+    target = get_target(sf, "reel_01")
+    props = build_props(proj, sf, D.estimate_timeline(sf, target), target, "draft", log=lambda *_: None)
     assert props["audioSrc"] is None and props["draft"] is True
     assert props["scenes"][0]["visual"]["placeholder"] == "MANUAL: a map"
 
 
 def test_review_keep_replace(project_factory):
-    from scripts.review_server import create_app
+    from scripts.jobs import Runner
+    from scripts.studio import create_app
 
     proj = project_factory([{"id": 1, "text": "hello", "visual": {"type": "manual", "prompt": "a map"}}])
-    client = create_app(proj).test_client()
-    page = client.get("/").get_data(as_text=True)
+    client = create_app(proj.parent, Runner(notify_done=False)).test_client()
+    page = client.get("/p/proj/review/").get_data(as_text=True)
     assert "hello" in page and "1 manual pending" in page
 
-    r = client.post("/scene/1/replace", data={"rights": "own", "source": "my photo",
-                                              "file": (io.BytesIO(b"png"), "map.png")},
+    r = client.post("/p/proj/review/scene/1/replace", data={"rights": "own", "source": "my photo",
+                                                            "file": (io.BytesIO(b"png"), "map.png")},
                     content_type="multipart/form-data")
     assert r.status_code == 302
     assert (proj / "assets/images/scene_01.png").read_bytes() == b"png"
-    assert client.get("/asset/assets/images/scene_01.png").data == b"png"
-    assert client.get("/asset/script/scenes.json").status_code == 404, "only assets/ is served"
+    assert client.get("/p/proj/file/assets/images/scene_01.png").data == b"png"
+    assert client.get("/p/proj/file/build/review.json").status_code == 404, "build/ is not served"
 
-    client.post("/scene/1/keep")
+    client.post("/p/proj/review/scene/1/keep")
     assert json.loads((proj / "build/review.json").read_text()) == {"1": "keep"}
-    assert "0 manual pending" in client.get("/").get_data(as_text=True)
+    assert "0 manual pending" in client.get("/p/proj/review/").get_data(as_text=True)
 
 
 def test_cli_inbox_prompts_for_rights(project_factory, monkeypatch):

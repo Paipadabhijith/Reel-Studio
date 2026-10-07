@@ -1,0 +1,337 @@
+{% extends "base.html" %}
+{% set LABEL = {'done': 'done', 'todo': 'needs you', 'waiting': 'waiting for you', 'stale': 'out of date',
+                'blocked': 'blocked', 'later': 'later phase', 'optional': 'optional'} %}
+{% set S = {} %}{% for s in steps %}{% set _ = S.update({s.key: s}) %}{% endfor %}
+{% block title %}{{ slug }} · Reel Studio{% endblock %}
+{% block crumbs %}<span class="crumb">/ {{ slug }}</span>{% endblock %}
+{% block head %}
+<style>
+.layout { display: grid; grid-template-columns: 240px minmax(0, 1fr); gap: 20px; align-items: start; }
+@media (max-width: 860px) { .layout { grid-template-columns: 1fr; } .stepper { position: static !important; } }
+.stepper { position: sticky; top: 70px; display: flex; flex-direction: column; gap: 2px; }
+.stepper a { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 8px; text-decoration: none; color: var(--text); }
+.stepper a:hover { background: var(--panel); }
+.stepper a.next { background: var(--panel); outline: 1px solid var(--accent); }
+.dot { width: 22px; height: 22px; border-radius: 50%; flex: none; display: grid; place-items: center; font-size: 12px; font-weight: 700; background: var(--line); color: var(--muted); }
+.dot.done { background: var(--done); color: #06281c; }
+.dot.todo { background: var(--todo); color: #2b1d00; }
+.dot.waiting { background: var(--waiting); color: #071a33; }
+.dot.stale { background: var(--stale); color: #2a1200; }
+.stepper .name { flex: 1; font-size: 14px; }
+.stepper .later .name, .stepper .blocked .name { color: var(--muted); }
+.steps { display: flex; flex-direction: column; gap: 14px; }
+.step.later, .step.blocked { opacity: .65; }
+.step header { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.step header h2 { flex: 1; }
+.needs { margin: 10px 0 0; padding: 10px 12px; border-radius: 8px; background: rgba(251,191,36,.08); border: 1px solid rgba(251,191,36,.25); }
+.needs ul { margin: 4px 0 0; padding-left: 18px; }
+.outputs { margin-top: 10px; display: flex; flex-direction: column; gap: 6px; }
+.out { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; font-size: 13px; }
+.out code { background: #0b0d12; padding: 2px 6px; border-radius: 6px; }
+.out button { padding: 3px 8px; font-size: 12px; }
+.videos { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 10px; }
+.videos video { width: 220px; aspect-ratio: 9/16; background: #000; border-radius: 10px; }
+.nextbanner { display: flex; gap: 12px; align-items: center; margin-bottom: 14px; border-color: var(--accent); }
+.reading { counter-reset: n; list-style: none; padding: 0; margin: 8px 0; }
+.reading li { padding: 8px 10px; border-radius: 8px; background: var(--panel2); margin-bottom: 6px; font-size: 17px; line-height: 1.45; }
+.reading li span { color: var(--muted); font-size: 12px; margin-right: 8px; }
+.facts { white-space: pre-wrap; background: #0b0d12; padding: 12px; border-radius: 8px; max-height: 360px; overflow: auto; }
+.articles { margin: 6px 0; padding: 0; list-style: none; }
+.articles li { display: flex; gap: 8px; align-items: center; padding: 6px 0; border-bottom: 1px solid var(--line); font-size: 14px; }
+.articles li .src { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.recdot { width: 10px; height: 10px; border-radius: 50%; background: var(--err); display: inline-block; animation: blink 1s infinite; }
+@keyframes blink { 50% { opacity: .2; } }
+details > summary { cursor: pointer; color: var(--accent); margin-top: 10px; }
+</style>
+{% endblock %}
+
+{% macro outputs(step) %}
+  {% if step.outputs %}
+  <div class="outputs">
+    <span class="muted" style="font-size:12px">Saved to</span>
+    {% for rel in step.outputs %}
+      <div class="out"><code>{{ path }}/{{ rel }}</code>
+        {% if not rel.endswith('/') and file_exists(slug, rel) %}<a href="{{ file_url(slug, rel) }}" target="_blank">open</a>{% endif %}
+        <button type="button" onclick="reveal('{{ rel.rstrip('/') }}')">Show in Finder</button></div>
+    {% endfor %}
+  </div>
+  {% endif %}
+{% endmacro %}
+
+{% macro head(step, n) %}
+  <header><span class="dot {{ step.status }}">{{ '✓' if step.status == 'done' else n }}</span>
+    <h2>{{ step.title }}</h2><span class="pill {{ step.status }}">{{ LABEL[step.status] }}</span></header>
+  {% if step.detail %}<p class="muted" style="margin:6px 0 0">{{ step.detail }}</p>{% endif %}
+  {% if step.todos %}<div class="needs"><strong>Needs you</strong><ul>{% for t in step.todos %}<li>{{ t }}</li>{% endfor %}</ul></div>{% endif %}
+{% endmacro %}
+
+{% block body %}
+<div class="row" style="justify-content:space-between; margin-bottom:12px">
+  <div><h1>{{ slug }}</h1>
+    <div class="muted" style="font-size:13px">Folder: <code>{{ path }}</code>
+      <button type="button" style="padding:2px 8px; font-size:12px" onclick="reveal('')">Show in Finder</button></div></div>
+  <span class="pill {{ 'done' if stage == 'rendered' else 'todo' }}">{{ stage }}</span>
+</div>
+{% for w in warnings %}<div class="warn">⚠ {{ w }}</div>{% endfor %}
+
+<div class="layout">
+<nav class="stepper">
+  {% for s in steps %}
+  <a href="#{{ s.key }}" class="{{ s.status }} {{ 'next' if next and next.key == s.key else '' }}">
+    <span class="dot {{ s.status }}">{{ '✓' if s.status == 'done' else loop.index }}</span>
+    <span class="name">{{ s.title }}</span></a>
+  {% endfor %}
+</nav>
+
+<div>
+  <a id="job"></a>
+  <div id="jobpanel" class="card">
+    <div class="row"><strong id="jobtitle"></strong><span id="jobstatus" class="pill"></span><span class="muted" id="jobmeta" style="font-size:13px"></span></div>
+    <div class="bar" id="jobbar"><div></div></div>
+    <div id="jobresult" style="font-size:14px"></div>
+    <details open><summary>Log</summary><pre id="joblog" class="mono"></pre></details>
+  </div>
+
+  {% if next and not current %}
+  <div class="card nextbanner"><span style="font-size:20px">👉</span>
+    <div style="flex:1"><strong>Next: {{ next.title }}</strong><div class="muted" style="font-size:14px">{{ next.todos[0] if next.todos else next.detail }}</div></div>
+    <a class="btn primary" href="#{{ next.key }}">Go</a></div>
+  {% endif %}
+
+  <div class="steps">
+
+  {# ---------------- 1 brief ---------------- #}
+  <section class="card step {{ S.brief.status }}" id="brief">
+    {{ head(S.brief, 1) }}
+    <details {{ 'open' if S.brief.status != 'done' else '' }}><summary>Edit brief</summary>
+    <form method="post" action="{{ url_for('save_brief', slug=slug) }}">
+      <label>Topic</label><input name="topic" value="{{ brief.topic or '' }}" required>
+      <div class="grid2">
+        <div><label>Angle</label><input name="angle" value="{{ brief.angle or '' }}"></div>
+        <div><label>Audience</label><input name="target_audience" value="{{ brief.target_audience or '' }}"></div>
+        <div><label>Formats</label><select name="formats">{% for f in ['reel', 'both', 'long'] %}<option {{ 'selected' if brief.formats == f else '' }}>{{ f }}</option>{% endfor %}</select></div>
+        <div><label>Number of reels</label><select name="reel_count">{% for n in [1, 2, 3] %}<option {{ 'selected' if brief.reel_count == n else '' }}>{{ n }}</option>{% endfor %}</select></div>
+        <div><label>Tone</label><input name="tone" value="{{ brief.tone or '' }}"></div>
+        <div><label>Language</label><select name="language">{% for l, n in [('hinglish', 'Hinglish'), ('en', 'English'), ('hi', 'Hindi')] %}<option value="{{ l }}" {{ 'selected' if brief.language == l else '' }}>{{ n }}</option>{% endfor %}</select></div>
+      </div>
+      <label>Source links (one per line)</label>
+      <textarea name="urls">{{ (brief.source_urls or [])|join('\n') }}</textarea>
+      <div class="row" style="margin-top:10px"><button class="primary">Save brief</button></div>
+    </form></details>
+
+    <h3>Articles ({{ articles|length }})</h3>
+    {% if articles %}<ul class="articles">{% for a in articles %}
+      <li><span class="src" title="{{ a.source }}">{{ '🔗 ' if a.downloaded else '📄 ' }}{{ a.source }}</span>
+        <span class="muted">{{ a.words }} words</span>
+        <form method="post" action="{{ url_for('delete_article', slug=slug) }}" style="margin:0"><input type="hidden" name="name" value="{{ a.name }}"><button style="padding:2px 8px;font-size:12px">remove</button></form></li>
+    {% endfor %}</ul>{% else %}<p class="muted" style="margin:4px 0">Links are downloaded when the script is generated. Paste text here for paywalled pages.</p>{% endif %}
+    <details><summary>Add article text or file</summary>
+      <form method="post" action="{{ url_for('add_article', slug=slug) }}" enctype="multipart/form-data">
+        <label>Title (optional)</label><input name="title">
+        <label>Text</label><textarea name="text"></textarea>
+        <label>…or a file (.txt, .md, .html)</label><input type="file" name="file" accept=".txt,.md,.html,.htm">
+        <div class="row" style="margin-top:10px"><button>Add article</button></div>
+      </form></details>
+    {{ outputs(S.brief) }}
+  </section>
+
+  {# ---------------- 2 script ---------------- #}
+  <section class="card step {{ S.script.status }}" id="script">
+    {{ head(S.script, 2) }}
+    {% if prompt %}
+      <h3>Step A · copy this prompt into claude.ai</h3>
+      <textarea id="prompt" readonly style="min-height:120px" class="mono">{{ prompt }}</textarea>
+      <div class="row" style="margin-top:8px">
+        <button type="button" class="primary" onclick="copyPrompt(this)">Copy prompt</button>
+        <a class="btn" href="https://claude.ai/new" target="_blank" rel="noopener">Open claude.ai ↗</a></div>
+      <h3>Step B · paste Claude's whole reply</h3>
+      <form method="post" action="{{ url_for('run_step', slug=slug, step='script_import') }}">
+        <textarea name="reply" placeholder="Paste the JSON reply here (chat text and ```json fences are fine)" style="min-height:140px" class="mono"></textarea>
+        <div class="row" style="margin-top:8px"><button class="primary">Import script</button></div>
+      </form>
+    {% elif S.script.status != 'blocked' %}
+      <div class="row" style="margin-top:12px">
+        <form method="post" action="{{ url_for('run_step', slug=slug, step='script_prompt') }}">
+          {% if S.script.status in ['done', 'stale'] %}<input type="hidden" name="force" value="1">{% endif %}
+          <button class="{{ 'primary' if S.script.status == 'todo' else '' }}">{{ 'Regenerate' if S.script.status in ['done', 'stale'] else 'Write' }} via claude.ai (free)</button></form>
+        <form method="post" action="{{ url_for('run_step', slug=slug, step='script_api') }}">
+          {% if S.script.status in ['done', 'stale'] %}<input type="hidden" name="force" value="1">{% endif %}
+          <button title="Needs ANTHROPIC_API_KEY in .env (paid per use)">{{ 'Regenerate' if S.script.status in ['done', 'stale'] else 'Write' }} with Claude API</button></form>
+      </div>
+      {% if S.script.status in ['done', 'stale'] %}<p class="muted" style="font-size:13px;margin:8px 0 0">Regenerating replaces scenes.json (the old copy is kept as scenes.json.bak). Run Fetch again afterwards; files you added by hand stay attached to the same scene numbers, so check them in review.</p>{% endif %}
+    {% endif %}
+    {{ outputs(S.script) }}
+  </section>
+
+  {# ---------------- 3 facts ---------------- #}
+  <section class="card step {{ S.facts.status }}" id="facts">
+    {{ head(S.facts, 3) }}
+    {% if facts %}
+      <details {{ 'open' if S.facts.status == 'todo' else '' }}><summary>Show facts</summary><div class="facts mono">{{ facts }}</div></details>
+      {% if S.facts.status == 'todo' %}
+      <form method="post" action="{{ url_for('facts_checked', slug=slug) }}" style="margin-top:10px">
+        <button class="primary">I've checked these facts</button></form>{% endif %}
+    {% endif %}
+    {{ outputs(S.facts) }}
+  </section>
+
+  {# ---------------- 4 visuals ---------------- #}
+  <section class="card step {{ S.fetch.status }}" id="fetch">
+    {{ head(S.fetch, 4) }}
+    {% if S.fetch.status != 'blocked' %}
+    <div class="row" style="margin-top:12px">
+      <form method="post" action="{{ url_for('run_step', slug=slug, step='fetch') }}"><button class="{{ 'primary' if S.fetch.status == 'todo' else '' }}">Fetch visuals</button></form>
+      <form method="post" action="{{ url_for('run_step', slug=slug, step='fetch') }}"><input type="hidden" name="force" value="1"><button title="Re-download every auto-fetched scene">Refetch all</button></form>
+      <a class="btn" href="{{ url_for('review.index', slug=slug) }}">Open scene review</a>
+    </div>
+    <p class="muted" style="font-size:13px;margin:8px 0 0">Sources: Pexels, Pixabay, Unsplash, Wikimedia Commons only. Hand-placed files are never replaced.</p>
+    {% endif %}
+    {{ outputs(S.fetch) }}
+  </section>
+
+  {# ---------------- 5 manual ---------------- #}
+  <section class="card step {{ S.manual.status }}" id="manual">
+    {{ head(S.manual, 5) }}
+    {% if S.manual.status == 'todo' %}
+    <p style="margin:10px 0 0">Add each file on the <a href="{{ url_for('review.index', slug=slug) }}">review page</a> (Replace), or drop
+      <code>sceneNN.jpg/png/mp4</code> into the inbox folder and pick it there.</p>
+    {% endif %}
+    {{ outputs(S.manual) }}
+  </section>
+
+  {# ---------------- 6 draft ---------------- #}
+  <section class="card step {{ S.draft.status }}" id="draft">
+    {{ head(S.draft, 6) }}
+    {% if S.draft.status != 'blocked' %}
+    <div class="row" style="margin-top:12px">
+      <form method="post" action="{{ url_for('run_step', slug=slug, step='draft') }}" style="margin:0">
+        <button class="{{ 'primary' if S.draft.status in ['todo', 'stale'] else '' }}">{{ 'Render all drafts' if videos|length > 1 else ('Render draft' if S.draft.status == 'todo' else 'Re-render draft') }}</button></form>
+      {% if videos|length > 1 %}{% for v in videos %}<form method="post" action="{{ url_for('run_step', slug=slug, step='draft') }}" style="margin:0">
+        <input type="hidden" name="video" value="{{ v.id }}"><button>{{ v.label }} only</button></form>{% endfor %}{% endif %}</div>
+    {% endif %}
+    <div class="videos">{% for rel in S.draft.outputs %}<video controls preload="metadata" {{ 'style="width:100%;max-width:560px;aspect-ratio:16/9"' | safe if 'long' in rel else '' }} src="{{ file_url(slug, rel) }}"></video>{% endfor %}</div>
+    {{ outputs(S.draft) }}
+  </section>
+
+  {# ---------------- 7 review ---------------- #}
+  <section class="card step {{ S.review.status }}" id="review">
+    {{ head(S.review, 7) }}
+    {% if S.review.status not in ['blocked'] %}<div class="row" style="margin-top:12px"><a class="btn {{ 'primary' if S.review.status == 'todo' else '' }}" href="{{ url_for('review.index', slug=slug) }}">Open scene review →</a></div>{% endif %}
+  </section>
+
+  {# ---------------- 8 record ---------------- #}
+  <section class="card step {{ S.record.status }}" id="record">
+    {{ head(S.record, 8) }}
+    {% for v in videos %}
+    <div class="video-block" data-video="{{ v.id }}" style="margin-top:16px; padding-top:12px; border-top:1px solid var(--line)">
+      <div class="row"><strong>{{ v.label }}</strong>
+        <span class="pill {{ 'done' if v.has_audio else 'todo' }}">{{ 'recorded' if v.has_audio else 'needs recording' }}</span>
+        <span class="muted" style="font-size:13px">{{ v.scenes }} scenes · about {{ ('%.0f min' % v.minutes) if v.minutes >= 1.5 else ('%.0f s' % (v.minutes * 60)) }}</span></div>
+      <details {{ 'open' if not v.has_audio and videos|length == 1 else '' }}><summary>Script to read</summary>
+        <ol class="reading">{% for r in v.reading %}<li><span>{{ r.id }}</span>{{ r.text }}</li>{% endfor %}</ol></details>
+      <div class="row" style="margin-top:8px">
+        <button type="button" class="primary rec-btn" onclick="toggleRec('{{ v.id }}', this)">● Start recording</button>
+        <span class="muted rec-state"></span></div>
+      <div class="take-box row" style="display:none; margin-top:8px">
+        <audio class="take" controls></audio>
+        <button type="button" class="primary" onclick="useTake('{{ v.id }}', this)">Use this take</button>
+        <button type="button" onclick="discardTake('{{ v.id }}')">Discard</button></div>
+      <form method="post" action="{{ url_for('upload_audio', slug=slug) }}" enctype="multipart/form-data" class="row" style="margin-top:8px">
+        <input type="hidden" name="video" value="{{ v.id }}">
+        <input type="file" name="audio" accept="audio/*,.m4a,.mp3,.wav,.aiff" style="flex:1; min-width:200px"><button>Upload instead</button></form>
+      {% if v.has_audio %}<audio controls preload="metadata" style="margin-top:8px" src="{{ file_url(slug, v.audio) }}"></audio>{% endif %}
+    </div>
+    {% endfor %}
+    <p class="muted" style="font-size:13px">Any audio format works; it's converted to m4a and the previous take is kept as <code>*.prev.m4a</code>.</p>
+    {{ outputs(S.record) }}
+  </section>
+
+  {# ---------------- 9 final ---------------- #}
+  <section class="card step {{ S.final.status }}" id="final">
+    {{ head(S.final, 9) }}
+    {% for v in videos %}
+    <div style="margin-top:14px; padding-top:12px; border-top:1px solid var(--line)">
+      <div class="row"><strong>{{ v.label }}</strong>
+        {% if v.final %}<span class="pill done">rendered</span>{% elif v.has_audio %}<span class="pill todo">ready to render</span>{% else %}<span class="pill">needs recording</span>{% endif %}
+        <span style="flex:1"></span>
+        {% if v.has_audio %}<form method="post" action="{{ url_for('run_step', slug=slug, step='final') }}" style="margin:0">
+          <input type="hidden" name="video" value="{{ v.id }}">
+          <button class="{{ 'primary' if not v.final else '' }}">{{ 'Render again' if v.final else 'Render ' ~ v.label }}</button></form>{% endif %}</div>
+      {% if v.kind == 'long' %}<p class="muted" style="font-size:13px;margin:6px 0 0">Rendered chapter by chapter to keep memory low, then joined; also writes a sidecar .srt. A 10-minute video takes a while on the M1: start it and leave it.</p>{% endif %}
+      {% if v.final %}<div class="videos"><video controls preload="metadata" {{ 'style="width:100%;max-width:640px;aspect-ratio:16/9"' | safe if v.kind == 'long' else '' }} src="{{ file_url(slug, v.final) }}"></video></div>
+        {% if v.srt %}<div class="out" style="margin-top:6px"><code>{{ path }}/{{ v.srt }}</code> <a href="{{ file_url(slug, v.srt) }}" target="_blank">open</a></div>{% endif %}{% endif %}
+    </div>
+    {% endfor %}
+    {{ outputs(S.final) }}
+  </section>
+
+  {# ---------------- later phases ---------------- #}
+  <section class="card step later" id="publish">{{ head(S.publish, 10) }}</section>
+
+  {% if jobs %}
+  <section class="card" id="history">
+    <h2>Recent runs</h2>
+    <div style="display:flex; flex-direction:column; gap:6px; margin-top:8px">
+    {% for j in jobs %}
+      <div class="row" style="font-size:14px"><span class="pill {{ j.status }}">{{ j.status }}</span>
+        <span>{{ j.label }}</span>
+        <span class="muted">{{ (j.result or j.error or '')[:140] }}</span></div>
+    {% endfor %}
+    </div>
+    <p class="muted" style="font-size:12px;margin:8px 0 0">Full logs: <code>{{ path }}/build/logs/</code></p>
+  </section>
+  {% endif %}
+  </div>
+</div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function copyPrompt(btn) {
+  const t = document.getElementById('prompt');
+  navigator.clipboard.writeText(t.value).then(() => { btn.textContent = 'Copied ✓'; },
+    () => { t.select(); document.execCommand('copy'); btn.textContent = 'Copied ✓'; });
+}
+
+// --- in-browser narration recording (MediaRecorder; localhost counts as a secure context) ---
+const recs = {};   // video id -> {rec, chunks, blob, timer, t0}
+const block = id => document.querySelector('.video-block[data-video="' + id + '"]');
+async function toggleRec(id, btn) {
+  const b = block(id), st = b.querySelector('.rec-state');
+  const r = recs[id] = recs[id] || {};
+  if (r.rec && r.rec.state === 'recording') { r.rec.stop(); return; }
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({audio: {echoCancellation: false, noiseSuppression: false, autoGainControl: false}});
+    const type = ['audio/mp4', 'audio/webm;codecs=opus', 'audio/webm'].find(t => MediaRecorder.isTypeSupported(t)) || '';
+    r.rec = new MediaRecorder(stream, type ? {mimeType: type} : {});
+    r.chunks = [];
+    r.rec.ondataavailable = e => e.data.size && r.chunks.push(e.data);
+    r.rec.onstop = () => {
+      stream.getTracks().forEach(t => t.stop());
+      clearInterval(r.timer);
+      r.blob = new Blob(r.chunks, {type: r.rec.mimeType});
+      b.querySelector('.take').src = URL.createObjectURL(r.blob);
+      b.querySelector('.take-box').style.display = 'flex';
+      btn.textContent = '● Record again'; st.textContent = 'Listen back, then use or discard this take.';
+    };
+    r.rec.start(1000);
+    r.t0 = Date.now();
+    btn.textContent = '■ Stop';
+    r.timer = setInterval(() => { st.innerHTML = '<span class="recdot"></span> recording ' + Math.round((Date.now() - r.t0) / 1000) + 's'; }, 250);
+  } catch (e) {
+    st.textContent = 'Microphone not available: ' + e.message;
+  }
+}
+function discardTake(id) { const b = block(id); recs[id].blob = null; b.querySelector('.take-box').style.display = 'none'; b.querySelector('.rec-state').textContent = ''; }
+async function useTake(id, btn) {
+  const r = recs[id]; if (!r || !r.blob) return;
+  btn.disabled = true; btn.textContent = 'Saving…';
+  const ext = r.blob.type.includes('mp4') ? 'm4a' : 'webm';
+  const fd = new FormData(); fd.append('audio', r.blob, 'take.' + ext); fd.append('video', id);
+  const res = await fetch('{{ url_for("upload_audio", slug=slug) }}', {method: 'POST', body: fd, headers: {'X-Requested-With': 'fetch'}});
+  if (res.ok) { location.href = '{{ url_for("project_page", slug=slug) }}?msg=' + encodeURIComponent('Narration saved. Next: final render.') + '#final'; }
+  else { btn.disabled = false; btn.textContent = 'Use this take'; block(id).querySelector('.rec-state').textContent = 'Saving failed (' + res.status + ').'; }
+}
+</script>
+{% endblock %}

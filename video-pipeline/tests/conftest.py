@@ -29,3 +29,4 @@ def project_factory(tmp_path):
 def fake_keys(monkeypatch):
     monkeypatch.setenv("PEXELS_API_KEY", "test-pexels")
     monkeypatch.setenv("UNSPLASH_ACCESS_KEY", "test-unsplash")
+    monkeypatch.setenv("PIXABAY_API_KEY", "test-pixabay-secret")  # never the real key from .env
