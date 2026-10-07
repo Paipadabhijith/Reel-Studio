@@ -12,7 +12,7 @@ from pathlib import Path
 from typing import Callable
 
 from .lib.notify import notify
-from .lib.progress import use_sink
+from .lib.progress import JobCancelled, use_cancel, use_sink
 
 # fn(log) -> optional result message
 JobFn = Callable[[Callable[[str], None]], "str | None"]
@@ -28,7 +28,8 @@ class Job:
     fn: JobFn
     log_dir: Path | None = None
     id: int = field(default_factory=lambda: next(_ids))
-    status: str = "queued"  # queued | running | done | failed
+    status: str = "queued"  # queued | running | done | failed | cancelled
+    cancel_event: threading.Event = field(default_factory=threading.Event)
     created: float = field(default_factory=time.time)
     started: float | None = None
     ended: float | None = None
@@ -72,6 +73,18 @@ class Runner:
         self.q.put(job)
         return job
 
+    def cancel(self, job_id: int) -> bool:
+        """Stop a queued job at once, or ask a running one to stop (its subprocesses are killed)."""
+        job = self.jobs.get(job_id)
+        if not job or job.status not in ("queued", "running"):
+            return False
+        job.cancel_event.set()
+        job.log("cancel requested")
+        if job.status == "queued":
+            job.status, job.ended = "cancelled", time.time()
+            job.log("cancelled before it started")
+        return True
+
     def active(self) -> list[Job]:
         return sorted((j for j in self.jobs.values() if j.status in ("queued", "running")), key=lambda j: j.id)
 
@@ -90,6 +103,9 @@ class Runner:
     def _work(self) -> None:
         while True:
             job = self.q.get()
+            if job.status == "cancelled":
+                self.q.task_done()
+                continue
             job.status, job.started = "running", time.time()
             job.log(f"started: {job.label}")
 
@@ -98,11 +114,14 @@ class Runner:
                 job.progress_label = label
 
             try:
-                with use_sink(sink):
+                with use_sink(sink), use_cancel(job.cancel_event):
                     job.result = job.fn(job.log)
                 job.status = "done"
                 job.progress = 1.0
                 job.log(f"done in {time.time() - job.started:.0f}s" + (f": {job.result}" if job.result else ""))
+            except JobCancelled:
+                job.status = "cancelled"
+                job.log("cancelled; finished steps are kept and will be reused next time")
             except Exception as e:  # report every failure in the UI rather than killing the worker
                 job.status = "failed"
                 job.error = f"{type(e).__name__}: {e}"
@@ -112,7 +131,8 @@ class Runner:
                 job.ended = time.time()
                 self._save_log(job)
                 if self.notify_done:
-                    notify(f"{job.slug}: {job.label}", "done" if job.status == "done" else f"failed: {job.error}")
+                    if job.status != "cancelled":
+                        notify(f"{job.slug}: {job.label}", "done" if job.status == "done" else f"failed: {job.error}")
                 self.q.task_done()
 
     @staticmethod

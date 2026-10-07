@@ -14,7 +14,7 @@ from rapidfuzz import fuzz, process
 
 from . import analyze_tone
 from .lib import cache
-from .lib.progress import report
+from .lib.progress import check_cancel, report
 from .lib.config import WHISPER_LANG, WHISPER_MODEL, heavy_lock
 from .lib.schema import ScenesFile, Timeline, TimelineScene, Word, dump_json
 from .lib.targets import get_target
@@ -152,7 +152,9 @@ def align(
     lang = WHISPER_LANG[sf.language]
     log(f"align: transcribing ({WHISPER_MODEL}, language={lang})")
     report(None, "transcribing narration with Whisper")
+    check_cancel()
     heard = transcribe(audio, lang)
+    check_cancel()
     if not heard:
         raise RuntimeError("Whisper returned no words; is the recording silent?")
     heard_norm = [normalize(h["w"]) for h in heard]
@@ -170,6 +172,7 @@ def align(
     log(f"align: matched {matched}/{len(match)} script words ({ratio:.0%})")
     if ratio < 0.4:
         log("align: WARNING low match; script text may differ a lot from the recording")
+    report(None, f"voice matched {ratio:.0%} of the script")
 
     raw = [(heard[m]["start"], heard[m]["end"]) if m is not None else None for m in match]
     times = _fill_times(raw, 0.0, dur)
@@ -181,7 +184,9 @@ def align(
             Word(w=script_words[k][1], t=round(times[k][0], 3), end=round(times[k][1], 3)) for k in idxs
         ]
         start = words[0].t if words else (tl_scenes[-1].end_s if tl_scenes else 0.0)
-        tl_scenes.append(TimelineScene(id=s.id, start_s=start, end_s=start, words=words))
+        hit = sum(1 for k in idxs if match[k] is not None)
+        tl_scenes.append(TimelineScene(id=s.id, start_s=start, end_s=start, words=words,
+                                       match=round(hit / len(idxs), 3) if idxs else None))
     # scenes are contiguous: each runs until the next begins, first starts at 0, last ends at audio end
     tl_scenes[0].start_s = 0.0
     for a, b in zip(tl_scenes, tl_scenes[1:]):

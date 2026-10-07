@@ -127,3 +127,28 @@ stay on your machine (git-ignored). Blender renders with Eevee at 32 samples; ex
 5-second map scene is a few minutes, and it is cached by template, parameters, length and aspect.
 **Check the boundaries before you publish a map of India**: the data's licence is not stated, and maps published in India
 are expected to follow the official boundary, which this third-party data may not.
+
+## Plan, parts and checks (before the final render)
+
+**Plan.** After the script, the *Plan* page shows every scene as a card: edit the sentence, the stressed words, the
+picture type and its search words, chart numbers, 3D-map states, or the stat badge; add, delete or reorder scenes.
+Each save is validated (a bad edit is refused with the reason) and the previous version is kept in `build/history/`.
+**Lock the plan** to unlock fetching: pictures are only downloaded after you've fixed the structure.
+
+**Parts.** Each scene of each video is a *part*. On *Check parts*:
+1. **Pictures** (before recording): a picture of every scene (charts, stats and 3D maps included). Automatic checks flag
+   missing or too-small files (soft above 1.4x stretch, error above 3x), wrong orientation, missing credits, a picture reused
+   in two scenes, invalid chart data, unknown map states, scenes that are very short or very long, and text cards that overflow.
+2. **Timing** (after recording): each scene plays as a clip with its slice of your voice, with the voice-match score
+   (below 50% is flagged; captions may be mistimed).
+Approve a part, or ask for a redo with a note. Approval is tied to a fingerprint of the scene and its file, so changing
+either marks it *changed since approval*. *Approve all without warnings* approves only the clean ones.
+
+**Long-form is built in four steps** (Studio, *Final render*): align your voice, build the scene clips (only changed scenes
+are rendered; about 7 s of start-up per scene), check, assemble (joins clips, adds your voice at -14 LUFS, writes the `.srt`).
+Assemble stays disabled until every part is approved; *Assemble anyway* and *Render everything now* skip the checks.
+Reels are one render (about a minute), so checking their parts is optional. `reel final` on the command line does all the
+steps without the checks.
+
+**Cancel.** The job panel has a *Cancel* button: it stops Remotion or Blender and everything they started within a moment.
+Finished scenes are kept and reused on the next run. (Voice timing in progress finishes its current step first.)

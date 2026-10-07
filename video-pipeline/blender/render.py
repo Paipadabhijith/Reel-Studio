@@ -40,7 +40,7 @@ for attr in ("taa_render_samples", "taa_samples"):
         setattr(scene.eevee, attr, 32)
 res = (1080, 1920) if ASPECT == "9:16" else (1920, 1080)
 scene.render.resolution_x, scene.render.resolution_y = res
-scene.render.resolution_percentage = 100
+scene.render.resolution_percentage = int(arg("--scale", "100"))
 scene.render.fps = FPS
 scene.view_settings.view_transform = "Standard"   # keep the brand colours true (no filmic desaturation)
 scene.frame_start, scene.frame_end = 1, FRAMES

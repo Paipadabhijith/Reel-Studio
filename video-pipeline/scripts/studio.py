@@ -22,7 +22,7 @@ from .lib.config import PROJECTS_DIR
 from .lib.schema import load_scenes
 from .lib.state import env_warnings, next_step, project_state, stage_label
 
-SERVABLE_DIRS = ("out", "assets", "audio", "script", "inbox", "input")
+SERVABLE_DIRS = ("out", "assets", "audio", "script", "inbox", "input", "build/parts")
 AUDIO_EXTS = {"m4a", "mp3", "wav", "aac", "webm", "ogg", "mp4", "caf", "aiff"}
 ARTICLE_EXTS = {"txt", "md", "html", "htm"}
 SLUG_RE = re.compile(r"^[a-z0-9][a-z0-9_-]*$")
@@ -65,6 +65,69 @@ def job_draft(project: Path, only: str | None = None):
         outs, missing = draft(project, log=log, only=only)
         msg = f"{len(outs)} draft(s) rendered"
         return msg + (f"; scenes {', '.join(map(str, missing))} still need manual files" if missing else "")
+    return run
+
+
+def _target(project: Path, target_id: str):
+    from .lib.targets import get_target
+
+    sf = load_scenes(project / "script" / "scenes.json")
+    return sf, get_target(sf, target_id)
+
+
+def job_stills(project: Path, target_id: str):
+    def run(log):
+        from .parts import build_stills
+
+        sf, target = _target(project, target_id)
+        tl = _timeline_if_any(project, target)
+        n = build_stills(project, sf, target, tl, log=log)
+        return f"{n} picture(s) made" if n else "all pictures were already current"
+    return run
+
+
+def _timeline_if_any(project: Path, target):
+    from .lib.state import _load_timeline
+
+    return _load_timeline(project, target)
+
+
+def job_align(project: Path, target_id: str):
+    def run(log):
+        from .align_audio import align
+
+        sf, target = _target(project, target_id)
+        tl = align(project, sf, target.id, log)
+        weak = [s.id for s in tl.scenes if s.match is not None and s.match < 0.5]
+        return f"{len(tl.scenes)} scenes timed" + (f"; weak voice match on scene(s) {', '.join(map(str, weak))}" if weak else "")
+    return run
+
+
+def job_parts(project: Path, target_id: str):
+    def run(log):
+        from .render_final import build_parts, part_preview
+
+        sf, target = _target(project, target_id)
+        tl = _timeline_if_any(project, target)
+        if tl is None:
+            raise RuntimeError("align your voice first")
+        files = build_parts(project, sf, tl, target, log)
+        for sid in target.scene_ids:
+            part_preview(project, sf, tl, target, sid)
+        return f"{len(files)} scene clips ready to check"
+    return run
+
+
+def job_assemble(project: Path, target_id: str):
+    def run(log):
+        from .render_final import assemble
+
+        sf, target = _target(project, target_id)
+        tl = _timeline_if_any(project, target)
+        if tl is None:
+            raise RuntimeError("align your voice first")
+        out = assemble(project, sf, tl, target, log)
+        return f"assembled {out.name}"
     return run
 
 
@@ -112,7 +175,13 @@ def _videos(project: Path) -> list[dict]:
     for t in list_targets(sf):
         audio = project / t.audio
         words = sum(len(sf.scene(i).text.split()) for i in t.scene_ids)
+        flow = None
+        if t.kind == "long" and audio.exists():
+            from .lib.state import long_flow
+
+            flow = long_flow(project, sf, t)
         out.append({
+            "flow": flow,
             "id": t.id, "label": t.label, "kind": t.kind, "audio": t.audio, "has_audio": audio.exists(),
             "audio_mtime": int(audio.stat().st_mtime) if audio.exists() else 0,
             "final": t.out if (project / t.out).exists() else None,
@@ -146,7 +215,7 @@ def _to_m4a(src: Path, dest: Path) -> float:
 
 
 def create_app(projects_dir: Path = PROJECTS_DIR, runner: Runner | None = None) -> Flask:
-    from . import review_server
+    from . import review_server, studio_qc
 
     app = Flask(__name__)
     app.config["PROJECTS_DIR"] = Path(projects_dir)
@@ -154,6 +223,7 @@ def create_app(projects_dir: Path = PROJECTS_DIR, runner: Runner | None = None) 
     runner = runner or Runner()
     app.config["RUNNER"] = runner
     app.register_blueprint(review_server.bp)
+    app.register_blueprint(studio_qc.bp)
 
     def file_exists(slug: str, rel: str) -> bool:
         return (app.config["PROJECTS_DIR"] / slug / rel).is_file()
@@ -355,6 +425,33 @@ def create_app(projects_dir: Path = PROJECTS_DIR, runner: Runner | None = None) 
             return start(slug, "script", "Import claude.ai reply", job_script_manual(p), "script")
         if step == "fetch":
             return start(slug, "fetch", "Fetch visuals", job_fetch(p, force), "fetch")
+        if step in ("stills", "align", "parts", "assemble"):
+            from . import parts as parts_mod
+            from .lib.state import _load_timeline
+
+            try:
+                sf, target = _target(p, request.form.get("video") or "")
+            except ValueError as e:
+                return flash_back(slug, str(e), True, "review")
+            if step == "stills":
+                return start(slug, f"stills-{target.id}", f"Make pictures: {target.label}", job_stills(p, target.id), "review")
+            if not (p / target.audio).exists():
+                return flash_back(slug, f"Record or upload the narration for {target.label} first.", True, "record")
+            if step == "align":
+                return start(slug, f"align-{target.id}", f"Align voice: {target.label}", job_align(p, target.id), "final")
+            if step == "parts":
+                if _load_timeline(p, target) is None:
+                    return flash_back(slug, "Align your voice first.", True, "final")
+                return start(slug, f"parts-{target.id}", f"Build scene clips: {target.label}", job_parts(p, target.id), "final")
+            tl = _load_timeline(p, target)
+            if tl is None:
+                return flash_back(slug, "Align your voice first.", True, "final")
+            g = parts_mod.gate(parts_mod.overview(p, sf, target, tl, with_stills=False))
+            if request.form.get("override") != "1" and not (g["visual_ok"] and (g["timing_ok"] or not g["has_timing"])):
+                todo = len(g["visual_todo"]) + len(g["timing_todo"])
+                return flash_back(slug, f"{todo} check(s) still open for {target.label}. Approve every part, "
+                                        "or use “Assemble anyway”.", True, "final")
+            return start(slug, f"assemble-{target.id}", f"Assemble: {target.label}", job_assemble(p, target.id), "final")
         if step == "draft":
             return start(slug, "draft", "Render draft", job_draft(p, request.form.get("video") or None), "draft")
         if step == "final":
@@ -366,6 +463,9 @@ def create_app(projects_dir: Path = PROJECTS_DIR, runner: Runner | None = None) 
                 return flash_back(slug, str(e), True, "final")
             if not (p / target.audio).exists():
                 return flash_back(slug, f"Record or upload the narration for {target.label} first.", True, "record")
+            if target.kind == "long" and request.form.get("override") != "1":
+                return flash_back(slug, "Long-form is built in steps so you can check each scene first: align, build "
+                                        "scene clips, check, assemble. Or use “Render everything now”.", True, "final")
             return start(slug, f"final-{target.id}", f"Final render: {target.label}", job_final(p, target.id), "final")
         abort(404)
 
@@ -393,6 +493,10 @@ def create_app(projects_dir: Path = PROJECTS_DIR, runner: Runner | None = None) 
         return ("", 204)
 
     # ---- api ---------------------------------------------------------
+
+    @app.post("/api/jobs/<int:job_id>/cancel")
+    def api_cancel(job_id: int):
+        return jsonify({"ok": runner.cancel(job_id)})
 
     @app.get("/api/jobs")
     def api_jobs():

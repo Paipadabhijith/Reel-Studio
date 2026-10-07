@@ -97,6 +97,7 @@ class TimelineScene(BaseModel):
     start_s: float
     end_s: float
     words: list[Word] = Field(default_factory=list)
+    match: float | None = None  # share of this scene's words found in the recording (None: not measured)
 
 
 class EmphasisMark(BaseModel):

@@ -163,9 +163,8 @@ def test_review_keep_replace(project_factory):
     assert client.get("/p/proj/file/assets/images/scene_01.png").data == b"png"
     assert client.get("/p/proj/file/build/review.json").status_code == 404, "build/ is not served"
 
-    client.post("/p/proj/review/scene/1/keep")
-    assert json.loads((proj / "build/review.json").read_text()) == {"1": "keep"}
     assert "0 manual pending" in client.get("/p/proj/review/").get_data(as_text=True)
+    assert "Check parts" in client.get("/p/proj/review/").get_data(as_text=True), "approval now lives on the parts page"
 
 
 def test_cli_inbox_prompts_for_rights(project_factory, monkeypatch):

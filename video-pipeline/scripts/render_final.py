@@ -14,7 +14,7 @@ from .align_audio import duration_s
 from .lib import cache
 from .lib.assets import find_asset
 from .lib.config import BRAND_FILE, REMOTION_CONCURRENCY, TARGET_LUFS, TEMPLATE_DIR, heavy_lock
-from .lib.progress import report, run_remotion
+from .lib.progress import check_cancel, report, run_remotion
 from .lib.schema import Scene, ScenesFile, Timeline
 from .lib.targets import Target, chapters_for
 
@@ -87,19 +87,34 @@ def chapter_frames(tl: Timeline, chapters: list[tuple[str, list[int]]]) -> list[
     return list(zip(starts, ends))
 
 
+def scene_frames(tl: Timeline, ids: list[int]) -> dict[int, tuple[int, int]]:
+    """(start_frame, end_frame) of every scene. Scenes tile the video: each ends where the next begins."""
+    by_id = {s.id: s for s in tl.scenes}
+    total = int(round(tl.duration_s * FPS))
+    starts = [0] + [int(round(by_id[i].start_s * FPS)) for i in ids[1:]]
+    ends = starts[1:] + [total]
+    return {i: (a, b) for i, a, b in zip(ids, starts, ends)}
+
+
+def scene_props(project: Path, sf: ScenesFile, tl: Timeline, target: Target, sid: int, mode: str = "final", log=print) -> dict:
+    """Props for rendering one scene on its own (times relative to the scene)."""
+    return build_props(project, sf, tl, target, mode, ids=[sid], frames=scene_frames(tl, target.scene_ids)[sid])
+
+
 def build_props(
     project: Path, sf: ScenesFile, tl: Timeline, target: Target, mode: str = "final",
-    chapter: int | None = None, log=print,
+    chapter: int | None = None, log=print, ids: list[int] | None = None, frames: tuple[int, int] | None = None,
 ) -> dict:
-    """Remotion props for the whole video (chapter=None) or one chapter of it, times relative to that chapter."""
+    """Remotion props for the whole video, one chapter of it, or an explicit scene list; times relative to its start."""
     brand = json.loads(BRAND_FILE.read_text())[sf.brand]
     chapters = chapters_for(sf, target)
-    frames = chapter_frames(tl, chapters)
-    if chapter is None:
-        ids, f0, f1, title = target.scene_ids, 0, frames[-1][1], None
+    if ids is not None:
+        title, (f0, f1) = None, frames
+    elif chapter is None:
+        ids, f0, f1, title = target.scene_ids, 0, chapter_frames(tl, chapters)[-1][1], None
     else:
         title, ids = chapters[chapter]
-        f0, f1 = frames[chapter]
+        f0, f1 = chapter_frames(tl, chapters)[chapter]
     off = f0 / FPS
     by_id = {s.id: s for s in tl.scenes}
     scenes = []
@@ -156,6 +171,31 @@ def remotion_render(project: Path, props: dict, out: Path, scale: float | None =
         run_remotion(cmd, TEMPLATE_DIR, log)
 
 
+def template_digest() -> str:
+    """Hash of the Remotion code and brand file (memoised by newest modification time)."""
+    files = template_sources()
+    stamp = max(f.stat().st_mtime for f in files)
+    if _TEMPLATE_MEMO.get("stamp") != stamp:
+        _TEMPLATE_MEMO.update(stamp=stamp, digest=cache.hash_inputs(files=files))
+    return _TEMPLATE_MEMO["digest"]
+
+
+_TEMPLATE_MEMO: dict = {}
+
+
+def remotion_still(project: Path, props: dict, out: Path, frame: int, scale: float | None = None) -> None:
+    props_path = project / "build" / f"props_still_{props['reelId']}_{out.stem}.json"
+    props_path.parent.mkdir(parents=True, exist_ok=True)
+    props_path.write_text(json.dumps(props, ensure_ascii=False))
+    out.parent.mkdir(parents=True, exist_ok=True)
+    cmd = ["npx", "remotion", "still", "src/Root.tsx", COMPOSITION[props["kind"]], str(out),
+           f"--props={props_path}", f"--public-dir={project}", f"--frame={frame}", "--image-format=jpeg"]
+    if scale:
+        cmd.append(f"--scale={scale}")
+    with heavy_lock("remotion"):
+        run_remotion(cmd, TEMPLATE_DIR)
+
+
 def render_chapters(
     project: Path, sf: ScenesFile, tl: Timeline, target: Target, mode: str, scale: float | None, log=print,
 ) -> tuple[list[Path], str]:
@@ -165,6 +205,7 @@ def render_chapters(
     ch_dir = project / "build" / "chapters"
     files, digests = [], []
     for n, (title, _) in enumerate(chapters):
+        check_cancel()
         props = build_props(project, sf, tl, target, mode, n, log)
         out = ch_dir / f"{'draft_' if mode == 'draft' else ''}{target.id}_{n + 1:02d}.mp4"
         digest = cache.hash_inputs(props, scale, files=props_inputs(project, props))
@@ -248,8 +289,96 @@ def write_srt(tl: Timeline, dst: Path) -> int:
     return len(cues)
 
 
+# ---------------------------------------------------------------- parts (long-form): one clip per scene
+
+
+def part_file(project: Path, target: Target, sid: int) -> Path:
+    return project / "build" / "parts" / target.id / f"scene_{sid:02d}.mp4"
+
+
+def part_digest(project: Path, sf: ScenesFile, tl: Timeline, target: Target, sid: int) -> tuple[str, dict]:
+    props = scene_props(project, sf, tl, target, sid, "final", log=lambda *_: None)
+    return cache.hash_inputs(props, template_digest(), files=props_inputs(project, props)), props
+
+
+def render_part(project: Path, sf: ScenesFile, tl: Timeline, target: Target, sid: int, log=print) -> Path:
+    """Render one scene to its own clip (cached by everything that shows in it)."""
+    out = part_file(project, target, sid)
+    digest, props = part_digest(project, sf, tl, target, sid)
+    stage = f"part_{target.id}_{sid}"
+    cache_dir = project / "build" / "cache"
+    if cache.is_fresh(cache_dir, stage, digest, [out]):
+        return out
+    props = scene_props(project, sf, tl, target, sid, "final", log)
+    remotion_render(project, props, out, None, log)
+    cache.mark(cache_dir, stage, digest)
+    return out
+
+
+def build_parts(project: Path, sf: ScenesFile, tl: Timeline, target: Target, log=print) -> list[Path]:
+    """Make every scene's clip (3D scenes first). Scenes whose content hasn't changed are skipped."""
+    render_blender.render_for_target(project, sf, tl, target, log)
+    ids = target.scene_ids
+    files = []
+    for n, sid in enumerate(ids, 1):
+        check_cancel()
+        out = part_file(project, target, sid)
+        digest, _ = part_digest(project, sf, tl, target, sid)
+        fresh = cache.is_fresh(project / "build" / "cache", f"part_{target.id}_{sid}", digest, [out])
+        report((n - 1) / len(ids), f"scene {sid} ({n}/{len(ids)})" + (" cached" if fresh else ": rendering"))
+        if not fresh:
+            log(f"{target.id}: rendering scene {sid} ({n}/{len(ids)})")
+        files.append(render_part(project, sf, tl, target, sid, log))
+    return files
+
+
+def part_preview(project: Path, sf: ScenesFile, tl: Timeline, target: Target, sid: int) -> Path:
+    """The scene's clip with the matching slice of your narration, for checking timing."""
+    clip = part_file(project, target, sid)
+    out = clip.with_name(f"preview_{sid:02d}.mp4")
+    f0, f1 = scene_frames(tl, target.scene_ids)[sid]
+    audio = project / target.audio
+    digest = cache.hash_inputs(part_digest(project, sf, tl, target, sid)[0], f0, f1, files=[audio])
+    cache_dir = project / "build" / "cache"
+    stage = f"preview_{target.id}_{sid}"
+    if cache.is_fresh(cache_dir, stage, digest, [out]):
+        return out
+    _run(["ffmpeg", "-y", "-loglevel", "error", "-i", str(clip), "-ss", f"{f0 / FPS:.3f}", "-t", f"{(f1 - f0) / FPS:.3f}",
+          "-i", str(audio), "-map", "0:v:0", "-map", "1:a:0", "-c:v", "copy", "-c:a", "aac", "-b:a", "128k",
+          "-shortest", "-movflags", "+faststart", str(out)])
+    cache.mark(cache_dir, stage, digest)
+    return out
+
+
+def assemble(project: Path, sf: ScenesFile, tl: Timeline, target: Target, log=print) -> Path:
+    """Join the scene clips, add the narration at -14 LUFS, and write subtitles."""
+    out = project / target.out
+    files = build_parts(project, sf, tl, target, log)  # instant when every part is current
+    audio = project / target.audio
+    digest = cache.hash_inputs([part_digest(project, sf, tl, target, i)[0] for i in target.scene_ids], files=[audio])
+    stage = f"final_{target.id}"
+    cache_dir = project / "build" / "cache"
+    if cache.is_fresh(cache_dir, stage, digest, [out]):
+        log(f"{target.id}: final cached")
+        return out
+    report(None, "joining scenes")
+    joined = project / "build" / f"{target.id}_joined.mp4"
+    concat(files, joined)
+    log(f"{target.id}: adding narration, normalizing loudness to {TARGET_LUFS} LUFS")
+    report(None, "adding narration and normalizing loudness")
+    out.parent.mkdir(parents=True, exist_ok=True)
+    mux_audio(joined, audio, out)
+    joined.unlink(missing_ok=True)
+    n = write_srt(tl, out.with_suffix(".srt"))
+    log(f"{target.id}: wrote {out.with_suffix('.srt').name} ({n} cues)")
+    cache.mark(cache_dir, stage, digest)
+    return out
+
+
 def render_target(project: Path, sf: ScenesFile, tl: Timeline, target: Target, log=print) -> Path:
-    """Final render of one video: any Blender scenes, chapters, concat, narration, subtitles (long-form)."""
+    """Final render of one video. Long-form is built as one clip per scene and assembled; a reel is one render."""
+    if target.kind == "long":
+        return assemble(project, sf, tl, target, log)
     out = project / target.out
     cache_dir = project / "build" / "cache"
 

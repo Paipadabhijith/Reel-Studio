@@ -23,12 +23,13 @@ summary { cursor: pointer; color: var(--accent); }
 {% endblock %}
 {% block body %}
 <div class="row" style="justify-content:space-between; margin-bottom:14px">
-  <div><h1>Review visuals</h1><div class="muted">{{ scenes|length }} scenes · {{ kept }} kept · {{ pending }} manual pending</div></div>
-  <a class="btn" href="{{ url_for('project_page', slug=slug) }}#review">← Back to pipeline</a>
+  <div><h1>Review visuals</h1><div class="muted">{{ scenes|length }} scenes · {{ pending }} manual pending</div></div>
+  <div class="row"><a class="btn primary" href="{{ url_for('qc.parts_page', slug=slug) }}">Check parts →</a>
+    <a class="btn" href="{{ url_for('project_page', slug=slug) }}#review">← Back to pipeline</a></div>
 </div>
 <div class="grid">
 {% for s in scenes %}
-<div class="scard {{ 'kept' if s.kept else '' }}" id="s{{ s.id }}">
+<div class="scard" id="s{{ s.id }}">
   <div class="thumb">
     {% if s.kind == 'photo' %}<img src="{{ url_for('file', slug=slug, rel=s.file) }}?v={{ s.mtime }}" alt="scene {{ s.id }}">
     {% elif s.kind == 'video' %}<video src="{{ url_for('file', slug=slug, rel=s.file) }}?v={{ s.mtime }}" muted loop playsinline controls></video>
@@ -36,10 +37,9 @@ summary { cursor: pointer; color: var(--accent); }
   </div>
   <div class="sbody">
     <div class="meta"><span class="tag">#{{ s.id }}</span><span class="tag {{ 'manual' if s.type == 'manual' else '' }}">{{ s.type }}</span>
-      {% if s.kept %}<span class="tag kept">kept</span>{% endif %}</div>
+</div>
     <p style="margin:0">{{ s.text }}</p>
     {% if s.credit %}<div class="credit">{{ s.credit }}</div>{% endif %}
-    {% if s.file %}<form method="post" action="{{ url_for('review.keep', slug=slug, sid=s.id) }}"><button class="primary">Keep</button></form>{% endif %}
     <details {{ 'open' if s.type == 'manual' and not s.file else '' }}><summary>Replace</summary>
       <form method="post" action="{{ url_for('review.replace', slug=slug, sid=s.id) }}" enctype="multipart/form-data">
         <input type="file" name="file" accept="image/*,video/mp4,video/quicktime">

@@ -224,5 +224,8 @@ def test_self_drawing_scenes_need_no_downloaded_file(project_factory):
     (proj / "input/brief.md").write_text("- topic: x\n")
     (proj / "script/script.md").write_text("# s\n")
     (proj / "build/cache/script.hash").write_text("h")
+    from scripts import plan as plan_mod
+
+    plan_mod.set_locked(proj, True)
     fetch = next(s for s in project_state(proj) if s.key == "fetch")
     assert "0/0" in fetch.detail, "nothing here has to be fetched"

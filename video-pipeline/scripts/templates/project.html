@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% set LABEL = {'done': 'done', 'todo': 'needs you', 'waiting': 'waiting for you', 'stale': 'out of date',
                 'blocked': 'blocked', 'later': 'later phase', 'optional': 'optional'} %}
-{% set S = {} %}{% for s in steps %}{% set _ = S.update({s.key: s}) %}{% endfor %}
+{% set S = {} %}{% set N = {} %}{% for s in steps %}{% set _ = S.update({s.key: s}) %}{% set _ = N.update({s.key: loop.index}) %}{% endfor %}
 {% block title %}{{ slug }} · Reel Studio{% endblock %}
 {% block crumbs %}<span class="crumb">/ {{ slug }}</span>{% endblock %}
 {% block head %}
@@ -86,7 +86,8 @@ details > summary { cursor: pointer; color: var(--accent); margin-top: 10px; }
 <div>
   <a id="job"></a>
   <div id="jobpanel" class="card">
-    <div class="row"><strong id="jobtitle"></strong><span id="jobstatus" class="pill"></span><span class="muted" id="jobmeta" style="font-size:13px"></span></div>
+    <div class="row"><strong id="jobtitle"></strong><span id="jobstatus" class="pill"></span><span class="muted" id="jobmeta" style="font-size:13px"></span>
+      <span style="flex:1"></span><button id="jobcancel" type="button" style="display:none; padding:3px 12px; font-size:13px" onclick="cancelJob()">Cancel</button></div>
     <div class="bar" id="jobbar"><div></div></div>
     <div id="jobresult" style="font-size:14px"></div>
     <details open><summary>Log</summary><pre id="joblog" class="mono"></pre></details>
@@ -102,7 +103,7 @@ details > summary { cursor: pointer; color: var(--accent); margin-top: 10px; }
 
   {# ---------------- 1 brief ---------------- #}
   <section class="card step {{ S.brief.status }}" id="brief">
-    {{ head(S.brief, 1) }}
+    {{ head(S.brief, N.brief) }}
     <details {{ 'open' if S.brief.status != 'done' else '' }}><summary>Edit brief</summary>
     <form method="post" action="{{ url_for('save_brief', slug=slug) }}">
       <label>Topic</label><input name="topic" value="{{ brief.topic or '' }}" required>
@@ -137,7 +138,7 @@ details > summary { cursor: pointer; color: var(--accent); margin-top: 10px; }
 
   {# ---------------- 2 script ---------------- #}
   <section class="card step {{ S.script.status }}" id="script">
-    {{ head(S.script, 2) }}
+    {{ head(S.script, N.script) }}
     {% if prompt %}
       <h3>Step A · copy this prompt into claude.ai</h3>
       <textarea id="prompt" readonly style="min-height:120px" class="mono">{{ prompt }}</textarea>
@@ -163,9 +164,22 @@ details > summary { cursor: pointer; color: var(--accent); margin-top: 10px; }
     {{ outputs(S.script) }}
   </section>
 
+  {# ---------------- plan ---------------- #}
+  <section class="card step {{ S.plan.status }}" id="plan">
+    {{ head(S.plan, N.plan) }}
+    {% if S.plan.status != 'blocked' %}
+    <div class="row" style="margin-top:12px">
+      <a class="btn {{ 'primary' if S.plan.status == 'todo' else '' }}" href="{{ url_for('qc.plan_page', slug=slug) }}">{{ 'Review & edit the plan' if S.plan.status == 'todo' else 'Open the plan' }}</a>
+      {% if S.plan.status == 'todo' %}<form method="post" action="{{ url_for('qc.plan_lock', slug=slug) }}" style="margin:0"><button>Lock plan as it is</button></form>{% endif %}
+    </div>
+    <p class="muted" style="font-size:13px;margin:8px 0 0">Edit any scene's text, picture, chart numbers or map states, add, remove or reorder scenes. Earlier versions are kept in <code>build/history/</code>.</p>
+    {% endif %}
+    {{ outputs(S.plan) }}
+  </section>
+
   {# ---------------- 3 facts ---------------- #}
   <section class="card step {{ S.facts.status }}" id="facts">
-    {{ head(S.facts, 3) }}
+    {{ head(S.facts, N.facts) }}
     {% if facts %}
       <details {{ 'open' if S.facts.status == 'todo' else '' }}><summary>Show facts</summary><div class="facts mono">{{ facts }}</div></details>
       {% if S.facts.status == 'todo' %}
@@ -177,7 +191,7 @@ details > summary { cursor: pointer; color: var(--accent); margin-top: 10px; }
 
   {# ---------------- 4 visuals ---------------- #}
   <section class="card step {{ S.fetch.status }}" id="fetch">
-    {{ head(S.fetch, 4) }}
+    {{ head(S.fetch, N.fetch) }}
     {% if S.fetch.status != 'blocked' %}
     <div class="row" style="margin-top:12px">
       <form method="post" action="{{ url_for('run_step', slug=slug, step='fetch') }}"><button class="{{ 'primary' if S.fetch.status == 'todo' else '' }}">Fetch visuals</button></form>
@@ -191,7 +205,7 @@ details > summary { cursor: pointer; color: var(--accent); margin-top: 10px; }
 
   {# ---------------- 5 manual ---------------- #}
   <section class="card step {{ S.manual.status }}" id="manual">
-    {{ head(S.manual, 5) }}
+    {{ head(S.manual, N.manual) }}
     {% if S.manual.status == 'todo' %}
     <p style="margin:10px 0 0">Add each file on the <a href="{{ url_for('review.index', slug=slug) }}">review page</a> (Replace), or drop
       <code>sceneNN.jpg/png/mp4</code> into the inbox folder and pick it there.</p>
@@ -201,7 +215,7 @@ details > summary { cursor: pointer; color: var(--accent); margin-top: 10px; }
 
   {# ---------------- 6 draft ---------------- #}
   <section class="card step {{ S.draft.status }}" id="draft">
-    {{ head(S.draft, 6) }}
+    {{ head(S.draft, N.draft) }}
     {% if S.draft.status != 'blocked' %}
     <div class="row" style="margin-top:12px">
       <form method="post" action="{{ url_for('run_step', slug=slug, step='draft') }}" style="margin:0">
@@ -213,15 +227,21 @@ details > summary { cursor: pointer; color: var(--accent); margin-top: 10px; }
     {{ outputs(S.draft) }}
   </section>
 
-  {# ---------------- 7 review ---------------- #}
+  {# ---------------- check parts ---------------- #}
   <section class="card step {{ S.review.status }}" id="review">
-    {{ head(S.review, 7) }}
-    {% if S.review.status not in ['blocked'] %}<div class="row" style="margin-top:12px"><a class="btn {{ 'primary' if S.review.status == 'todo' else '' }}" href="{{ url_for('review.index', slug=slug) }}">Open scene review →</a></div>{% endif %}
+    {{ head(S.review, N.review) }}
+    {% if S.review.status != 'blocked' %}
+    <div class="row" style="margin-top:12px">
+      {% for v in videos %}<a class="btn {{ 'primary' if S.review.status == 'todo' and loop.first else '' }}" href="{{ url_for('qc.parts_page', slug=slug, video=v.id) }}">Check {{ v.label }}</a>{% endfor %}
+      <a class="btn" href="{{ url_for('review.index', slug=slug) }}">Replace / refetch pictures</a>
+    </div>
+    <p class="muted" style="font-size:13px;margin:8px 0 0">Every scene is a part with automatic checks (sharpness, credits, chart data, length, voice match). Approve each, or ask for a redo. Anything you change afterwards needs checking again.</p>
+    {% endif %}
   </section>
 
   {# ---------------- 8 record ---------------- #}
   <section class="card step {{ S.record.status }}" id="record">
-    {{ head(S.record, 8) }}
+    {{ head(S.record, N.record) }}
     {% for v in videos %}
     <div class="video-block" data-video="{{ v.id }}" style="margin-top:16px; padding-top:12px; border-top:1px solid var(--line)">
       <div class="row"><strong>{{ v.label }}</strong>
@@ -246,27 +266,48 @@ details > summary { cursor: pointer; color: var(--accent); margin-top: 10px; }
     {{ outputs(S.record) }}
   </section>
 
-  {# ---------------- 9 final ---------------- #}
+  {# ---------------- final ---------------- #}
   <section class="card step {{ S.final.status }}" id="final">
-    {{ head(S.final, 9) }}
+    {{ head(S.final, N.final) }}
     {% for v in videos %}
     <div style="margin-top:14px; padding-top:12px; border-top:1px solid var(--line)">
       <div class="row"><strong>{{ v.label }}</strong>
-        {% if v.final %}<span class="pill done">rendered</span>{% elif v.has_audio %}<span class="pill todo">ready to render</span>{% else %}<span class="pill">needs recording</span>{% endif %}
+        {% if v.final and v.flow and not v.flow.assembled %}<span class="pill stale">out of date</span>{% elif v.final %}<span class="pill done">rendered</span>{% elif v.has_audio %}<span class="pill todo">ready to render</span>{% else %}<span class="pill">needs recording</span>{% endif %}
         <span style="flex:1"></span>
-        {% if v.has_audio %}<form method="post" action="{{ url_for('run_step', slug=slug, step='final') }}" style="margin:0">
+        {% if v.kind == 'reel' and v.has_audio %}<form method="post" action="{{ url_for('run_step', slug=slug, step='final') }}" style="margin:0">
           <input type="hidden" name="video" value="{{ v.id }}">
           <button class="{{ 'primary' if not v.final else '' }}">{{ 'Render again' if v.final else 'Render ' ~ v.label }}</button></form>{% endif %}</div>
-      {% if v.kind == 'long' %}<p class="muted" style="font-size:13px;margin:6px 0 0">Rendered chapter by chapter to keep memory low, then joined; also writes a sidecar .srt. A 10-minute video takes a while on the M1: start it and leave it.</p>{% endif %}
-      {% if v.final %}<div class="videos"><video controls preload="metadata" {{ 'style="width:100%;max-width:640px;aspect-ratio:16/9"' | safe if v.kind == 'long' else '' }} src="{{ file_url(slug, v.final) }}"></video></div>
-        {% if v.srt %}<div class="out" style="margin-top:6px"><code>{{ path }}/{{ v.srt }}</code> <a href="{{ file_url(slug, v.srt) }}" target="_blank">open</a></div>{% endif %}{% endif %}
+
+      {% if v.kind == 'long' and v.has_audio %}
+      {% set f = v.flow %}
+      <ol class="flow" style="list-style:none; padding:0; margin:10px 0 0; display:flex; flex-direction:column; gap:8px">
+        <li class="row"><span class="dot {{ 'done' if f.aligned else 'todo' }}">{{ '✓' if f.aligned else '1' }}</span><span style="flex:1">Align your voice <span class="muted">(times every word, about a minute)</span></span>
+          <form method="post" action="{{ url_for('run_step', slug=slug, step='align') }}" style="margin:0"><input type="hidden" name="video" value="{{ v.id }}"><button class="{{ 'primary' if not f.aligned else '' }}">{{ 'Align' if not f.aligned else 'Align again' }}</button></form></li>
+        <li class="row"><span class="dot {{ 'done' if f.built else ('todo' if f.aligned else '') }}">{{ '✓' if f.built else '2' }}</span><span style="flex:1">Build the scene clips <span class="muted">(only changed scenes are rendered)</span></span>
+          <form method="post" action="{{ url_for('run_step', slug=slug, step='parts') }}" style="margin:0"><input type="hidden" name="video" value="{{ v.id }}"><button class="{{ 'primary' if f.aligned and not f.built else '' }}" {{ 'disabled' if not f.aligned }}>{{ 'Build' if not f.built else 'Rebuild' }}</button></form></li>
+        <li class="row"><span class="dot {{ 'done' if f.gate and f.gate.visual_ok and f.gate.timing_ok else ('todo' if f.built else '') }}">{{ '✓' if f.gate and f.gate.visual_ok and f.gate.timing_ok else '3' }}</span>
+          <span style="flex:1">Check the parts
+            {% if f.gate %}<span class="muted">({{ f.gate.total - f.gate.visual_todo|length }}/{{ f.gate.total }} pictures, {{ f.gate.total - f.gate.timing_todo|length }}/{{ f.gate.total }} timing approved)</span>{% endif %}</span>
+          <a class="btn {{ 'primary' if f.built and not (f.gate and f.gate.timing_ok) else '' }}" href="{{ url_for('qc.parts_page', slug=slug, video=v.id, **{'pass': 'timing' if f.built else 'visual'}) }}">Open checks</a></li>
+        <li class="row"><span class="dot {{ 'done' if v.final and f.assembled else ('todo' if f.built else '') }}">{{ '✓' if v.final and f.assembled else '4' }}</span><span style="flex:1">Assemble the final video <span class="muted">(joins the clips, adds your voice, writes subtitles)</span></span>
+          <form method="post" action="{{ url_for('run_step', slug=slug, step='assemble') }}" style="margin:0"><input type="hidden" name="video" value="{{ v.id }}">
+            <button class="{{ 'primary' if f.gate and f.gate.visual_ok and f.gate.timing_ok and not f.assembled else '' }}" {{ 'disabled' if not f.built }}>Assemble</button></form>
+          <form method="post" action="{{ url_for('run_step', slug=slug, step='assemble') }}" style="margin:0" onsubmit="return confirm('Assemble without finishing the checks?')"><input type="hidden" name="video" value="{{ v.id }}"><input type="hidden" name="override" value="1"><button class="mini" style="padding:3px 9px;font-size:12px" {{ 'disabled' if not f.built }}>Assemble anyway</button></form></li>
+      </ol>
+      <details style="margin-top:8px"><summary>Skip the checks: render everything now</summary>
+        <form method="post" action="{{ url_for('run_step', slug=slug, step='final') }}" style="margin-top:6px" onsubmit="return confirm('Render the whole video without checking each scene?')">
+          <input type="hidden" name="video" value="{{ v.id }}"><input type="hidden" name="override" value="1"><button>Render everything now</button></form></details>
+      <p class="muted" style="font-size:13px;margin:6px 0 0">Expect roughly 5 frames per second on an M1: a 10-minute video is about an hour. Unchanged scenes are never rendered twice.</p>
+      {% endif %}
+
+      {% if v.final %}<div class="videos"><video controls preload="metadata" {{ 'style="width:100%;max-width:640px;aspect-ratio:16/9"' | safe if v.kind == 'long' else '' }} src="{{ file_url(slug, v.final) }}"></video></div>{% endif %}
     </div>
     {% endfor %}
     {{ outputs(S.final) }}
   </section>
 
   {# ---------------- later phases ---------------- #}
-  <section class="card step later" id="publish">{{ head(S.publish, 10) }}</section>
+  <section class="card step later" id="publish">{{ head(S.publish, N.publish) }}</section>
 
   {% if jobs %}
   <section class="card" id="history">

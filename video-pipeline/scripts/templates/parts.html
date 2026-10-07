@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+{% block title %}Check parts · {{ slug }}{% endblock %}
+{% block crumbs %}<span class="crumb">/ <a href="{{ url_for('project_page', slug=slug) }}">{{ slug }}</a> / check parts</span>{% endblock %}
+{% block head %}
+<style>
+.tabs { display: flex; gap: 6px; flex-wrap: wrap; margin: 6px 0 14px; }
+.tabs a { padding: 6px 14px; border-radius: 99px; background: var(--panel); color: var(--text); text-decoration: none; border: 1px solid var(--line); font-size: 14px; }
+.tabs a.on { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); font-weight: 600; }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: 16px; }
+.pcard { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; display: flex; flex-direction: column; }
+.pcard.approved { border-color: var(--done); }
+.pcard.redo, .pcard.blocked { border-color: var(--err); }
+.pcard.stale { border-color: var(--stale); }
+.media { background: #000; display: flex; align-items: center; justify-content: center; }
+.media.reel { aspect-ratio: 9/16; max-height: 440px; } .media.long { aspect-ratio: 16/9; }
+.media img, .media video { width: 100%; height: 100%; object-fit: contain; }
+.media .none { color: var(--muted); padding: 24px; text-align: center; font-size: 14px; }
+.pbody { padding: 12px; display: flex; flex-direction: column; gap: 8px; flex: 1; }
+.checks { list-style: none; padding: 0; margin: 0; font-size: 13px; display: flex; flex-direction: column; gap: 3px; }
+.checks li { display: flex; gap: 6px; } .checks .error { color: #fca5a5; } .checks .warn { color: #fcd34d; } .checks .ok { color: var(--muted); }
+.pcard form { margin: 0; }
+.chap { grid-column: 1 / -1; margin: 10px 0 -4px; color: var(--muted); font-weight: 700; text-transform: uppercase; font-size: 12px; letter-spacing: .05em; }
+.state { font-size: 12px; }
+</style>
+{% endblock %}
+{% block body %}
+{% set kindlabel = {'visual': 'Pictures', 'timing': 'Timing'} %}
+<div class="row" style="justify-content:space-between; margin-bottom:4px">
+  <div><h1>Check parts</h1>
+    <div class="muted">Each scene is a part. Approve it, or ask for a redo. {{ 'Rendering the long video unlocks when every part is approved.' if target.kind == 'long' else 'For reels this is optional: a reel renders in about a minute.' }}</div></div>
+  <a class="btn" href="{{ url_for('project_page', slug=slug) }}#review">← Back to pipeline</a>
+</div>
+
+{% if targets|length > 1 %}<div class="tabs">{% for t in targets %}<a class="{{ 'on' if t.id == target.id }}" href="{{ url_for('qc.parts_page', slug=slug, video=t.id, **{'pass': kind}) }}">{{ t.label }}</a>{% endfor %}</div>{% endif %}
+<div class="tabs">
+  <a class="{{ 'on' if kind == 'visual' }}" href="{{ url_for('qc.parts_page', slug=slug, video=target.id, **{'pass': 'visual'}) }}">1 · Pictures (before recording)</a>
+  <a class="{{ 'on' if kind == 'timing' }}" href="{{ url_for('qc.parts_page', slug=slug, video=target.id, **{'pass': 'timing'}) }}" {{ '' if has_timeline else 'style=opacity:.5' }}>2 · Timing (after recording)</a>
+</div>
+{% if kind == 'timing' and not has_timeline %}<div class="warn">Timing can be checked after you record this video and align the voice.</div>{% endif %}
+
+{% set todo = gate.visual_todo|length if kind == 'visual' else gate.timing_todo|length %}
+<div class="card row" style="margin-bottom:16px">
+  <strong>{{ gate.total - todo }}/{{ gate.total }} approved</strong>
+  <span class="pill {{ 'done' if todo == 0 else 'todo' }}">{{ 'all approved' if todo == 0 else todo ~ ' to go' }}</span>
+  <span style="flex:1"></span>
+  {% if kind == 'visual' and missing_stills %}
+  <form method="post" action="{{ url_for('run_step', slug=slug, step='stills') }}"><input type="hidden" name="video" value="{{ target.id }}"><button class="primary">Make {{ missing_stills }} missing picture(s)</button></form>
+  {% endif %}
+  <form method="post" action="{{ url_for('qc.parts_approve_clean', slug=slug) }}"><input type="hidden" name="video" value="{{ target.id }}"><input type="hidden" name="pass" value="{{ kind }}">
+    <button title="Approves parts with no warnings; anything with a warning stays for you to look at">Approve all without warnings</button></form>
+</div>
+{% if kind == 'visual' and missing_stills %}<p class="muted" style="margin-top:-6px">Pictures show how each scene will look (charts, stats and 3D maps included). Making them takes a few seconds each.</p>{% endif %}
+
+<div class="grid">
+{% set ns = namespace(chap=None) %}
+{% for p in parts %}
+  {% if chapters and chapters.get(p.scene.id) != ns.chap %}{% set ns.chap = chapters.get(p.scene.id) %}<div class="chap">{{ ns.chap }}</div>{% endif %}
+  {% set state = p.visual if kind == 'visual' else (p.timing or 'pending') %}
+  <div class="pcard {{ state }}" id="p{{ p.scene.id }}">
+    <div class="media {{ target.kind }}">
+      {% if kind == 'timing' %}
+        {% if previews.get(p.scene.id) %}<video controls preload="metadata" src="{{ file_url(slug, previews[p.scene.id]) }}"></video>
+        {% else %}<div class="none">No clip yet. Build the scene clips from the pipeline page.</div>{% endif %}
+      {% elif p.still %}<img src="{{ file_url(slug, p.still) }}" alt="scene {{ p.scene.id }}">
+      {% else %}<div class="none">No picture yet</div>{% endif %}
+    </div>
+    <div class="pbody">
+      <div class="row"><span class="pill">scene {{ p.scene.id }}</span><span class="pill">{{ p.scene.visual.type }}</span>
+        <span class="pill {{ {'approved': 'done', 'pending': 'todo', 'stale': 'stale', 'redo': 'failed', 'blocked': 'failed'}[state] }} state">{{ {'approved': 'approved', 'pending': 'to check', 'stale': 'changed since approval', 'redo': 'redo requested', 'blocked': 'fix first'}[state] }}</span></div>
+      <div>{{ p.scene.text }}</div>
+      <ul class="checks">{% for c in p.checks if c.level != 'ok' or kind == 'timing' %}<li class="{{ c.level }}"><span>{{ {'error': '✕', 'warn': '▲', 'ok': '✓'}[c.level] }}</span><span>{{ c.msg }}</span></li>{% endfor %}</ul>
+      {% if p.note and state == 'redo' %}<div class="muted" style="font-size:13px">Your note: {{ p.note }}</div>{% endif %}
+      <form method="post" action="{{ url_for('qc.parts_approve', slug=slug, sid=p.scene.id) }}">
+        <input type="hidden" name="video" value="{{ target.id }}"><input type="hidden" name="pass" value="{{ kind }}">
+        <div class="row"><input name="note" placeholder="note (optional)" style="flex:1; min-width:100px"><button class="primary" {{ 'disabled' if p.errors }}>Approve</button></div></form>
+      <form method="post" action="{{ url_for('qc.parts_redo', slug=slug, sid=p.scene.id) }}">
+        <input type="hidden" name="video" value="{{ target.id }}"><input type="hidden" name="pass" value="{{ kind }}">
+        <div class="row"><input name="note" placeholder="what needs to change?" style="flex:1; min-width:100px"><button>Redo</button></div></form>
+      <div class="row"><a class="btn mini" style="padding:3px 9px; font-size:12px" href="{{ url_for('qc.plan_page', slug=slug) }}#s{{ p.scene.id }}">Edit in plan</a>
+        <a class="btn mini" style="padding:3px 9px; font-size:12px" href="{{ url_for('review.index', slug=slug) }}#s{{ p.scene.id }}">Replace picture</a></div>
+    </div>
+  </div>
+{% endfor %}
+</div>
+{% endblock %}

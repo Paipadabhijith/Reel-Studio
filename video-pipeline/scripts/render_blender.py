@@ -15,7 +15,7 @@ from pathlib import Path
 
 from .lib import cache, india
 from .lib.config import REPO_ROOT, heavy_lock
-from .lib.progress import report
+from .lib.progress import JobCancelled, cancelled, check_cancel, report, watch_cancel
 from .lib.schema import ScenesFile, Timeline
 from .lib.targets import Target
 
@@ -123,13 +123,20 @@ def render_scene(project: Path, template: str, params: dict, frames: int, aspect
     log(f"blender scene {scene_id}: rendering {frames} frames ({template}, {aspect})")
     done, tail = 0, []
     with heavy_lock("blender"):
-        proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, bufsize=1)
-        for line in proc.stdout:  # type: ignore[union-attr]
-            line = line.rstrip()
-            tail = (tail + [line])[-25:]
-            if SAVED.search(line):
-                done += 1
-                report(min(done / frames, 0.97), f"blender scene {scene_id}: frame {done}/{frames}")
+        check_cancel()
+        proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, bufsize=1,
+                                start_new_session=True)
+        with watch_cancel(proc):
+            for line in proc.stdout:  # type: ignore[union-attr]
+                line = line.rstrip()
+                tail = (tail + [line])[-25:]
+                if SAVED.search(line):
+                    done += 1
+                    report(min(done / frames, 0.97), f"blender scene {scene_id}: frame {done}/{frames}")
+        if cancelled():
+            proc.wait()
+            shutil.rmtree(frames_dir, ignore_errors=True)
+            raise JobCancelled()
         code = proc.wait()
     if code != 0 or done < frames:
         raise BlenderError(f"Blender scene {scene_id} failed ({done}/{frames} frames):\n" + "\n".join(tail[-10:]))
@@ -153,3 +160,36 @@ def render_for_target(project: Path, sf: ScenesFile, tl: Timeline, target: Targe
             continue
         out.append(render_scene(project, v.template, v.params, frames_for(tl, sid), ASPECT[target.kind], sid, log))
     return out
+
+
+def render_preview(project: Path, template: str, params: dict, aspect: str, scene_id: int, log=print) -> Path:
+    """A quick low-resolution render of the finished state of a 3D scene (last frame of a 1.5 s clip), for checking."""
+    kind = "reel" if aspect == "9:16" else "long"
+    dst = project / "build" / "parts" / f"blender_preview_{scene_id:02d}_{kind}.png"
+    if template == "india_map":
+        codes, _ = india.resolve_states(params.get("highlight_states", []))
+        params = {**params, "highlight_states": codes}
+    blend = ensure_template(template, log)
+    digest = cache.hash_inputs(template, params, aspect, "preview", files=[blend, RENDER_PY])
+    stage = f"blender_preview_{scene_id:02d}_{kind}"
+    cache_dir = project / "build" / "cache"
+    if cache.is_fresh(cache_dir, stage, digest, [dst]):
+        return dst
+    work = project / "build" / "parts" / f"_preview_{scene_id:02d}_{kind}"
+    shutil.rmtree(work, ignore_errors=True)
+    work.mkdir(parents=True)
+    (work / "params.json").write_text(json.dumps(params))
+    frames = 48
+    cmd = [find_blender(), "-b", "--factory-startup", str(blend), "-P", str(RENDER_PY), "--",
+           "--params", str(work / "params.json"), "--frames", str(frames), "--aspect", aspect, "--scale", "40", "--out", str(work)]
+    log(f"blender scene {scene_id}: rendering a quick preview")
+    with heavy_lock("blender"):
+        r = subprocess.run(cmd, capture_output=True, text=True, timeout=900)
+    last = work / f"frame_{frames:04d}.png"
+    if r.returncode != 0 or not last.exists():
+        raise BlenderError("Blender preview failed:\n" + "\n".join((r.stdout + r.stderr).strip().splitlines()[-8:]))
+    dst.parent.mkdir(parents=True, exist_ok=True)
+    last.replace(dst)
+    shutil.rmtree(work, ignore_errors=True)
+    cache.mark(cache_dir, stage, digest)
+    return dst

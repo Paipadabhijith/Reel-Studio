@@ -74,6 +74,13 @@ button:disabled { opacity: .5; cursor: not-allowed; }
 // Shared job watcher: shows the running job for this page's project (or any job on the home page),
 // and reloads the page once a job this page started has finished so step statuses refresh.
 const PAGE_SLUG = {{ (slug if slug is defined else None)|tojson }};
+let currentJobId = null;
+async function cancelJob() {
+  if (currentJobId === null || !confirm('Stop this job? Anything already finished is kept and reused next time.')) return;
+  const cb = document.getElementById('jobcancel');
+  cb.disabled = true; cb.textContent = 'Stopping…';
+  await fetch('/api/jobs/' + currentJobId + '/cancel', {method: 'POST'});
+}
 let watching = new Set({{ ((active_jobs|selectattr('slug', 'equalto', slug)|map(attribute='id')|list) if slug is defined else (active_jobs|map(attribute='id')|list))|tojson }});
 
 function fmtStatus(j) {
@@ -87,7 +94,7 @@ function renderJob(j) {
   panel.classList.toggle('done', j.status === 'done');
   document.getElementById('jobtitle').textContent = j.label;
   const st = document.getElementById('jobstatus');
-  st.textContent = fmtStatus(j); st.className = 'pill ' + j.status;
+  st.textContent = fmtStatus(j); st.className = 'pill ' + (j.status === 'cancelled' ? 'stale' : j.status);
   document.getElementById('jobmeta').textContent =
     (j.progress_label ? j.progress_label + ' · ' : '') + (j.elapsed ? Math.round(j.elapsed) + 's' : '');
   const bar = document.getElementById('jobbar');
@@ -98,9 +105,13 @@ function renderJob(j) {
   const atBottom = log.scrollTop + log.clientHeight >= log.scrollHeight - 20;
   log.textContent = (j.lines || []).join('\n') + (j.error ? '\n\n' + j.error : '');
   if (atBottom) log.scrollTop = log.scrollHeight;
+  currentJobId = j.id;
+  const cb = document.getElementById('jobcancel');
+  if (cb) { cb.style.display = (j.status === 'running' || j.status === 'queued') ? '' : 'none'; cb.disabled = false; cb.textContent = 'Cancel'; }
   const res = document.getElementById('jobresult');
   res.textContent = j.status === 'done' ? (j.result ? '✓ ' + j.result : '✓ finished')
-                  : j.status === 'failed' ? '✗ ' + j.error : '';
+                  : j.status === 'failed' ? '✗ ' + j.error
+                  : j.status === 'cancelled' ? 'Cancelled. Finished steps are kept and reused next time.' : '';
 }
 async function poll() {
   let delay = 4000;

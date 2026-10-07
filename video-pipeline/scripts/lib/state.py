@@ -123,6 +123,22 @@ def project_state(project: Path) -> list[Step]:
                   ["Generate the script."] if brief.get("topic") else [], script_outs)
     steps.append(st)
 
+    # 2b plan -------------------------------------------------------------
+    from .. import plan as plan_mod
+
+    locked = plan_mod.is_locked(project)
+    script_ready = steps[-1].status in ("done", "stale", "optional")
+    if not sf:
+        steps.append(Step("plan", "Plan", "blocked", "No valid scenes yet."))
+    elif locked:
+        steps.append(Step("plan", "Plan", "done", f"{len(sf.scenes)} scenes · locked", [], ["script/scenes.json"]))
+    elif script_ready:
+        steps.append(Step("plan", "Plan", "todo", f"{len(sf.scenes)} scenes to review.",
+                          ["Read through the scenes, fix anything, then lock the plan. Visuals are only fetched after that."],
+                          ["script/scenes.json"]))
+    else:
+        steps.append(Step("plan", "Plan", "blocked", "Waits for the script."))
+
     # 3 facts ------------------------------------------------------------
     total, unsourced = count_facts(script_dir / "facts.md")
     checked = read_json(build / "facts_checked.json", {}).get("checked_at_mtime") == _mtime(script_dir / "facts.md")
@@ -184,15 +200,26 @@ def project_state(project: Path) -> list[Step]:
         steps.append(Step("draft", "Draft preview", "todo", "Silent preview at 150 wpm, reduced size.",
                           ["Render a draft to check the visuals."], optional=True))
 
-    # 7 review ------------------------------------------------------------
-    review = read_json(build / "review.json", {})
-    kept = sum(1 for s in have if review.get(str(s.id)) == "keep")
-    if not have:
-        steps.append(Step("review", "Review visuals", "blocked" if not sf else "optional", "No visuals to review yet.", optional=True))
+    # 7 check parts --------------------------------------------------------
+    from .. import parts as parts_mod
+
+    requires_qc = any(t.kind == "long" for t in targets)
+    if not sf:
+        steps.append(Step("review", "Check parts", "blocked"))
     else:
-        steps.append(Step("review", "Review visuals", "done" if kept == len(have) else "todo",
-                          f"{kept}/{len(have)} kept.",
-                          [] if kept == len(have) else ["Keep, replace or refetch each scene's visual."], optional=True))
+        done_n = total_n = err_n = 0
+        for t in targets:
+            tl = _load_timeline(project, t)
+            ps = parts_mod.overview(project, sf, t, tl, with_stills=False)
+            total_n += len(ps)
+            done_n += sum(p.visual == "approved" for p in ps)
+            err_n += sum(bool(p.errors) for p in ps)
+        todos = [] if done_n == total_n else [
+            f"Check the {total_n - done_n} remaining part(s): approve them or ask for a redo."
+            + (f" {err_n} have problems to fix first." if err_n else "")]
+        steps.append(Step("review", "Check parts", "done" if done_n == total_n else "todo",
+                          f"{done_n}/{total_n} parts approved" + ("" if requires_qc else " (optional for reels)"),
+                          todos, [], optional=not requires_qc))
 
     # 8 record ------------------------------------------------------------
     rec_todo, rec_stale, rec_done = [], [], []
@@ -229,10 +256,14 @@ def project_state(project: Path) -> list[Step]:
     if not have_audio:
         steps.append(Step("final", "Final render", "blocked", "Needs the narration recording."))
     elif pending:
+        todos = []
+        for t in pending:
+            todos.append(f"{t.label}: " + (_long_next(project, sf, t) if t.kind == "long" else "render it.")
+                         if t.kind == "long" else f"Render {t.label}.")
         why = "Inputs changed since the last render." if stale_finals and not [t for t in have_audio if t not in finished] \
             else "Aligns your voice and renders the video."
         steps.append(Step("final", "Final render", "stale" if (stale_finals and len(pending) == len(stale_finals)) else "todo",
-                          why, [f"Render {t.label}." for t in pending], outs))
+                          why, todos, outs))
     else:
         steps.append(Step("final", "Final render", "done",
                           "Aligned to your voice, -14 LUFS" + (", captions burned in." if any(t.kind == "reel" for t in finished) else "."),
@@ -246,7 +277,13 @@ def project_state(project: Path) -> list[Step]:
                 st.status, st.todos, st.outputs = "blocked", [], []
                 st.detail = "Waits for the script."
 
-    final = steps[-1]
+    if sf and not locked and plan_mod and next(st for st in steps if st.key == "plan").status == "todo":
+        for st in steps:
+            if st.key in ("fetch", "manual", "draft", "review", "record", "final"):
+                st.status, st.todos, st.outputs = "blocked", [], []
+                st.detail = "Lock the plan first."
+
+    final = next(st for st in steps if st.key == "final")
     if final.status == "done":
         for st in steps:
             if st.key in ("draft", "review") and st.status in ("todo", "stale"):
@@ -254,6 +291,45 @@ def project_state(project: Path) -> list[Step]:
 
     steps.append(Step("publish", "Package & publish", "later", "Cover, captions, YouTube and Instagram upload arrive in Phase 4."))
     return steps
+
+
+def _load_timeline(project: Path, target: Target):
+    from .schema import Timeline
+
+    f = project / target.timeline
+    try:
+        return Timeline.model_validate_json(f.read_text()) if f.exists() else None
+    except Exception:
+        return None
+
+
+def long_flow(project: Path, sf: ScenesFile, target: Target) -> dict:
+    """Where a long-form video is in: align -> build parts -> check timing -> assemble."""
+    from .. import parts as parts_mod
+    from ..render_final import part_file
+
+    audio, tl_file = project / target.audio, project / target.timeline
+    tl = _load_timeline(project, target)
+    aligned = tl is not None and _mtime(tl_file) >= _mtime(audio)
+    part_files = [part_file(project, target, i) for i in target.scene_ids]
+    inputs = [project / "script" / "scenes.json", tl_file, *(project / "assets").rglob("*")]
+    built = aligned and all(f.exists() for f in part_files) and min(_mtime(f) for f in part_files) >= _newest(inputs)
+    g = parts_mod.gate(parts_mod.overview(project, sf, target, tl, with_stills=False)) if aligned else None
+    out = project / target.out
+    assembled = out.exists() and built and _mtime(out) >= max(_mtime(f) for f in part_files)
+    return {"aligned": aligned, "built": built, "gate": g, "assembled": assembled}
+
+
+def _long_next(project: Path, sf: ScenesFile, target: Target) -> str:
+    f = long_flow(project, sf, target)
+    if not f["aligned"]:
+        return "align your voice (the first step)."
+    if not f["built"]:
+        return "build the scene clips."
+    g = f["gate"]
+    if g and g["has_timing"] and not g["timing_ok"]:
+        return f"check timing on {len(g['timing_todo'])} scene(s), then assemble."
+    return "assemble the final video."
 
 
 def _text_changed_since(project: Path, sf: ScenesFile, target: Target) -> bool:

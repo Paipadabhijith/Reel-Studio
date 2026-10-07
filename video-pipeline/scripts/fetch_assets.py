@@ -15,6 +15,7 @@ from pathlib import Path
 import httpx
 
 from . import manual_inbox
+from .lib.progress import check_cancel
 from .lib import cache
 from .lib.assets import chart_path, find_asset, image_path, remove_scene_assets, upsert_credit, video_path
 from .lib.config import BRAND_FILE
@@ -422,6 +423,7 @@ def fetch(
         for scene in sf.scenes:
             if only and scene.id not in only:
                 continue
+            check_cancel()
             try:
                 status = fetch_scene(project, sf, scene, http, force, downgrade, log)
             except (httpx.HTTPError, ValueError) as e:

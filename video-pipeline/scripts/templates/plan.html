@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+{% block title %}Plan · {{ slug }}{% endblock %}
+{% block crumbs %}<span class="crumb">/ <a href="{{ url_for('project_page', slug=slug) }}">{{ slug }}</a> / plan</span>{% endblock %}
+{% block head %}
+<style>
+.scene { margin-bottom: 14px; }
+.scene header { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 8px; }
+.scene header .num { font-weight: 800; font-size: 18px; min-width: 34px; }
+.tag { padding: 2px 8px; border-radius: 99px; background: var(--line); color: var(--muted); font-size: 12px; white-space: nowrap; }
+.mini { padding: 3px 9px; font-size: 12px; }
+.grp { display: none; margin-top: 6px; }
+.grp.on { display: block; }
+.sidebyside { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 16px; }
+@media (max-width: 860px) { .sidebyside { grid-template-columns: 1fr; } }
+.lockbar { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-bottom: 16px; }
+.hint { color: var(--muted); font-size: 12px; margin-top: 2px; }
+.two { display: flex; gap: 8px; } .two > * { flex: 1; }
+</style>
+{% endblock %}
+{% block body %}
+<div class="row" style="justify-content:space-between; margin-bottom:12px">
+  <div><h1>Plan</h1><div class="muted">{{ sf.scenes|length }} scenes. One scene = one picture + the sentence spoken over it.</div></div>
+  <a class="btn" href="{{ url_for('project_page', slug=slug) }}#plan">← Back to pipeline</a>
+</div>
+
+<div class="card lockbar" style="{{ 'border-color: var(--done)' if locked else 'border-color: var(--accent)' }}">
+  {% if locked %}
+    <strong>🔒 Plan locked.</strong>
+    <span class="muted" style="flex:1">You can still edit scenes. A changed scene needs its part checked again{% if recorded %}, and a changed sentence needs re-recording ({{ recorded|join(', ') }} already recorded){% endif %}.</span>
+    <form method="post" action="{{ url_for('qc.plan_lock', slug=slug) }}" style="margin:0"><input type="hidden" name="unlock" value="1"><button>Unlock</button></form>
+  {% else %}
+    <strong>Read it through, then lock the plan.</strong>
+    <span class="muted" style="flex:1">Pictures are only fetched once the plan is locked, so fix the structure first.</span>
+    <form method="post" action="{{ url_for('qc.plan_lock', slug=slug) }}" style="margin:0"><button class="primary">Lock plan →</button></form>
+  {% endif %}
+</div>
+
+{% for s in sf.scenes %}
+{% set v = s.visual %}
+<section class="card scene" id="s{{ s.id }}">
+  <header>
+    <span class="num">{{ loop.index }}</span><span class="tag">id {{ s.id }}</span>
+    {% for m in member[s.id] %}<span class="tag">{{ m }}</span>{% endfor %}
+    <span class="tag">≈ {{ '%.1f'|format(secs[s.id]) }} s</span>
+    <span style="flex:1"></span>
+    <form method="post" action="{{ url_for('qc.plan_move', slug=slug, sid=s.id, direction='up') }}" style="margin:0"><button class="mini" {{ 'disabled' if loop.first }}>↑</button></form>
+    <form method="post" action="{{ url_for('qc.plan_move', slug=slug, sid=s.id, direction='down') }}" style="margin:0"><button class="mini" {{ 'disabled' if loop.last }}>↓</button></form>
+    <form method="post" action="{{ url_for('qc.plan_insert', slug=slug) }}" style="margin:0"><input type="hidden" name="after" value="{{ s.id }}"><button class="mini">+ add after</button></form>
+    <form method="post" action="{{ url_for('qc.plan_delete', slug=slug, sid=s.id) }}" style="margin:0" onsubmit="return confirm('Delete scene {{ loop.index }}?')"><button class="mini">delete</button></form>
+  </header>
+  <form method="post" action="{{ url_for('qc.plan_save', slug=slug, sid=s.id) }}" data-scene>
+    <div class="sidebyside">
+      <div>
+        <label>What you say</label>
+        <textarea name="text" required style="min-height:84px">{{ s.text }}</textarea>
+        <label>Words to stress (comma separated, must appear in the text)</label>
+        <input name="emphasis" value="{{ s.emphasis|join(', ') }}">
+      </div>
+      <div>
+        <label>What's on screen</label>
+        <select name="type" onchange="showGroups(this.form)">
+          {% for t in visual_types %}<option value="{{ t }}" {{ 'selected' if v.type == t else '' }}>{{ {'photo': 'Photo (search)', 'video': 'Video clip (search)', 'chart': 'Animated chart', 'stat': 'Big number', 'blender': '3D India map', 'manual': 'Your own file', 'text_card': 'Text card'}[t] }}</option>{% endfor %}
+        </select>
+
+        <div class="grp" data-for="photo video">
+          <label>Search words</label><input name="query" value="{{ v.query or '' }}" placeholder="kerala monsoon rain">
+          <div class="two"><div><label>Look in</label><select name="source">
+              <option value="" {{ 'selected' if v.source != 'wikimedia' }}>stock sites (Pexels, Pixabay, Unsplash)</option><option value="wikimedia" {{ 'selected' if v.source == 'wikimedia' }}>Wikimedia first (landmarks, people)</option></select></div>
+            <div><label>Shape</label><select name="orientation">{% for o in ['portrait', 'landscape', 'square'] %}<option {{ 'selected' if v.orientation == o }}>{{ o }}</option>{% endfor %}</select></div></div>
+          <div class="grp on" data-for="photo"><label>Motion</label><select name="motion"><option value="">slow zoom in</option>{% for m in motions %}<option {{ 'selected' if v.motion == m }}>{{ m }}</option>{% endfor %}</select></div>
+        </div>
+        <div class="grp" data-for="manual"><label>What file you will add</label><input name="prompt" value="{{ v.prompt or '' }}" placeholder="Screenshot of the press release headline"></div>
+        <div class="grp" data-for="chart">
+          <div class="two"><div><label>Kind</label><select name="chart_kind">{% for k in chart_kinds %}<option {{ 'selected' if v.params.get('kind') == k }}>{{ k }}</option>{% endfor %}</select></div>
+            <div><label>Unit</label><input name="chart_unit" value="{{ v.params.get('unit') or '' }}" placeholder="% or mm"></div></div>
+          <label>Title</label><input name="chart_title" value="{{ v.params.get('title') or '' }}">
+          <label>Labels (comma separated)</label><input name="chart_labels" value="{{ (v.params.get('labels') or [])|join(', ') }}" placeholder="2023, 2024">
+          <label>Values (same count)</label><input name="chart_values" value="{{ (v.params.get('values') or [])|join(', ') }}" placeholder="148, 131">
+        </div>
+        <div class="grp" data-for="blender">
+          <label>States to light up, in order</label><input name="states" value="{{ (v.params.get('highlight_states') or [])|join(', ') }}" placeholder="KL, TN, KA, TS or names">
+          <div class="hint">Codes or names: Kerala, Tamil Nadu, Telangana…</div>
+          <label>Camera</label><select name="camera">{% for c in cameras %}<option {{ 'selected' if v.params.get('camera') == c }}>{{ c }}</option>{% endfor %}</select>
+        </div>
+        <div class="grp" data-for="photo video manual stat chart">
+          <div class="two"><div><label>Big number {{ '(required)' if v.type == 'stat' else '(optional badge)' }}</label><input name="overlay_value" value="{{ s.overlay.value if s.overlay else '' }}" placeholder="76%"></div>
+            <div><label>Label</label><input name="overlay_label" value="{{ s.overlay.label if s.overlay and s.overlay.label else '' }}" placeholder="turnout"></div></div>
+        </div>
+      </div>
+    </div>
+    <div class="row" style="margin-top:10px"><button class="primary">Save scene</button>
+      {% if v.file %}<span class="hint">current file: {{ v.file }}</span>{% endif %}</div>
+  </form>
+</section>
+{% endfor %}
+
+<form method="post" action="{{ url_for('qc.plan_insert', slug=slug) }}"><button>+ Add a scene at the end</button></form>
+{% endblock %}
+{% block scripts %}
+<script>
+function showGroups(form) {
+  const t = form.querySelector('[name=type]').value;
+  form.querySelectorAll('.grp').forEach(g => g.classList.toggle('on', g.dataset.for.split(' ').includes(t)));
+}
+document.querySelectorAll('form[data-scene]').forEach(showGroups);
+</script>
+{% endblock %}

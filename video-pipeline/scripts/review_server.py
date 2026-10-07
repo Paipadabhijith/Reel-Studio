@@ -65,24 +65,14 @@ def index(slug: str):
             "placeholder": s.visual.prompt or s.visual.query or s.visual.type,
             "query": s.visual.query, "source": s.visual.source or "stock",
             "fetch_type": s.visual.downgraded_from or (s.visual.type if s.visual.type in ("photo", "video") else "photo"),
-            "kept": review.get(str(s.id)) == "keep" and bool(file),
             "credit": f"{c.attribution_text or c.source} · {c.license}" if c else "",
         })
     inbox = sorted(f.name for f in (project / "inbox").glob("*") if f.suffix.lower().lstrip(".") in ALLOWED_UPLOAD)
     return render_template(
         "review.html", slug=slug, scenes=rows, inbox=inbox, rights=manual_inbox.RIGHTS,
-        kept=sum(r["kept"] for r in rows), pending=len(manual_inbox.pending(project, sf)),
+        pending=len(manual_inbox.pending(project, sf)),
         msg=request.args.get("msg"), err=request.args.get("err") == "1",
     )
-
-
-@bp.post("/scene/<int:sid>/keep")
-def keep(slug: str, sid: int):
-    project = _project(slug)
-    state = _read_review(project)
-    state[str(sid)] = "keep"
-    _write_review(project, state)
-    return _back(slug, f"Scene {sid} kept.", sid=sid)
 
 
 @bp.post("/scene/<int:sid>/replace")

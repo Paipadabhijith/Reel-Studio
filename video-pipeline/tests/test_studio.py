@@ -157,7 +157,13 @@ def test_state_walks_through_the_pipeline(project_factory):
     assert status(steps, "brief") == "done" and status(steps, "script") == "done"
     facts = next(s for s in steps if s.key == "facts")
     assert facts.status == "todo" and "1 not found" in facts.detail
-    assert next_step(steps).key == "facts"
+    assert next_step(steps).key == "plan", "the plan must be read and locked before anything is fetched"
+    assert status(steps, "fetch") == "blocked" and status(steps, "record") == "blocked"
+    from scripts import plan as plan_mod
+
+    plan_mod.set_locked(proj, True)
+    steps = project_state(proj)
+    assert status(steps, "plan") == "done" and next_step(steps).key == "facts"
     manual = next(s for s in steps if s.key == "manual")
     assert manual.status == "todo" and "press release" in manual.todos[0]
 
