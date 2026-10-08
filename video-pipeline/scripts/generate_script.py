@@ -12,7 +12,7 @@ from .lib import cache
 from .lib.schema import ScenesFile, dump_json, load_scenes
 
 MODEL = "claude-opus-5-5"
-PROMPT_VERSION = "script-v2"
+PROMPT_VERSION = "script-v3"
 MAX_TOKENS = 64000
 USER_AGENT = "Mozilla/5.0 (Macintosh; video-pipeline personal research tool)"
 
@@ -127,6 +127,9 @@ Visuals (be concrete; these are search queries and shot requests)
 - blender: a 3D map of India; only for a scene about places. `template: "india_map"`, `blender.highlight_states` lists the
   states to light up in order, as 2-letter codes (e.g. KA, TN, KL, TS, MH, UP; Telangana is TS, Odisha is OD, Uttarakhand is UK),
   `camera` is one of top_down_tilt, top_down, orbit. Use at most one or two per video.
+- animation: an animated headline graphic (no stock photo). Use it for abstract ideas, concepts and numbers that no photo
+  shows; `animation.headline` is 1-3 strong words, `subline` the supporting phrase. Pictures that cannot be found are
+  turned into animations automatically, so prefer a photo when one clearly exists.
 - Never plan AI-generated likenesses of real people.
 - Orientation: "portrait" for scenes used in a reel, "landscape" for long-form-only scenes.
 
@@ -189,7 +192,7 @@ OUTPUT_SCHEMA = _obj({
         "text": STR,
         "emphasis": {"type": "array", "items": STR},
         "visual": _obj({
-            "type": {"type": "string", "enum": ["photo", "video", "chart", "text_card", "stat", "manual", "blender"]},
+            "type": {"type": "string", "enum": ["photo", "video", "chart", "text_card", "stat", "manual", "blender", "animation"]},
             "query": _nullable(STR),
             "source": _nullable({"type": "string", "enum": ["stock", "wikimedia"]}),
             "orientation": _nullable({"type": "string", "enum": ["portrait", "landscape", "square"]}),
@@ -199,6 +202,9 @@ OUTPUT_SCHEMA = _obj({
                 "kind": {"type": "string", "enum": ["bar", "line", "pie"]},
                 "title": STR, "unit": _nullable(STR),
                 "labels": {"type": "array", "items": STR}, "values": {"type": "array", "items": NUM},
+            })),
+            "animation": _nullable(_obj({
+                "style": {"type": "string", "enum": ["kinetic", "burst", "rings"]}, "headline": STR, "subline": _nullable(STR),
             })),
             "blender": _nullable(_obj({
                 "template": STR, "highlight_states": {"type": "array", "items": STR}, "camera": _nullable(STR),
@@ -276,8 +282,9 @@ def to_scenes_file(slug: str, brief: dict, data: dict) -> ScenesFile:
         if blender:
             v["template"] = blender.pop("template")
             params = {k: val for k, val in blender.items() if val is not None}
-        if v["type"] == "manual":
-            v["fallback"] = "text_card"
+        anim = v.pop("animation", None)
+        if anim:
+            params = {k: val for k, val in anim.items() if val not in (None, "", [])}
         v["params"] = params
         scenes.append({**s, "visual": {k: val for k, val in v.items() if val is not None}})
     fmt = brief["formats"]

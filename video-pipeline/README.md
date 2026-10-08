@@ -152,3 +152,55 @@ steps without the checks.
 
 **Cancel.** The job panel has a *Cancel* button: it stops Remotion or Blender and everything they started within a moment.
 Finished scenes are kept and reused on the next run. (Voice timing in progress finishes its current step first.)
+
+## Background music (optional)
+
+Each video can have its own track; leave it off and nothing changes. In the Studio, the **Music** card has *Add a music
+track*: choose the file, say where it came from and its licence (both required: copyrighted music is never baked in),
+then set the volume under your voice (-22 dB is a good start), the fade, and whether it should dip while you speak.
+*Hear a sample* mixes the first 25 seconds of your narration with the track so you can judge it by ear.
+
+- The track loops or is trimmed to the length of the video, fades in and out, and the final mix is normalized to -14 LUFS.
+- **Reels** also keep a voice-only copy (`out/reel_01_9x16_no_music.mp4`), so you can add Instagram's own music in the app
+  (the API can't), which avoids copyright claims on commercial songs.
+- Changing the track or any setting makes the video out of date, and only the audio mix is redone on the next render
+  (long-form scene clips are reused).
+- The credit line (for example "Music: Soft pad from Pixabay Music (Royalty-free)") is shown for the video description.
+- Command line: `reel music my-reel --video reel_01 --file song.mp3 --source "Pixabay Music" --license royalty-free`,
+  `--clear` to remove it, no `--file` to show what is set.
+- Free sources (check each track's licence; terms change): Pixabay Music, YouTube Audio Library, Free Music Archive,
+  Incompetech (credit required).
+
+## When there is no picture: animations
+
+If `reel fetch` finds nothing relevant for a scene, the scene becomes an **animation made from its own words** instead
+of an empty slot or a plain text card. It is visible and editable in the plan, and it remembers what it replaced
+(a later *Refetch* can bring the picture back).
+
+| Style | Engine | Looks like | Cost |
+| --- | --- | --- | --- |
+| Kinetic words, Burst, Rings | Remotion | Headline words slam in over moving rays, rings or particles, with a line underneath and optional tags | quick, like any scene |
+| 3D animated title | Blender | The headline as bevelled 3D text with a gold underline and a ring of beads, slow camera move | about 1 s per frame |
+
+- **Which engine?** A fixed rule decides, and the reason is shown on each scene ("Chosen because…"):
+
+  | The scene is… | Engine | Result |
+  | --- | --- | --- |
+  | **drawable as an infographic**: one figure; several figures or year→value pairs; a list or a timeline; a comparison | **Remotion** | animated stat (count-up), animated bar/line chart, tagged text |
+  | **geography**: it names an Indian state | **Blender** | 3D map of those states (a figure in the text rides along as a badge). If every state has its own figure ("Kerala 40%, Goa 25%"), it is a chart instead |
+  | **needs motion** and has nothing to chart (cyclone, flood, rocket, journey…) | **Blender** | 3D animated title |
+  | neither data nor motion | **Remotion** | animated text |
+
+  An infographic always wins over motion ("cyclone with 120 km/h winds" is a stat). A lone small number with no unit
+  ("scene 1") is not a figure. The opening scene gets one point toward motion, but only if it has a motion cue.
+  Blender is slow, so a project gets at most three 3D scenes (the rest become animated text, with the reason shown).
+  Pick *Animation: choose automatically* in the plan, or press *Make an animation (best fit)* on a part; choosing
+  *Animated graphic* or *3D title* yourself always overrides the rule.
+- **Headline** comes from the words you stressed, else a number with its unit ("76%", "11 percent"), else the first strong words.
+  Edit the headline, the line under it, the style and the tags on the *Plan* page.
+- **Per scene choice** (Plan, photo/video scenes): *If no picture is found* - make an animation (default) or *ask me for a file*.
+- **One click on the Check parts page:** any scene with no file shows *Make an animation (best fit)*, *Simple graphic* and *3D title*.
+- **Safety net:** at render time a scene that still has no file draws an animation rather than an empty frame
+  (unless it asked for a text card). Drafts label these "ANIMATION INSTEAD".
+- Animations are your own graphics, so they need no credit. The script prompt can also plan `animation` scenes
+  directly for abstract ideas and concepts that no photo shows.

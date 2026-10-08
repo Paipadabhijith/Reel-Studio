@@ -9,7 +9,7 @@ import re
 import subprocess
 from pathlib import Path
 
-from . import render_blender
+from . import animation, music, render_blender
 from .align_audio import duration_s
 from .lib import cache
 from .lib.assets import find_asset
@@ -38,11 +38,21 @@ def visual_props(project: Path, scene: Scene, mode: str, log=print, kind: str = 
            "clipFrames": None, "params": None}
 
     def fallback(reason: str, label: str) -> dict:
+        """No usable picture: a made animation, unless the scene asked to keep a plain text card."""
+        if v.on_missing != "manual" and v.fallback != "text_card" and v.type in ("photo", "video", "manual", "chart"):
+            log(f"scene {scene.id}: {reason}, using an animation")
+            out.update(type="animation", params=animation.auto_params(scene), motion="none")
+            out["placeholder"] = f"ANIMATION INSTEAD ({label})" if mode == "draft" else None
+            return out
         log(f"scene {scene.id}: {reason}, using text card")
         out["placeholder"] = label if mode == "draft" else None
         return out
 
     if v.type == "text_card":
+        return out
+    if v.type == "animation":
+        params = {**animation.auto_params(scene), **{k: val for k, val in v.params.items() if val not in (None, "", [])}}
+        out.update(type="animation", params=params, motion="none")
         return out
     if v.type == "chart":
         if _valid_chart(v.params):
@@ -355,7 +365,8 @@ def assemble(project: Path, sf: ScenesFile, tl: Timeline, target: Target, log=pr
     out = project / target.out
     files = build_parts(project, sf, tl, target, log)  # instant when every part is current
     audio = project / target.audio
-    digest = cache.hash_inputs([part_digest(project, sf, tl, target, i)[0] for i in target.scene_ids], files=[audio])
+    digest = cache.hash_inputs([part_digest(project, sf, tl, target, i)[0] for i in target.scene_ids],
+                               music.fingerprint(project, target), files=[audio])
     stage = f"final_{target.id}"
     cache_dir = project / "build" / "cache"
     if cache.is_fresh(cache_dir, stage, digest, [out]):
@@ -364,15 +375,47 @@ def assemble(project: Path, sf: ScenesFile, tl: Timeline, target: Target, log=pr
     report(None, "joining scenes")
     joined = project / "build" / f"{target.id}_joined.mp4"
     concat(files, joined)
-    log(f"{target.id}: adding narration, normalizing loudness to {TARGET_LUFS} LUFS")
-    report(None, "adding narration and normalizing loudness")
-    out.parent.mkdir(parents=True, exist_ok=True)
-    mux_audio(joined, audio, out)
+    finish_audio(project, target, joined, out, log)
     joined.unlink(missing_ok=True)
-    n = write_srt(tl, out.with_suffix(".srt"))
-    log(f"{target.id}: wrote {out.with_suffix('.srt').name} ({n} cues)")
     cache.mark(cache_dir, stage, digest)
     return out
+
+
+def clean_copy_path(target: Target) -> str:
+    return target.out.rsplit(".", 1)[0] + "_no_music.mp4"
+
+
+def finish_audio(project: Path, target: Target, video: Path, out: Path, log=print) -> None:
+    """Add the narration (with the music under it, if the video has any) at -14 LUFS."""
+    narration = project / target.audio
+    track = music.get(project, target)
+    out.parent.mkdir(parents=True, exist_ok=True)
+    clean = project / clean_copy_path(target)
+    if track:
+        log(f"{target.id}: mixing music “{track.title}” under the narration "
+            f"({track.volume_db:g} dB{', ducked while you speak' if track.duck else ''})")
+        report(None, "mixing the music")
+        mixed = music.mixed_audio(project, target, narration)
+        log(f"{target.id}: normalizing loudness to {TARGET_LUFS} LUFS")
+        report(None, "adding audio and normalizing loudness")
+        mux_audio(video, mixed, out)
+        mixed.unlink(missing_ok=True)
+        if track.clean_copy and target.kind == "reel":
+            mux_audio(video, narration, clean)
+            log(f"{target.id}: kept a voice-only copy ({clean.name}) for adding music in the Instagram app")
+        else:
+            clean.unlink(missing_ok=True)
+    else:
+        log(f"{target.id}: adding narration, normalizing loudness to {TARGET_LUFS} LUFS")
+        report(None, "adding narration and normalizing loudness")
+        mux_audio(video, narration, out)
+        clean.unlink(missing_ok=True)
+    if target.kind == "long":
+        tl_path = project / target.timeline
+        from .lib.schema import Timeline
+
+        n = write_srt(Timeline.model_validate_json(tl_path.read_text()), out.with_suffix(".srt"))
+        log(f"{target.id}: wrote {out.with_suffix('.srt').name} ({n} cues)")
 
 
 def render_target(project: Path, sf: ScenesFile, tl: Timeline, target: Target, log=print) -> Path:
@@ -386,7 +429,7 @@ def render_target(project: Path, sf: ScenesFile, tl: Timeline, target: Target, l
     files, chapters_digest = render_chapters(project, sf, tl, target, "final", None, log)
 
     audio = project / target.audio
-    digest = cache.hash_inputs(chapters_digest, files=[audio])
+    digest = cache.hash_inputs(chapters_digest, music.fingerprint(project, target), files=[audio])
     stage = f"final_{target.id}"
     if cache.is_fresh(cache_dir, stage, digest, [out]):
         log(f"{target.id}: final cached")
@@ -395,13 +438,7 @@ def render_target(project: Path, sf: ScenesFile, tl: Timeline, target: Target, l
     report(None, "joining chapters")
     joined = project / "build" / f"{target.id}_joined.mp4"
     concat(files, joined)
-    log(f"{target.id}: adding narration, normalizing loudness to {TARGET_LUFS} LUFS")
-    report(None, "adding narration and normalizing loudness")
-    out.parent.mkdir(parents=True, exist_ok=True)
-    mux_audio(joined, audio, out)
+    finish_audio(project, target, joined, out, log)
     joined.unlink(missing_ok=True)
-    if target.kind == "long":
-        n = write_srt(tl, out.with_suffix(".srt"))
-        log(f"{target.id}: wrote {out.with_suffix('.srt').name} ({n} cues)")
     cache.mark(cache_dir, stage, digest)
     return out

@@ -5,7 +5,7 @@ from pathlib import Path
 
 from flask import Blueprint, abort, current_app, redirect, render_template, request, url_for
 
-from . import parts as parts_mod
+from . import animation, parts as parts_mod
 from . import plan
 from .lib.schema import Timeline, load_scenes
 from .lib.state import _load_timeline, long_flow
@@ -38,7 +38,7 @@ def plan_page(slug: str):
     recorded = [t.label for t in targets if (proj / t.audio).exists()]
     return render_template(
         "plan.html", slug=slug, sf=sf, member=member, secs=secs, locked=plan.is_locked(proj), recorded=recorded,
-        visual_types=plan.VISUAL_TYPES, motions=plan.MOTIONS, cameras=plan.CAMERAS, chart_kinds=plan.CHART_KINDS,
+        visual_types=plan.VISUAL_TYPES, motions=plan.MOTIONS, anim_styles=animation.STYLE_LABELS, cameras=plan.CAMERAS, chart_kinds=plan.CHART_KINDS,
         msg=request.args.get("msg"), err=request.args.get("err") == "1",
     )
 
@@ -92,6 +92,29 @@ def plan_move(slug: str, sid: int, direction: str):
     except plan.PlanError as e:
         return _back_plan(slug, str(e), True, sid)
     return _back_plan(slug, f"Moved scene {sid} {direction}.", sid=sid)
+
+
+@bp.post("/plan/animate/<int:sid>")
+def plan_animate(slug: str, sid: int):
+    """One click: replace a scene that has no picture with an animation made from its own words."""
+    from . import animation
+
+    proj = _project(slug)
+    sf = plan.load(proj)
+    scene = next((x for x in sf.scenes if x.id == sid), None)
+    if scene is None:
+        abort(404)
+    engine = request.form.get("engine") if request.form.get("engine") in ("blender", "remotion") else "auto"
+    animation.to_animation(scene, engine, sf)
+    try:
+        plan.save(proj, sf)
+    except plan.PlanError as e:
+        return _back_plan(slug, str(e), True, sid)
+    msg = f"Scene {sid} is now an animation: {animation.describe(scene)}. Edit the headline in the plan if you like."
+    if request.form.get("back") == "parts":
+        return redirect(url_for("qc.parts_page", slug=slug, video=request.form.get("video") or None,
+                                **{"pass": "visual"}, msg=msg, err=0) + f"#p{sid}")
+    return _back_plan(slug, msg, sid=sid)
 
 
 @bp.post("/plan/lock")

@@ -76,6 +76,12 @@
       <form method="post" action="{{ url_for('qc.parts_redo', slug=slug, sid=p.scene.id) }}">
         <input type="hidden" name="video" value="{{ target.id }}"><input type="hidden" name="pass" value="{{ kind }}">
         <div class="row"><input name="note" placeholder="what needs to change?" style="flex:1; min-width:100px"><button>Redo</button></div></form>
+      {% if p.can_animate %}
+      <div class="row">
+        {% for engine, label in [('auto', 'Make an animation (best fit)'), ('remotion', 'Simple graphic'), ('blender', '3D title')] %}
+        <form method="post" action="{{ url_for('qc.plan_animate', slug=slug, sid=p.scene.id) }}"><input type="hidden" name="engine" value="{{ engine }}"><input type="hidden" name="back" value="parts"><input type="hidden" name="video" value="{{ target.id }}">
+          <button style="padding:4px 10px; font-size:12px" class="{{ 'primary' if engine == 'auto' else '' }}">{{ label }}</button></form>{% endfor %}
+      </div>{% endif %}
       <div class="row"><a class="btn mini" style="padding:3px 9px; font-size:12px" href="{{ url_for('qc.plan_page', slug=slug) }}#s{{ p.scene.id }}">Edit in plan</a>
         <a class="btn mini" style="padding:3px 9px; font-size:12px" href="{{ url_for('review.index', slug=slug) }}#s{{ p.scene.id }}">Replace picture</a></div>
     </div>

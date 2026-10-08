@@ -1,6 +1,6 @@
 export type Word = {w: string; t: number; end?: number | null};
 
-export type VisualKind = 'photo' | 'video' | 'chart' | 'stat' | 'blender' | 'text_card';
+export type VisualKind = 'photo' | 'video' | 'chart' | 'stat' | 'blender' | 'animation' | 'text_card';
 
 export type Overlay = {type: string; value?: string | null; label?: string | null};
 

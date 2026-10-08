@@ -10,7 +10,7 @@ from pathlib import Path
 from flask import Blueprint, abort, current_app, redirect, render_template, request, url_for
 from werkzeug.utils import secure_filename
 
-from . import fetch_assets, manual_inbox
+from . import animation, fetch_assets, manual_inbox
 from .lib.assets import find_asset, load_credits
 from .lib.schema import dump_json, load_scenes
 
@@ -62,7 +62,7 @@ def index(slug: str):
         rows.append({
             "id": s.id, "text": s.text, "type": s.visual.type, "kind": kind, "file": file,
             "mtime": int((project / file).stat().st_mtime) if file else 0,
-            "placeholder": s.visual.prompt or s.visual.query or s.visual.type,
+            "placeholder": animation.describe(s) or s.visual.prompt or s.visual.query or s.visual.type,
             "query": s.visual.query, "source": s.visual.source or "stock",
             "fetch_type": s.visual.downgraded_from or (s.visual.type if s.visual.type in ("photo", "video") else "photo"),
             "credit": f"{c.attribution_text or c.source} · {c.license}" if c else "",

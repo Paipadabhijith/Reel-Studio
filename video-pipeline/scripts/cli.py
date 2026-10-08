@@ -197,6 +197,43 @@ def review(slug: str, port: int = typer.Option(7788)):
     serve(port, f"/p/{slug}/review/")
 
 
+@app.command()
+def music(
+    slug: str,
+    video: str = typer.Option(None, "--video", "-v", help="reel id or 'long' (default: the first video)"),
+    file: str = typer.Option(None, "--file", help="Music file to add"),
+    title: str = typer.Option("", help="Track title"),
+    source: str = typer.Option("", help="Where it came from (required with --file)"),
+    license: str = typer.Option("", help="royalty-free | cc-by | public-domain | licensed | own (required with --file)"),
+    url: str = typer.Option("", help="Link to the track"),
+    volume: float = typer.Option(-22.0, help="dB under the narration"),
+    no_duck: bool = typer.Option(False, "--no-duck", help="Keep the music level while you speak"),
+    clear: bool = typer.Option(False, "--clear", help="Remove the music from this video"),
+):
+    """Optional background music for a video (omit --file to just show what is set)."""
+    from pathlib import Path
+
+    from . import music as music_mod
+    from .lib.targets import get_target
+
+    proj = project_dir(slug)
+    sf = load_scenes(proj / "script" / "scenes.json")
+    try:
+        target = get_target(sf, video)
+        if clear:
+            _log("removed" if music_mod.clear(proj, target) else "no music was set")
+        elif file:
+            t = music_mod.set_track(proj, target, Path(file).expanduser(), title=title, source=source, license=license,
+                                    url=url, volume_db=volume, duck=not no_duck)
+            _log(f"{target.id}: added “{t.title}” ({t.volume_db:g} dB, {'ducked' if t.duck else 'steady'}). {t.credit}")
+        else:
+            t = music_mod.get(proj, target)
+            _log(f"{target.id}: " + (f"“{t.title}” · {t.source} · {t.license} · {t.volume_db:g} dB" if t else "no music (voice only)"))
+    except (ValueError, music_mod.MusicError) as e:
+        typer.echo(f"error: {e}", err=True)
+        raise typer.Exit(1)
+
+
 def _stub(name: str, phase: int) -> None:
     def cmd(slug: str = typer.Argument(None)) -> None:
         _not_yet(name, phase)

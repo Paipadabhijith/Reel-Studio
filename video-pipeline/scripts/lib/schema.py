@@ -7,7 +7,7 @@ from typing import Literal
 
 from pydantic import BaseModel, Field, model_validator
 
-VisualType = Literal["photo", "video", "chart", "text_card", "stat", "manual", "blender"]
+VisualType = Literal["photo", "video", "chart", "text_card", "stat", "manual", "blender", "animation"]
 Orientation = Literal["portrait", "landscape", "square"]
 
 
@@ -22,7 +22,8 @@ class Visual(BaseModel):
     params: dict = Field(default_factory=dict)
     file: str | None = None  # explicit asset path relative to the project dir
     source: Literal["stock", "wikimedia"] | None = None  # where fetch looks first
-    downgraded_from: VisualType | None = None  # set when fetch found nothing and fell back to manual
+    downgraded_from: VisualType | None = None  # set when fetch found nothing and the scene was changed to manual/animation
+    on_missing: Literal["animate", "manual"] | None = None  # no picture found: make an animation (default) or ask for a file
 
 
 class Overlay(BaseModel):

@@ -86,7 +86,7 @@ def test_generate_writes_outputs_and_caches(script_project):
     sf = G.generate(script_project, llm=fake_llm, log=lambda *_: None)
     assert [s.id for s in sf.scenes] == [1, 2, 3] and sf.language == "hinglish"
     assert sf.scene(2).visual.params["values"] == [68, 76]
-    assert sf.scene(3).visual.fallback == "text_card"
+    assert sf.scene(3).visual.fallback is None, "a missing file now falls back to an animation, not a text card"
     assert (script_project / "script/scenes.json.bak").exists()
     facts = (script_project / "script/facts.md").read_text()
     assert "- [ ] Turnout was 76%" in facts and "NOT in the supplied sources" in facts
@@ -143,7 +143,8 @@ def test_draft_props_label_missing_manual(project_factory):
     target = get_target(sf, "reel_01")
     props = build_props(proj, sf, D.estimate_timeline(sf, target), target, "draft", log=lambda *_: None)
     assert props["audioSrc"] is None and props["draft"] is True
-    assert props["scenes"][0]["visual"]["placeholder"] == "MANUAL: a map"
+    vis = props["scenes"][0]["visual"]
+    assert vis["type"] == "animation" and vis["placeholder"] == "ANIMATION INSTEAD (MANUAL: a map)"
 
 
 def test_review_keep_replace(project_factory):

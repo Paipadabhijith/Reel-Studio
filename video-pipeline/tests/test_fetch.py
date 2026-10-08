@@ -76,11 +76,24 @@ def test_low_relevance_falls_through_to_unsplash(project_factory):
     assert any("/photos/1/download" in c for c in calls), "Unsplash download endpoint must be pinged"
 
 
-def test_nothing_relevant_downgrades_to_manual_inbox(project_factory):
+def test_nothing_relevant_becomes_an_animation(project_factory):
     proj = project_factory([photo_scene(1, "finance minister budget speech")])
     http, _ = make_transport(pexels=[pexels_photo("a bowl of fruit", "fruit")])
-    summary = F.fetch(proj, http=http, log=lambda *_: None)
-    assert summary == {"manual": 1}
+    lines = []
+    summary = F.fetch(proj, http=http, log=lines.append)
+    assert summary == {"animated": 1}
+    v = load_scenes(proj / "script/scenes.json").scenes[0].visual
+    assert v.type == "animation" and v.downgraded_from == "photo" and v.query == "finance minister budget speech"
+    assert v.params["headline"] and v.params["style"] in ("kinetic", "burst", "rings") and "no figures and no motion" in v.params["why"]
+    assert any("made an animation instead" in l for l in lines)
+    assert "No manual scenes pending" in (proj / "inbox/README.txt").read_text()
+    assert F.fetch(proj, http=http, log=lambda *_: None) == {"skip": 1}, "an animation is not searched for again"
+
+
+def test_scene_that_asks_for_a_file_goes_to_the_manual_inbox(project_factory):
+    proj = project_factory([photo_scene(1, "finance minister budget speech", on_missing="manual")])
+    http, _ = make_transport(pexels=[pexels_photo("a bowl of fruit", "fruit")])
+    assert F.fetch(proj, http=http, log=lambda *_: None) == {"manual": 1}
     v = load_scenes(proj / "script/scenes.json").scenes[0].visual
     assert v.type == "manual" and v.downgraded_from == "photo" and v.fallback == "text_card"
     readme = (proj / "inbox/README.txt").read_text()
@@ -154,7 +167,7 @@ def test_pixabay_used_before_unsplash_and_skips_ai_images(project_factory):
 def test_only_ai_images_means_no_match(project_factory):
     proj = project_factory([photo_scene(1, "monsoon rain india")])
     http, _ = make_transport(pixabay=[pixabay_hit("monsoon, rain, india", ai=True)])
-    assert F.fetch(proj, http=http, log=lambda *_: None) == {"manual": 1}
+    assert F.fetch(proj, http=http, log=lambda *_: None) == {"animated": 1}
 
 
 def test_pixabay_video(project_factory):

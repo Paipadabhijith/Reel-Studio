@@ -188,7 +188,123 @@ def india_map():
             key(t, "scale", f0 + 8, (1, 1, 1))
 
 
-TEMPLATES = {"india_map": india_map}
+# ---- title3d -----------------------------------------------------------------------------------
+def title3d():
+    import random
+
+    headline = str(PARAMS.get("headline") or "").strip().upper() or " "
+    subline = str(PARAMS.get("subline") or "").strip()
+    portrait = res[0] < res[1]
+    rnd = random.Random(sum(map(ord, headline)))
+
+    def lines(text, width):
+        out, cur = [], ""
+        for w in text.split():
+            if cur and len(cur) + 1 + len(w) > width:
+                out.append(cur)
+                cur = w
+            else:
+                cur = (cur + " " + w).strip()
+        return out + ([cur] if cur else [])
+
+    def material(name, rgb, emission=0.0, rough=0.35, metal=0.0):
+        m = bpy.data.materials.new(name)
+        m.use_nodes = True
+        b = m.node_tree.nodes["Principled BSDF"]
+        b.inputs["Base Color"].default_value = (*rgb, 1)
+        b.inputs["Roughness"].default_value = rough
+        b.inputs["Metallic"].default_value = metal
+        b.inputs["Emission Color"].default_value = (*rgb, 1)
+        b.inputs["Emission Strength"].default_value = emission
+        return m
+
+    white = material("white", (0.95, 0.95, 0.97), 0.0, 0.25, 0.1)
+    gold = material("gold", ACCENT, 0.5, 0.3, 0.6)
+    soft = material("soft", (0.7, 0.72, 0.8), 0.2, 0.6)
+
+    def text_obj(body, size, mat, extrude, y=0.0):
+        c = bpy.data.curves.new("t", "FONT")
+        c.body, c.align_x, c.align_y = body, "CENTER", "CENTER"
+        c.size, c.extrude, c.bevel_depth, c.bevel_resolution = size, extrude, extrude * 0.25, 2
+        o = bpy.data.objects.new("t", c)
+        scene.collection.objects.link(o)
+        o.data.materials.append(mat)
+        o.location = (0, y, 0)
+        return o
+
+    wrap = 11 if portrait else 22
+    head_lines = lines(headline, wrap) or [" "]
+    head = text_obj("\n".join(head_lines), 1.0, white, 0.28)
+    head.data.space_line = 0.95
+    bpy.context.view_layer.update()
+    # scale the headline to a width that fits the frame, whatever its length
+    max_w = 8.2 if portrait else 15.0
+    w, h = max(head.dimensions.x, 0.01), max(head.dimensions.y, 0.01)
+    k = min(max_w / w, (6.0 if portrait else 5.0) / h, 3.2)
+    head.scale = (k, k, k)
+    underline = text_obj("____", 0.5, gold, 0.1, y=-(h * k) / 2 - 0.55)
+    underline.scale = (k * 1.2, k * 0.6, k * 0.6)
+
+    sub = None
+    if subline:
+        sub = text_obj("\n".join(lines(subline, 30 if portrait else 56)[:3]), 0.42, soft, 0.04, y=-(h * k) / 2 - 1.5)
+
+    # a slow ring of glowing beads around the title
+    ring = bpy.data.objects.new("ring", None)
+    scene.collection.objects.link(ring)
+    radius = (max_w / 2) * 1.18
+    for i in range(36):
+        ang = i / 36 * 6.2832
+        bead = bpy.data.objects.new(f"b{i}", bpy.data.meshes.new(f"b{i}"))
+        import bmesh
+
+        bm = bmesh.new()
+        bmesh.ops.create_uvsphere(bm, u_segments=12, v_segments=8, radius=0.07 + 0.07 * rnd.random())
+        bm.to_mesh(bead.data)
+        bm.free()
+        bead.data.materials.append(gold if i % 3 == 0 else white)
+        bead.location = (radius * math.cos(ang), radius * 0.62 * math.sin(ang), -0.3 + rnd.random() * 0.6)
+        bead.parent = ring
+        scene.collection.objects.link(bead)
+
+    # lights
+    sun = bpy.data.objects.new("sun", bpy.data.lights.new("sun", "SUN"))
+    sun.data.energy = 3.0
+    sun.rotation_euler = (math.radians(40), math.radians(-25), math.radians(20))
+    scene.collection.objects.link(sun)
+    glow = bpy.data.objects.new("glow", bpy.data.lights.new("glow", "POINT"))
+    glow.data.energy = 900
+    glow.data.color = ACCENT
+    glow.location = (-3.5, -4.0, 4.0)
+    scene.collection.objects.link(glow)
+
+    # camera: fit the title, drift in, and rock the title a few degrees so the depth reads
+    cam_data = bpy.data.cameras.new("cam")
+    cam_data.lens = 50
+    cam = bpy.data.objects.new("cam", cam_data)
+    scene.collection.objects.link(cam)
+    scene.camera = cam
+    aspect = res[0] / res[1]
+    half = math.atan(cam_data.sensor_width / 2 / cam_data.lens)
+    need_w = max_w * 1.35
+    need_h = (h * k + (2.6 if subline else 1.4)) * 1.5
+    major = max(need_h, need_w / aspect) if aspect < 1 else max(need_w, need_h * aspect)
+    dist = (major / 2) / math.tan(half)
+    cam.location = (0, -0.6, dist * 1.12)
+    key(cam, "location", 1, (0, -0.6, dist * 1.12))
+    key(cam, "location", FRAMES, (0, -0.2, dist * 0.98))
+    for obj in [head, underline] + ([sub] if sub else []):
+        key(obj, "rotation_euler", 1, (math.radians(-6), math.radians(-14), 0))
+        key(obj, "rotation_euler", FRAMES, (math.radians(4), math.radians(14), 0))
+    key(ring, "rotation_euler", 1, (0, 0, 0))
+    key(ring, "rotation_euler", FRAMES, (0, 0, math.radians(70)))
+    # the title pops in over the first half second
+    for obj, base in [(head, head.scale[:]), (underline, underline.scale[:])] + ([(sub, sub.scale[:])] if sub else []):
+        key(obj, "scale", 1, tuple(0.001 * b for b in base))
+        key(obj, "scale", int(0.5 * FPS), base)
+
+
+TEMPLATES = {"india_map": india_map, "title3d": title3d}
 name = Path(bpy.data.filepath).stem
 if name not in TEMPLATES:
     raise SystemExit(f"no render handler for template {name!r}")

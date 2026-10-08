@@ -1,6 +1,7 @@
 import React from 'react';
 import {AbsoluteFill, Audio, Sequence, staticFile} from 'remotion';
 import {WordCaptions} from '../captions/WordCaptions';
+import {AnimationScene} from '../scenes/AnimationScene';
 import {ChartScene} from '../scenes/ChartScene';
 import {PhotoScene} from '../scenes/PhotoScene';
 import {StatOverlay, StatScene} from '../scenes/StatScene';
@@ -16,6 +17,7 @@ const SceneVisual: React.FC<{sc: SceneProps; brand: Brand; len: number; kind: 'r
     return <VideoScene file={v.file} clipFrames={v.clipFrames ?? undefined} />;
   }
   if (v.type === 'chart' && v.params) return <ChartScene params={v.params} brand={brand} kind={kind} />;
+  if (v.type === 'animation' && v.params) return <AnimationScene params={v.params} brand={brand} kind={kind} seed={sc.id} />;
   if (v.type === 'stat') {
     const value = sc.overlay?.value ?? v.params?.value;
     if (value) return <StatScene value={String(value)} label={sc.overlay?.label ?? v.params?.label} brand={brand} kind={kind} />;

@@ -37,6 +37,7 @@
 
 {% for s in sf.scenes %}
 {% set v = s.visual %}
+{% set cur = 'title3d' if (v.type == 'blender' and v.template == 'title3d') else v.type %}
 <section class="card scene" id="s{{ s.id }}">
   <header>
     <span class="num">{{ loop.index }}</span><span class="tag">id {{ s.id }}</span>
@@ -59,7 +60,7 @@
       <div>
         <label>What's on screen</label>
         <select name="type" onchange="showGroups(this.form)">
-          {% for t in visual_types %}<option value="{{ t }}" {{ 'selected' if v.type == t else '' }}>{{ {'photo': 'Photo (search)', 'video': 'Video clip (search)', 'chart': 'Animated chart', 'stat': 'Big number', 'blender': '3D India map', 'manual': 'Your own file', 'text_card': 'Text card'}[t] }}</option>{% endfor %}
+          {% for t in visual_types %}<option value="{{ t }}" {{ 'selected' if cur == t else '' }}>{{ {'photo': 'Photo (search)', 'video': 'Video clip (search)', 'auto': 'Animation: choose automatically (best fit)', 'animation': 'Animated graphic (fast)', 'title3d': '3D animated title (Blender)', 'chart': 'Animated chart', 'stat': 'Big number', 'blender': '3D India map', 'manual': 'Your own file', 'text_card': 'Text card'}[t] }}</option>{% endfor %}
         </select>
 
         <div class="grp" data-for="photo video">
@@ -67,7 +68,17 @@
           <div class="two"><div><label>Look in</label><select name="source">
               <option value="" {{ 'selected' if v.source != 'wikimedia' }}>stock sites (Pexels, Pixabay, Unsplash)</option><option value="wikimedia" {{ 'selected' if v.source == 'wikimedia' }}>Wikimedia first (landmarks, people)</option></select></div>
             <div><label>Shape</label><select name="orientation">{% for o in ['portrait', 'landscape', 'square'] %}<option {{ 'selected' if v.orientation == o }}>{{ o }}</option>{% endfor %}</select></div></div>
+          <label>If no picture is found</label>
+          <select name="on_missing"><option value="" {{ 'selected' if v.on_missing != 'manual' }}>make an animation from the sentence</option><option value="manual" {{ 'selected' if v.on_missing == 'manual' }}>ask me for a file</option></select>
           <div class="grp on" data-for="photo"><label>Motion</label><select name="motion"><option value="">slow zoom in</option>{% for m in motions %}<option {{ 'selected' if v.motion == m }}>{{ m }}</option>{% endfor %}</select></div>
+        </div>
+        <div class="grp" data-for="animation title3d">
+          <label>Headline (1-3 strong words)</label><input name="headline" value="{{ v.params.get('headline') or '' }}" placeholder="leave empty to take it from the sentence">
+          <label>Line under it</label><input name="subline" value="{{ v.params.get('subline') or '' }}">
+        </div>
+        <div class="grp" data-for="animation">
+          <div class="two"><div><label>Style</label><select name="anim_style">{% for k, lab in anim_styles.items() %}<option value="{{ k }}" {{ 'selected' if v.params.get('style') == k }}>{{ lab }}</option>{% endfor %}</select></div>
+            <div><label>Tags (comma separated)</label><input name="keywords" value="{{ (v.params.get('keywords') or [])|join(', ') }}"></div></div>
         </div>
         <div class="grp" data-for="manual"><label>What file you will add</label><input name="prompt" value="{{ v.prompt or '' }}" placeholder="Screenshot of the press release headline"></div>
         <div class="grp" data-for="chart">
@@ -89,7 +100,9 @@
       </div>
     </div>
     <div class="row" style="margin-top:10px"><button class="primary">Save scene</button>
-      {% if v.file %}<span class="hint">current file: {{ v.file }}</span>{% endif %}</div>
+      {% if v.file %}<span class="hint">current file: {{ v.file }}</span>{% endif %}
+      {% if v.params.get('why') %}<span class="hint">Chosen because: {{ v.params.why }}</span>{% endif %}
+      {% if v.downgraded_from and v.type in ('animation', 'manual') %}<span class="hint">No {{ v.downgraded_from }} was found for “{{ v.query or '…' }}”: shown as {{ 'an animation' if v.type == 'animation' else 'a file for you to add' }}. Change the type to try again.</span>{% endif %}</div>
   </form>
 </section>
 {% endfor %}

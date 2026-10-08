@@ -167,8 +167,10 @@ def project_state(project: Path) -> list[Step]:
         steps.append(Step("fetch", "Visuals", "blocked", "No valid scenes.json yet."))
     else:
         complete = fetched or (visual_scenes and len(have) == len(visual_scenes))
+        animated = [x for x in sf.scenes if x.visual.type == "animation" and x.visual.downgraded_from]
         steps.append(Step("fetch", "Visuals", "done" if complete else "todo",
-                          f"{len(have)}/{len(visual_scenes)} scenes have a visual.",
+                          f"{len(have)}/{len(visual_scenes)} scenes have a visual."
+                          + (f" {len(animated)} animated instead of a picture." if animated else ""),
                           ([] if complete else ["Fetch visuals."]) + (env_warnings() if not complete else []),
                           ["assets/images/", "assets/videos/", "assets/credits.json"]))
 
@@ -246,10 +248,20 @@ def project_state(project: Path) -> list[Step]:
         steps.append(Step("record", "Record narration", "done",
                           "All recordings saved." if len(targets) > 1 else "Recording saved.", [], [t.audio for t in targets]))
 
+    # music (optional) ----------------------------------------------------
+    from .. import music as music_mod
+
+    with_music = [t for t in targets if music_mod.get(project, t)]
+    if with_music:
+        steps.append(Step("music", "Music", "done", "Background music on: " + ", ".join(t.id for t in with_music) + ".",
+                          [], [music_mod.get(project, t).file for t in with_music], optional=True))
+    else:
+        steps.append(Step("music", "Music", "optional", "No music: voice only. Add a track if you want one.", optional=True))
+
     # 9 final -------------------------------------------------------------
     have_audio = [t for t in targets if (project / t.audio).exists()]
     finished = [t for t in targets if (project / t.out).exists()]
-    stale_finals = [t for t in finished if _newest([project / t.audio, *asset_inputs]) > _mtime(project / t.out)]
+    stale_finals = [t for t in finished if _newest([project / t.audio, music_mod.settings_path(project), *asset_inputs]) > _mtime(project / t.out)]
     outs = [t.out for t in finished] + [t.out.rsplit(".", 1)[0] + ".srt" for t in finished
                                         if t.kind == "long" and (project / t.out).with_suffix(".srt").exists()]
     pending = [t for t in have_audio if t not in finished or t in stale_finals]

@@ -14,7 +14,7 @@ from pathlib import Path
 
 import httpx
 
-from . import manual_inbox
+from . import animation, manual_inbox
 from .lib.progress import check_cancel
 from .lib import cache
 from .lib.assets import chart_path, find_asset, image_path, remove_scene_assets, upsert_credit, video_path
@@ -345,12 +345,20 @@ def _est_duration(scene: Scene) -> float:
     return max(len(scene.text.split()) / 2.5, 2.0)  # 150 wpm
 
 
-def _downgrade(scene: Scene, reason: str) -> None:
+def _downgrade(scene: Scene, reason: str, sf=None) -> str:
+    """Nothing usable was found. Make an animation from the scene's own words, or ask for a file if the scene says so.
+
+    Returns "animated" or "manual".
+    """
     v = scene.visual
-    v.downgraded_from = v.type
-    v.type = "manual"
-    v.prompt = v.prompt or f"{reason}. Wanted: {v.query or scene.text}"
-    v.fallback = v.fallback or "text_card"
+    if v.on_missing == "manual":
+        v.downgraded_from = v.type
+        v.type = "manual"
+        v.prompt = v.prompt or f"{reason}. Wanted: {v.query or scene.text}"
+        v.fallback = v.fallback or "text_card"
+        return "manual"
+    animation.to_animation(scene, "auto", sf)
+    return "animated"
 
 
 def fetch_scene(
@@ -373,8 +381,7 @@ def fetch_scene(
         if not force and existing and (state.get(str(scene.id)) == digest or str(scene.id) not in state):
             return "cached" if str(scene.id) in state else "kept"  # hand-placed files are never overwritten
         if not v.query:
-            _downgrade(scene, "No search query")
-            return "manual"
+            return _downgrade(scene, "No search query", sf)
         if v.type == "video":
             providers = VIDEO_ORDER
         else:
@@ -384,9 +391,11 @@ def fetch_scene(
             log(f"scene {scene.id}: nothing relevant for {v.query!r}; kept the current asset")
             return "nomatch"
         if not found:
-            log(f"scene {scene.id}: nothing relevant for {v.query!r}; moved to manual inbox")
-            _downgrade(scene, "Auto-fetch found nothing relevant")
-            return "manual"
+            outcome = _downgrade(scene, "Auto-fetch found nothing relevant", sf)
+            log(f"scene {scene.id}: nothing relevant for {v.query!r}; "
+                + ("made an animation instead: " + animation.describe(scene) if outcome == "animated"
+                   else "moved to the manual inbox"))
+            return outcome
         cand, s = found
         remove_scene_assets(project, scene.id)
         rel = video_path(scene.id) if v.type == "video" else image_path(scene.id, cand.ext)

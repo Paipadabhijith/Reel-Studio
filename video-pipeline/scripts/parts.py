@@ -12,7 +12,7 @@ import time
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from . import plan
+from . import animation, plan
 from .lib import cache, india
 from .lib.assets import find_asset, load_credits
 from .lib.schema import Scene, ScenesFile, Timeline, TimelineScene
@@ -38,6 +38,7 @@ class Part:
     visual: str = "pending"      # pending | approved | stale | redo | blocked
     timing: str | None = None    # None until the video has been aligned
     note: str = ""
+    can_animate: bool = False    # no file for this scene: it can be turned into an animation in one click
     fingerprint: str = ""
     timing_fp: str = ""
     still: str | None = None     # path relative to the project
@@ -161,14 +162,32 @@ def check_scene(
             out.append(Check("error", "Stat has no number to show"))
         elif not any(c.isdigit() for c in str(value)):
             out.append(Check("warn", f"“{value}” has no digits, so it won't count up"))
-    elif v.type == "blender":
-        codes, bad = india.resolve_states(v.params.get("highlight_states", []))
-        if bad or not codes:
-            out.append(Check("error", "Unknown or missing states: " + (", ".join(bad) if bad else "none chosen")))
+    elif v.type == "animation":
+        head = (v.params.get("headline") or "").strip()
+        if not head:
+            out.append(Check("warn", "No headline: one will be made from the sentence"))
         else:
-            out.append(Check("ok", f"Highlights {', '.join(codes)}"))
+            out.append(Check("ok", animation.describe(scene) + (f" (instead of a {v.downgraded_from})" if v.downgraded_from else "")))
+        if len(head) > 40:
+            out.append(Check("warn", "Long headline: it will shrink to fit; a shorter one reads better"))
+    elif v.type == "blender":
+        if v.template == animation.TITLE3D:
+            if not (v.params.get("headline") or "").strip():
+                out.append(Check("error", "The 3D title has no headline"))
+            else:
+                out.append(Check("ok", animation.describe(scene)))
+        else:
+            codes, bad = india.resolve_states(v.params.get("highlight_states", []))
+            if bad or not codes:
+                out.append(Check("error", "Unknown or missing states: " + (", ".join(bad) if bad else "none chosen")))
+            else:
+                out.append(Check("ok", f"Highlights {', '.join(codes)}"))
+    if v.type == "blender":
         if not any(_P(c).exists() for c in [os.getenv("BLENDER_BIN", ""), *BLENDER_CANDIDATES]) and not shutil.which("blender"):
             out.append(Check("error", "Blender is not installed (brew install --cask blender)"))
+
+    if v.params.get("why") and v.type in ("stat", "chart", "animation", "blender"):
+        out.append(Check("ok", "Chosen automatically: " + str(v.params["why"])))
 
     # ---- text on screen
     if v.type == "text_card" or (v.type in ("photo", "video", "manual") and not asset_of(project, scene)):
@@ -223,6 +242,7 @@ def overview(
         sc, ts = sf.scene(sid), ts_by_id.get(sid)
         p = Part(scene=sc, key=part_key(target, sid), fingerprint=fingerprint(project, sc), timing_fp=timing_fingerprint(ts))
         p.checks = check_scene(project, sf, sc, target, ts, dups)
+        p.can_animate = sc.visual.type in ("photo", "video", "manual") and asset_of(project, sc) is None
         entry = _entry(qc, p.key)
         p.note = (entry.get("visual") or {}).get("note", "") or qc.get("redo", {}).get(p.key, {}).get("note", "")
         p.visual = _state(qc, p.key, "visual", p.fingerprint, bool(p.errors))

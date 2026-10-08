@@ -19,7 +19,7 @@ SOURCE_URL = "https://raw.githubusercontent.com/udit-001/india-maps-data/main/ge
 # other spellings people (and models) use
 ALIASES = {
     "OR": "OD", "TG": "TS", "UT": "UK", "UA": "UK", "CT": "CG", "DD": "DH", "DN": "DH", "DNH": "DH",
-    "JAMMUKASHMIR": "JK", "ORISSA": "OD", "UTTARANCHAL": "UK", "PONDICHERRY": "PY",
+    "JAMMUKASHMIR": "JK", "DILLI": "DL", "ORISSA": "OD", "UTTARANCHAL": "UK", "PONDICHERRY": "PY",
     "DADRANAGARHAVELI": "DH", "DAMANDIU": "DH", "DAMANDDIU": "DH",
     "ANDAMANNICOBAR": "AN", "ANDAMANNICOBARISLANDS": "AN", "NCTDELHI": "DL", "NEWDELHI": "DL",
 }
@@ -124,3 +124,34 @@ def build_simplified(data_dir: Path = DATA_DIR, out: Path = SIMPLE_FILE, log=pri
     out.write_text(json.dumps(result, separators=(",", ":")))
     log(f"india map: merged and simplified {len(result)} states -> {out.name} ({out.stat().st_size // 1024} KB)")
     return out
+
+
+def find_states(text: str) -> list[str]:
+    """States and UTs named in running text, in order of appearance.
+
+    Matches full names only (never the 2-letter codes), so "ka", "up", "or" or "as" in ordinary
+    sentences are not mistaken for Karnataka, Uttar Pradesh, Odisha or Assam.
+    """
+    tokens = re.findall(r"[A-Za-z&]+", text)
+    found: list[str] = []
+    i = 0
+    while i < len(tokens):
+        hit = None
+        for n in (4, 3, 2, 1):
+            if i + n > len(tokens):
+                continue
+            chunk = " ".join(tokens[i:i + n])
+            key = _key(chunk)
+            if n == 1 and len(chunk) < 4 and chunk.lower() != "goa":
+                continue
+            code = _BY_NAME.get(key) or (ALIASES.get(key) if len(key) >= 5 else None)
+            if code:
+                hit = (code, n)
+                break
+        if hit:
+            if hit[0] not in found:
+                found.append(hit[0])
+            i += hit[1]
+        else:
+            i += 1
+    return found

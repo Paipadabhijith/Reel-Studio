@@ -11,10 +11,11 @@ from pathlib import Path
 
 from pydantic import ValidationError
 
+from . import animation
 from .lib import india
 from .lib.schema import Scene, ScenesFile, dump_json, load_scenes
 
-VISUAL_TYPES = ("photo", "video", "chart", "stat", "blender", "manual", "text_card")
+VISUAL_TYPES = ("photo", "video", "auto", "animation", "title3d", "chart", "stat", "blender", "manual", "text_card")
 MOTIONS = ("slow-zoom-in", "slow-zoom-out", "pan-left", "pan-right")
 CAMERAS = ("top_down_tilt", "top_down", "orbit")
 CHART_KINDS = ("bar", "line", "pie")
@@ -69,13 +70,24 @@ def apply_form(sf: ScenesFile, sid: int, form) -> Scene:
     text = " ".join((form.get("text") or "").split())
     if not text:
         raise PlanError("the narration text can't be empty")
-    vtype = form.get("type") or old.visual.type
+    current = "title3d" if old.visual.type == "blender" and old.visual.template == animation.TITLE3D else old.visual.type
+    vtype = form.get("type") or current
     if vtype not in VISUAL_TYPES:
         raise PlanError(f"unknown visual type {vtype!r}")
 
+    if vtype == "auto":
+        # let the rule pick the engine and form from this scene's own text
+        base = old.model_copy(deep=True, update={"text": text, "emphasis": _csv(form.get("emphasis", ""))})
+        missing = [e for e in base.emphasis if e.lower() not in text.lower()]
+        if missing:
+            raise PlanError(f"emphasis words must appear in the text: {', '.join(missing)}")
+        animation.to_animation(base, "auto", sf)
+        sf.scenes[sf.scenes.index(old)] = base
+        return base
     v = old.visual.model_dump()
-    v["type"] = vtype
+    v["type"] = "blender" if vtype == "title3d" else vtype
     v["downgraded_from"] = None
+    v["on_missing"] = form.get("on_missing") if form.get("on_missing") in ("animate", "manual") else None
     for key in ("query", "prompt"):
         v[key] = (form.get(key) or "").strip() or None
     v["source"] = form.get("source") if form.get("source") in ("stock", "wikimedia") else None
@@ -109,7 +121,16 @@ def apply_form(sf: ScenesFile, sid: int, form) -> Scene:
         cam = form.get("camera") if form.get("camera") in CAMERAS else "top_down_tilt"
         params = {"highlight_states": codes, "camera": cam}
         v["template"] = "india_map"
-    if vtype != "blender":
+    elif vtype in ("animation", "title3d"):
+        headline = " ".join((form.get("headline") or "").split()) or animation.headline_for(old.model_copy(update={"text": text}))
+        subline = " ".join((form.get("subline") or "").split())
+        if vtype == "title3d":
+            params = {"headline": headline, "subline": subline}
+            v["template"] = animation.TITLE3D
+        else:
+            style = form.get("anim_style") if form.get("anim_style") in animation.STYLES else animation.STYLES[sid % len(animation.STYLES)]
+            params = {"style": style, "headline": headline, "subline": subline, "keywords": _csv(form.get("keywords", ""))[:5]}
+    if vtype not in ("blender", "title3d"):
         v["template"] = None
     v["params"] = params
 

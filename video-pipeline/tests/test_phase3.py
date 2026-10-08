@@ -73,10 +73,12 @@ def test_visual_props_for_animated_scenes(project_factory):
     chart = vp({"type": "chart", "params": {"kind": "bar", "labels": ["a", "b"], "values": [1, 2]}})
     assert chart["type"] == "chart" and chart["params"]["values"] == [1, 2]
     bad = vp({"type": "chart", "params": {"labels": ["a"], "values": [1, 2]}})
-    assert bad["type"] == "text_card" and "CHART" in bad["placeholder"]
+    assert bad["type"] == "animation" and "CHART" in bad["placeholder"]
+    kept = vp({"type": "chart", "params": {"labels": ["a"], "values": [1, 2]}, "fallback": "text_card"})
+    assert kept["type"] == "text_card", "a scene that asks for a text card keeps it"
     stat = vp({"type": "stat"}, overlay={"type": "stat", "value": "76%", "label": "turnout"})
     assert stat["type"] == "stat" and stat["params"] == {"value": "76%", "label": "turnout"}
-    assert vp({"type": "stat"})["type"] == "text_card"
+    assert vp({"type": "stat"})["type"] == "text_card" and vp({"type": "text_card"})["type"] == "text_card"
     blender = vp({"type": "blender", "template": "india_map", "params": {}})
     assert blender["type"] == "text_card" and "india_map" in blender["placeholder"]
     (proj / "build/blender").mkdir(parents=True, exist_ok=True)

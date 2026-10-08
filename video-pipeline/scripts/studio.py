@@ -180,7 +180,19 @@ def _videos(project: Path) -> list[dict]:
             from .lib.state import long_flow
 
             flow = long_flow(project, sf, t)
+        track = None
+        from . import music
+
+        mt = music.get(project, t)
+        if mt:
+            from dataclasses import asdict
+
+            track = asdict(mt)
+            track["credit"] = mt.credit
+        sample = f"build/parts/music_preview_{t.id}.m4a"
         out.append({
+            "music": track, "music_sample": sample if (project / sample).exists() else None,
+            "clean": clean_rel if (clean_rel := t.out.rsplit(".", 1)[0] + "_no_music.mp4") and (project / clean_rel).exists() else None,
             "flow": flow,
             "id": t.id, "label": t.label, "kind": t.kind, "audio": t.audio, "has_audio": audio.exists(),
             "audio_mtime": int(audio.stat().st_mtime) if audio.exists() else 0,
@@ -316,6 +328,7 @@ def create_app(projects_dir: Path = PROJECTS_DIR, runner: Runner | None = None) 
 
     @app.get("/p/<slug>")
     def project_page(slug: str):
+        from . import music as music_mod
         from .generate_script import parse_brief
 
         p = project(slug)
@@ -326,6 +339,7 @@ def create_app(projects_dir: Path = PROJECTS_DIR, runner: Runner | None = None) 
         return render_template(
             "project.html", slug=slug, path=str(p), steps=steps, next=next_step(steps),
             stage=stage_label(steps), brief=brief, articles=_articles(p), videos=_videos(p),
+            music_licenses=music_mod.LICENSES,
             prompt=prompt_path.read_text() if prompt_path.exists() else None,
             facts=(p / "script" / "facts.md").read_text() if (p / "script" / "facts.md").exists() else "",
             warnings=env_warnings(), jobs=[j.to_dict(tail=0) for j in jobs],
@@ -367,6 +381,81 @@ def create_app(projects_dir: Path = PROJECTS_DIR, runner: Runner | None = None) 
         if f.is_file():
             f.unlink()
         return flash_back(slug, "Article removed.", anchor="brief")
+
+    # ---- music (optional) --------------------------------------------
+
+    def _music_target(slug: str):
+        from .lib.targets import get_target
+
+        p = project(slug)
+        return p, get_target(load_scenes(p / "script" / "scenes.json"), request.form.get("video") or None)
+
+    def _music_args():
+        def num(key, default):
+            try:
+                return float(request.form.get(key, default))
+            except ValueError:
+                return default
+
+        from . import music
+
+        return dict(volume_db=num("volume_db", music.DEFAULT_DB), duck=request.form.get("duck") == "1",
+                    fade_s=num("fade_s", 1.5), clean_copy=request.form.get("clean_copy") == "1")
+
+    @app.post("/p/<slug>/music")
+    def music_add(slug: str):
+        from . import music
+
+        try:
+            p, target = _music_target(slug)
+        except ValueError as e:
+            return flash_back(slug, str(e), True, "music")
+        up = request.files.get("file")
+        if not up or not up.filename:
+            return flash_back(slug, "Choose the music file.", True, "music")
+        tmpdir = tempfile.mkdtemp()
+        try:
+            src = Path(tmpdir) / secure_filename(up.filename)
+            up.save(src)
+            track = music.set_track(p, target, src, title=request.form.get("title", "") or src.stem,
+                                    source=request.form.get("source", ""), license=request.form.get("license", ""),
+                                    url=request.form.get("url", ""), **_music_args())
+        except music.MusicError as e:
+            return flash_back(slug, f"Music not added: {e}", True, "music")
+        finally:
+            shutil.rmtree(tmpdir, ignore_errors=True)
+        return flash_back(slug, f"Added “{track.title}” to {target.label}. Press “Hear a sample” to check the volume.", anchor="music")
+
+    @app.post("/p/<slug>/music/settings")
+    def music_settings(slug: str):
+        from . import music
+
+        try:
+            p, target = _music_target(slug)
+            music.update_settings(p, target, **_music_args())
+        except (ValueError, music.MusicError) as e:
+            return flash_back(slug, str(e), True, "music")
+        return flash_back(slug, "Music settings saved.", anchor="music")
+
+    @app.post("/p/<slug>/music/clear")
+    def music_clear(slug: str):
+        from . import music
+
+        p, target = _music_target(slug)
+        music.clear(p, target)
+        (p / "build" / "parts" / f"music_preview_{target.id}.m4a").unlink(missing_ok=True)
+        return flash_back(slug, f"Music removed from {target.label}. It will be voice only.", anchor="music")
+
+    @app.post("/p/<slug>/music/preview")
+    def music_preview(slug: str):
+        from . import music
+
+        try:
+            p, target = _music_target(slug)
+            music.preview(p, target)
+        except (ValueError, music.MusicError) as e:
+            return flash_back(slug, str(e), True, "music")
+        return flash_back(slug, "Sample ready: press play under the track.", anchor="music")
 
     @app.post("/p/<slug>/facts/checked")
     def facts_checked(slug: str):

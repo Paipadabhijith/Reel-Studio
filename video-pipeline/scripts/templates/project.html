@@ -198,7 +198,8 @@ details > summary { cursor: pointer; color: var(--accent); margin-top: 10px; }
       <form method="post" action="{{ url_for('run_step', slug=slug, step='fetch') }}"><input type="hidden" name="force" value="1"><button title="Re-download every auto-fetched scene">Refetch all</button></form>
       <a class="btn" href="{{ url_for('review.index', slug=slug) }}">Open scene review</a>
     </div>
-    <p class="muted" style="font-size:13px;margin:8px 0 0">Sources: Pexels, Pixabay, Unsplash, Wikimedia Commons only. Hand-placed files are never replaced.</p>
+    <p class="muted" style="font-size:13px;margin:8px 0 0">Sources: Pexels, Pixabay, Unsplash, Wikimedia Commons only. Hand-placed files are never replaced.
+      <strong>If no relevant picture is found, the scene becomes an animation</strong> chosen from its own words: figures, lists and timelines become animated infographics (Remotion); places become a 3D map and scenes that need motion a 3D title (Blender). The reason is shown on each scene; change it in the plan, or choose “ask me for a file”.</p>
     {% endif %}
     {{ outputs(S.fetch) }}
   </section>
@@ -266,6 +267,64 @@ details > summary { cursor: pointer; color: var(--accent); margin-top: 10px; }
     {{ outputs(S.record) }}
   </section>
 
+  {# ---------------- music (optional) ---------------- #}
+  <section class="card step {{ S.music.status }}" id="music">
+    {{ head(S.music, N.music) }}
+    {% if S.music.status != 'blocked' %}
+    {% for v in videos %}
+    <div style="margin-top:14px; padding-top:12px; border-top:1px solid var(--line)">
+      <div class="row"><strong>{{ v.label }}</strong>
+        {% if v.music %}<span class="pill done">music on</span>{% else %}<span class="pill">voice only</span>{% endif %}</div>
+      {% if v.music %}
+        <div style="margin-top:8px"><strong>{{ v.music.title }}</strong> <span class="muted">· {{ v.music.source }} · {{ v.music.license }} · {{ '%.0f'|format(v.music.duration_s) }} s (loops to fit)</span></div>
+        <audio controls preload="metadata" style="margin-top:6px" src="{{ file_url(slug, v.music.file) }}"></audio>
+        <form method="post" action="{{ url_for('music_settings', slug=slug) }}" style="margin-top:8px">
+          <input type="hidden" name="video" value="{{ v.id }}">
+          <div class="grid2">
+            <div><label>Volume under your voice: <span id="vol-{{ v.id }}">{{ v.music.volume_db }} dB</span></label>
+              <input type="range" name="volume_db" min="-40" max="-6" step="1" value="{{ v.music.volume_db }}" oninput="document.getElementById('vol-{{ v.id }}').textContent = this.value + ' dB'">
+              <div class="muted" style="font-size:12px">Quieter ← → louder. Around -22 sits well under speech.</div></div>
+            <div><label>Fade in/out (seconds)</label><input type="number" name="fade_s" min="0" max="6" step="0.5" value="{{ v.music.fade_s }}"></div>
+          </div>
+          <label style="display:flex; gap:8px; align-items:center"><input type="checkbox" name="duck" value="1" style="width:auto" {{ 'checked' if v.music.duck }}> Lower the music while I speak</label>
+          {% if v.kind == 'reel' %}<label style="display:flex; gap:8px; align-items:center"><input type="checkbox" name="clean_copy" value="1" style="width:auto" {{ 'checked' if v.music.clean_copy }}> Also keep a voice-only copy (to add Instagram's own music in the app)</label>{% endif %}
+          <div class="row" style="margin-top:8px"><button class="primary">Save settings</button></div>
+        </form>
+        <div class="row" style="margin-top:8px">
+          <form method="post" action="{{ url_for('music_preview', slug=slug) }}" style="margin:0"><input type="hidden" name="video" value="{{ v.id }}"><button>Hear a sample (first 25 s)</button></form>
+          <form method="post" action="{{ url_for('music_clear', slug=slug) }}" style="margin:0" onsubmit="return confirm('Remove the music from this video?')"><input type="hidden" name="video" value="{{ v.id }}"><button>Remove music</button></form>
+        </div>
+        {% if v.music_sample %}<audio controls preload="metadata" style="margin-top:8px" src="{{ file_url(slug, v.music_sample) }}"></audio>{% endif %}
+        <p class="muted" style="font-size:12px;margin:8px 0 0">Credit for the description: {{ v.music.credit }}</p>
+      {% else %}
+        <details><summary>Add a music track</summary>
+        <form method="post" action="{{ url_for('music_add', slug=slug) }}" enctype="multipart/form-data">
+          <input type="hidden" name="video" value="{{ v.id }}">
+          <label>Music file (mp3, m4a, wav…)</label><input type="file" name="file" accept="audio/*,.mp3,.m4a,.wav,.aiff,.flac,.ogg" required>
+          <div class="grid2">
+            <div><label>Track title</label><input name="title" placeholder="Calm Morning"></div>
+            <div><label>Where it came from (required)</label><input name="source" placeholder="Pixabay Music / artist name" required></div>
+            <div><label>Licence (required)</label><select name="license" required><option value="">choose…</option>
+              {% for k, label in music_licenses.items() %}<option value="{{ k }}">{{ label }}</option>{% endfor %}</select></div>
+            <div><label>Link to the track (optional)</label><input name="url" placeholder="https://…"></div>
+          </div>
+          <div class="grid2">
+            <div><label>Volume under your voice: <span id="volnew-{{ v.id }}">-22 dB</span></label>
+              <input type="range" name="volume_db" min="-40" max="-6" step="1" value="-22" oninput="document.getElementById('volnew-{{ v.id }}').textContent = this.value + ' dB'"></div>
+            <div><label>Fade in/out (seconds)</label><input type="number" name="fade_s" min="0" max="6" step="0.5" value="1.5"></div>
+          </div>
+          <label style="display:flex; gap:8px; align-items:center"><input type="checkbox" name="duck" value="1" style="width:auto" checked> Lower the music while I speak</label>
+          {% if v.kind == 'reel' %}<label style="display:flex; gap:8px; align-items:center"><input type="checkbox" name="clean_copy" value="1" style="width:auto" checked> Also keep a voice-only copy (to add Instagram's own music in the app)</label>{% endif %}
+          <div class="row" style="margin-top:10px"><button class="primary">Add music</button></div>
+        </form></details>
+      {% endif %}
+    </div>
+    {% endfor %}
+    <p class="muted" style="font-size:13px;margin:12px 0 0">Optional. Only use music you have the right to use: free-to-use libraries (Pixabay Music, YouTube Audio Library, Free Music Archive), Creative Commons tracks with credit, or your own. Commercial songs can get your video muted or blocked. Rendering picks the music up automatically; the next render is the only thing that changes.</p>
+    {{ outputs(S.music) }}
+    {% endif %}
+  </section>
+
   {# ---------------- final ---------------- #}
   <section class="card step {{ S.final.status }}" id="final">
     {{ head(S.final, N.final) }}
@@ -300,6 +359,7 @@ details > summary { cursor: pointer; color: var(--accent); margin-top: 10px; }
       <p class="muted" style="font-size:13px;margin:6px 0 0">Expect roughly 5 frames per second on an M1: a 10-minute video is about an hour. Unchanged scenes are never rendered twice.</p>
       {% endif %}
 
+      {% if v.clean %}<div class="out" style="margin-top:8px">Voice-only copy for Instagram's music: <code>{{ path }}/{{ v.clean }}</code> <a href="{{ file_url(slug, v.clean) }}" target="_blank">open</a></div>{% endif %}
       {% if v.final %}<div class="videos"><video controls preload="metadata" {{ 'style="width:100%;max-width:640px;aspect-ratio:16/9"' | safe if v.kind == 'long' else '' }} src="{{ file_url(slug, v.final) }}"></video></div>{% endif %}
     </div>
     {% endfor %}
