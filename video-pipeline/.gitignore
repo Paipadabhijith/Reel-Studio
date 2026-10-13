@@ -11,3 +11,9 @@ projects/*/out/
 # generated on first use: downloaded boundary data and the .blend built from it
 blender/data/
 blender/templates/*.blend
+# project media is re-fetchable (stock) or personal (your recordings): keep only the project text in git.
+# files committed before these lines (the demo's first images and narration) stay tracked.
+projects/*/assets/images/
+projects/*/assets/videos/
+projects/*/audio/
+*.bak

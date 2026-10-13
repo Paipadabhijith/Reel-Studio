@@ -14,7 +14,7 @@ def pexels_photo(alt, url_slug, w=2000, h=3000):
             "photographer": "Asha", "src": {"original": f"https://images.pexels.com/{url_slug}.jpeg"}}
 
 
-def make_transport(pexels=(), unsplash=(), wikimedia=None, calls=None, pixabay=(), pixabay_videos=(), pixabay_status=200):
+def make_transport(pexels=(), unsplash=(), wikimedia=None, calls=None, pixabay=(), pixabay_videos=(), pixabay_status=200, coverr=(), openverse=(), nasa=None, archive=None):
     calls = calls if calls is not None else []
 
     def handler(req: httpx.Request) -> httpx.Response:
@@ -30,6 +30,25 @@ def make_transport(pexels=(), unsplash=(), wikimedia=None, calls=None, pixabay=(
             return httpx.Response(pixabay_status, json={"hits": list(pixabay)})
         if host == "pixabay.com" and req.url.path == "/api/videos/":
             return httpx.Response(pixabay_status, json={"hits": list(pixabay_videos)})
+        if host == "api.coverr.co" and req.url.path == "/videos":
+            assert req.headers["authorization"] == "Bearer test-coverr-secret"
+            return httpx.Response(200, json={"hits": list(coverr)})
+        if host == "api.openverse.org" and req.url.path == "/v1/images/":
+            return httpx.Response(200, json={"results": list(openverse)})
+        if host == "images-api.nasa.gov" and nasa:
+            return httpx.Response(200, json={"collection": {"items": nasa["items"]}})
+        if host == "images-assets.nasa.gov" and req.url.path.endswith("collection.json"):
+            return httpx.Response(200, json=nasa["manifest"])
+        if host == "images-assets.nasa.gov":
+            return httpx.Response(200, content=JPEG)
+        if host == "archive.org" and req.url.path == "/advancedsearch.php" and archive:
+            return httpx.Response(200, json={"response": {"docs": archive["docs"]}})
+        if host == "archive.org" and req.url.path.startswith("/metadata/") and archive:
+            return httpx.Response(200, json={"files": archive["files"]})
+        if host == "archive.org" and req.url.path.startswith("/download/"):
+            return httpx.Response(200, content=JPEG)
+        if host in ("live.staticflickr.com", "cdn.coverr.co"):
+            return httpx.Response(200, content=JPEG)
         if host == "commons.wikimedia.org":
             return httpx.Response(200, json=wikimedia or {})
         if host in ("images.pexels.com", "images.unsplash.com", "upload.wikimedia.org", "cdn.pixabay.com"):
@@ -182,6 +201,26 @@ def test_pixabay_video(project_factory):
     assert (proj / "assets/videos/scene_01.mp4").exists()
 
 
+def coverr_hit(title, tags, ai=False):
+    slug = title.lower().replace(" ", "-")
+    return {"title": title, "description": "", "tags": tags, "duration": "10.5", "max_width": 1920, "max_height": 1080,
+            "is_vertical": False, "is_ai_generated": ai, "base_filename": f"coverr-{slug}",
+            "urls": {"mp4": f"https://cdn.coverr.co/videos/coverr-{slug}/1080p.mp4"}}
+
+
+def test_coverr_video_used_before_pixabay_and_skips_ai_clips(project_factory):
+    proj = project_factory([{"id": 1, "text": "rain on a street at night here", "visual": {
+        "type": "video", "query": "rain street night", "orientation": "landscape"}}])
+    coverr = [coverr_hit("AI rain street night", ["rain", "street", "night"], ai=True),
+              coverr_hit("Rain on a street at night", ["rain", "street", "night"])]
+    http, calls = make_transport(coverr=coverr)
+    assert F.fetch(proj, http=http, log=lambda *_: None) == {"fetched": 1}
+    assert any(c.endswith("rain-on-a-street-at-night/1080p.mp4") for c in calls)
+    assert not any("ai-rain" in c for c in calls) and not any("pixabay.com/api/videos" in c for c in calls)
+    credit = json.loads((proj / "assets/credits.json").read_text())[0]
+    assert credit["source"] == "Coverr" and (proj / "assets/videos/scene_01.mp4").exists()
+
+
 def test_api_key_never_reaches_the_log(project_factory):
     proj = project_factory([photo_scene(1, "monsoon rain india")])
     http, _ = make_transport(pixabay_status=500)
@@ -189,3 +228,94 @@ def test_api_key_never_reaches_the_log(project_factory):
     F.fetch(proj, http=http, log=lines.append)
     joined = "\n".join(lines)
     assert "pixabay" in joined.lower() and "test-pixabay-secret" not in joined and "key=***" in joined
+
+
+def test_openverse_keyless_fallback_keeps_licence_and_skips_noncommercial(project_factory):
+    proj = project_factory([photo_scene(1, "farmers working paddy field", orientation="landscape")])
+    hit = {"title": "Farmers working paddy field", "url": "https://live.staticflickr.com/1/a.jpg",
+           "foreign_landing_url": "https://www.flickr.com/photos/1/a", "creator": "Neo", "license": "by",
+           "license_version": "2.0", "width": 2400, "height": 1600, "source": "flickr", "filetype": "jpg",
+           "tags": [{"name": "farmers"}, {"name": "paddy"}]}
+    nc = dict(hit, title="Farmers working paddy field NC", license="by-nc", url="https://live.staticflickr.com/1/nc.jpg")
+    http, calls = make_transport(openverse=[nc, hit])
+    assert F.fetch(proj, http=http, log=lambda *_: None) == {"fetched": 1}
+    credit = json.loads((proj / "assets/credits.json").read_text())[0]
+    assert credit["source"] == "Openverse" and "CC BY 2.0" in credit["attribution_text"] and "Neo" in credit["attribution_text"]
+    assert not any(c.endswith("nc.jpg") for c in calls)
+
+
+def _nasa(kind, nid, title, files):
+    items = [{"href": f"https://images-assets.nasa.gov/{kind}/{nid}/collection.json",
+              "data": [{"title": title, "description": "", "keywords": title.split(), "nasa_id": nid,
+                        "photographer": "Bill"}]}]
+    return {"items": items, "manifest": files}
+
+
+def test_nasa_photo_picks_orig_and_credits_nasa(project_factory):
+    proj = project_factory([photo_scene(1, "apollo moon landing", orientation="landscape")])
+    base = "http://images-assets.nasa.gov/image/a11/a11"
+    nasa = _nasa("image", "a11", "Apollo moon landing", [f"{base}~thumb.jpg", f"{base}~large.jpg", f"{base}~orig.jpg"])
+    http, calls = make_transport(nasa=nasa)
+    assert F.fetch(proj, http=http, log=lambda *_: None) == {"fetched": 1}
+    assert any(c == "https://images-assets.nasa.gov/image/a11/a11~orig.jpg" for c in calls), "https, full resolution"
+    credit = json.loads((proj / "assets/credits.json").read_text())[0]
+    assert credit["source"] == "NASA" and "NASA/Bill" in credit["attribution_text"]
+
+
+def test_nasa_video_uses_large_mp4(project_factory):
+    proj = project_factory([{"id": 1, "text": "a rocket launch lifts off here", "visual": {
+        "type": "video", "query": "rocket launch", "orientation": "landscape"}}])
+    base = "http://images-assets.nasa.gov/video/r1/r1"
+    nasa = _nasa("video", "r1", "Rocket launch", [f"{base}~orig.mp4", f"{base}~large.mp4", f"{base}.vtt"])
+    http, calls = make_transport(nasa=nasa)
+    assert F.fetch(proj, http=http, log=lambda *_: None) == {"fetched": 1}
+    assert any(c.endswith("r1~large.mp4") for c in calls) and not any(c.endswith("~orig.mp4") for c in calls)
+    assert (proj / "assets/videos/scene_01.mp4").exists()
+
+
+def test_internet_archive_video_skips_huge_files(project_factory):
+    proj = project_factory([{"id": 1, "text": "old film of a steam train here", "visual": {
+        "type": "video", "query": "steam train", "orientation": "landscape"}}])
+    archive = {"docs": [{"identifier": "train-1", "title": "Steam train", "subject": ["steam", "train"],
+                         "creator": "Railways"}],
+               "files": [{"name": "big.mp4", "format": "h.264", "size": str(900 * 1024 * 1024), "width": "1920",
+                          "height": "1080", "length": "600"},
+                         {"name": "small file.mp4", "format": "h.264", "size": str(40 * 1024 * 1024), "width": "1280",
+                          "height": "720", "length": "600"}]}
+    http, calls = make_transport(archive=archive)
+    assert F.fetch(proj, http=http, log=lambda *_: None) == {"fetched": 1}
+    assert any(c.endswith("/train-1/small%20file.mp4") for c in calls) and not any(c.endswith("big.mp4") for c in calls)
+    credit = json.loads((proj / "assets/credits.json").read_text())[0]
+    assert credit["source"] == "Internet Archive"
+    assert "licenseurl:*publicdomain*" in next(c for c in calls if "advancedsearch" in c).replace("%2A", "*").replace("%3A", ":")
+
+
+def test_shape_words_do_not_count_as_search_words():
+    assert F.relevance("crowd cheering stadium landscape", "crowd cheering stadium") == 1.0
+
+
+def test_retry_missing_only_searches_scenes_that_found_nothing(project_factory):
+    proj = project_factory([
+        {"id": 1, "text": "old steam train", "visual": {"type": "manual", "downgraded_from": "video",
+         "query": "steam train", "orientation": "landscape", "prompt": "Auto-fetch found nothing relevant. Wanted: x"}},
+        {"id": 2, "text": "a crowd", "visual": {"type": "manual", "downgraded_from": "photo",
+         "query": "zzz nothing", "prompt": "Auto-fetch found nothing relevant. Wanted: zzz nothing"}},
+        {"id": 3, "text": "a screenshot", "visual": {"type": "manual", "prompt": "press release"}},
+        photo_scene(4, "monsoon rain india"),
+    ])
+    (proj / "assets/images/scene_04.jpg").write_bytes(b"mine")
+    assert [s.id for s in F.retryable(load_scenes(proj / "script/scenes.json"), proj)] == [1, 2]
+    archive = {"docs": [{"identifier": "train-1", "title": "Steam train", "subject": ["steam", "train"]}],
+               "files": [{"name": "t.mp4", "format": "h.264", "size": "1000", "width": "1280", "height": "720",
+                          "length": "60"}]}
+    http, calls = make_transport(archive=archive)
+    assert F.retry_missing(proj, http=http, log=lambda *_: None) == {"fetched": 1, "still missing": 1}
+    sf = load_scenes(proj / "script/scenes.json")
+    one, two, three = sf.scenes[0].visual, sf.scenes[1].visual, sf.scenes[2].visual
+    assert one.type == "video" and one.downgraded_from is None and one.prompt is None
+    assert (proj / "assets/videos/scene_01.mp4").exists()
+    assert two.type == "manual" and two.downgraded_from == "photo" and two.prompt.startswith("Auto-fetch")
+    assert three.type == "manual" and three.prompt == "press release", "script-asked manual scenes are left alone"
+    assert (proj / "assets/images/scene_04.jpg").read_bytes() == b"mine", "existing visuals are never touched"
+    readme = (proj / "inbox/README.txt").read_text()
+    assert "scene02" in readme and "scene01" not in readme

@@ -5,7 +5,9 @@ import json
 from pathlib import Path
 from typing import Literal
 
-from pydantic import BaseModel, Field, model_validator
+import re
+
+from pydantic import BaseModel, Field, field_validator, model_validator
 
 VisualType = Literal["photo", "video", "chart", "text_card", "stat", "manual", "blender", "animation"]
 Orientation = Literal["portrait", "landscape", "square"]
@@ -24,6 +26,44 @@ class Visual(BaseModel):
     source: Literal["stock", "wikimedia"] | None = None  # where fetch looks first
     downgraded_from: VisualType | None = None  # set when fetch found nothing and the scene was changed to manual/animation
     on_missing: Literal["animate", "manual"] | None = None  # no picture found: make an animation (default) or ask for a file
+
+
+Pack = Literal["broadcast", "archival", "editorial"]
+PACKS: tuple[str, ...] = ("broadcast", "archival", "editorial")
+ENERGIES: tuple[str, ...] = ("calm", "steady", "punchy")
+GRADES: tuple[str, ...] = ("neutral", "warm", "cool", "mono", "sepia")
+_HEX = re.compile(r"^#?([0-9a-fA-F]{6})$")
+
+
+class Direction(BaseModel):
+    """How the whole video looks and moves, decided from the topic's vibe before any scene is written."""
+    pack: Pack = "editorial"
+    vibe: str = ""                       # one line: what it should feel like
+    energy: Literal["calm", "steady", "punchy"] = "steady"
+    grade: Literal["neutral", "warm", "cool", "mono", "sepia"] = "neutral"
+    accent: str | None = None            # "#RRGGBB"; None keeps the pack's own colour
+    accent2: str | None = None
+    motifs: list[str] = Field(default_factory=list)
+    avoid: list[str] = Field(default_factory=list)
+
+    @field_validator("accent", "accent2", mode="before")
+    @classmethod
+    def _hex(cls, v):
+        """Model output: a bad colour falls back to the pack's colour instead of failing the whole script."""
+        if v is None:
+            return None
+        m = _HEX.match(str(v).strip())
+        return f"#{m.group(1).upper()}" if m else None
+
+
+class Packaging(BaseModel):
+    """What goes around one finished video: written with the script, assembled by `reel package`."""
+    video: str                                       # a reel id, or "long"
+    titles: list[str] = Field(default_factory=list)
+    thumbnail_text: str = ""                         # 1-3 words, never repeating the title
+    description_lead: str = ""                       # the two lines above "...more"
+    hashtags: list[str] = Field(default_factory=list)
+    search_queries: list[str] = Field(default_factory=list)
 
 
 class Overlay(BaseModel):
@@ -60,6 +100,8 @@ class ScenesFile(BaseModel):
     format: Literal["reel", "long", "both"] = "both"
     brand: str = "default"
     language: Literal["en", "hi", "hinglish"] = "hinglish"
+    direction: Direction | None = None
+    packaging: list[Packaging] = Field(default_factory=list)
     long_form: LongForm | None = None
     reels: list[Reel] = Field(default_factory=list)
     scenes: list[Scene]

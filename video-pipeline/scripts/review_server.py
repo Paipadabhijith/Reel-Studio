@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 import json
-import os
 import shutil
 import tempfile
 from pathlib import Path
@@ -122,12 +121,6 @@ def refetch(slug: str, sid: int):
     if not query:
         return _back(slug, "Enter search words to refetch.", True, sid)
     v = scene.visual
-    wants_video = request.form.get("type") == "video"
-    wants_stock = request.form.get("source") != "wikimedia" or wants_video
-    keys = ("PEXELS_API_KEY", "PIXABAY_API_KEY") if wants_video else fetch_assets.STOCK_KEYS
-    if wants_stock and not any(os.getenv(k) for k in keys):
-        return _back(slug, "No stock API key in .env for this search (videos need Pexels or Pixabay). "
-                           "Add a key, or pick 'wikimedia' for photos.", True, sid)
     v.type = request.form.get("type") if request.form.get("type") in ("photo", "video") else "photo"
     v.source = request.form.get("source") if request.form.get("source") in ("stock", "wikimedia") else "stock"
     v.query, v.downgraded_from = query, None

@@ -1,0 +1,42 @@
+[
+  {
+    "scene_id": 3,
+    "source": "Coverr",
+    "license": "Coverr License",
+    "url": "https://coverr.co/videos/coverr-capturing-selfies-outdoors",
+    "attribution_text": "Video from Coverr: Close-Up of a Young Woman Taking Selfies Outdoors",
+    "added_by": "fetch"
+  },
+  {
+    "scene_id": 5,
+    "source": "Pixabay",
+    "license": "Pixabay Content License",
+    "url": "https://pixabay.com/photos/woman-model-portrait-blue-outfit-6190487/",
+    "attribution_text": "Image by Sunriseforever from Pixabay",
+    "added_by": "fetch"
+  },
+  {
+    "scene_id": 7,
+    "source": "Pixabay",
+    "license": "Pixabay Content License",
+    "url": "https://pixabay.com/videos/id-1307/",
+    "attribution_text": "Video by Vimeo-Free-Videos from Pixabay",
+    "added_by": "fetch"
+  },
+  {
+    "scene_id": 11,
+    "source": "Pixabay",
+    "license": "Pixabay Content License",
+    "url": "https://pixabay.com/videos/id-36951/",
+    "attribution_text": "Video by tomalauphi from Pixabay",
+    "added_by": "fetch"
+  },
+  {
+    "scene_id": 13,
+    "source": "Pixabay",
+    "license": "Pixabay Content License",
+    "url": "https://pixabay.com/videos/id-19799/",
+    "attribution_text": "Video by Prettysleepy from Pixabay",
+    "added_by": "fetch"
+  }
+]

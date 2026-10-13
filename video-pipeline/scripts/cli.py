@@ -134,12 +134,13 @@ def fetch(
     slug: str,
     scene: list[int] = typer.Option(None, "--scene", help="Only these scene ids (repeatable)"),
     force: bool = typer.Option(False, help="Re-download even if an asset exists"),
+    retry_missing: bool = typer.Option(False, help="Only search again for scenes an earlier fetch moved to the inbox"),
 ):
-    """Auto-fetch visuals (Pexels, Pixabay, Unsplash, Wikimedia) and list manual gaps."""
-    from .fetch_assets import fetch as run
+    """Auto-fetch visuals (Pexels, Pixabay, Coverr, Unsplash, Openverse, NASA, Internet Archive, Wikimedia) and list manual gaps."""
+    from .fetch_assets import fetch as run, retry_missing as retry
 
     proj = project_dir(slug)
-    summary = run(proj, only=scene or None, force=force, log=_log)
+    summary = retry(proj, log=_log) if retry_missing else run(proj, only=scene or None, force=force, log=_log)
     _log("fetch: " + ", ".join(f"{v} {k}" for k, v in sorted(summary.items())))
 
 
@@ -241,7 +242,23 @@ def _stub(name: str, phase: int) -> None:
     app.command(name, help=f"(Phase {phase})")(cmd)
 
 
-for _name, _phase in [("package", 4), ("publish", 4)]:
+@app.command()
+def package(slug: str, video: str = typer.Option(None, "--video", "-v", help="One video; default: every rendered video")):
+    """Titles, thumbnail text, description, chapters, credits and hashtags for each rendered video (out/*_package.md)."""
+    from .lib.targets import get_target, list_targets
+    from .package import write
+
+    proj = project_dir(slug)
+    sf = load_scenes(proj / "script" / "scenes.json")
+    targets = [get_target(sf, video)] if video else [t for t in list_targets(sf) if (proj / t.out).exists()]
+    if not targets:
+        _log("package: no rendered video yet; run `reel final` first")
+        raise typer.Exit(1)
+    for t in targets:
+        write(proj, sf, t, log=_log)
+
+
+for _name, _phase in [("publish", 4)]:
     _stub(_name, _phase)
 
 if __name__ == "__main__":

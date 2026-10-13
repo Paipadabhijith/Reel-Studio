@@ -1,0 +1,52 @@
+SOURCE: https://www.youtube.com/watch?v=NU3iOitOSgQ
+VIA: youtube
+
+TITLE: 2026 Nobel Prize in Chemistry Explained: How Chemistry Amplifies Chirality!
+
+CHANNEL: RojasLab
+
+PUBLISHED: 2026-10-07
+
+DESCRIPTION:
+Master chemistry with ChemCore! Practice AP, General, and Organic Chemistry with exam-style questions and instant feedback: https://www.chemcore.app
+
+The 2026 Nobel Prize in Chemistry has been awarded to Henri Kagan and Kenso Soai for their groundbreaking work involving nonlinear effects and autocatalysis in asymmetric organic synthesis.
+So what does that actually mean?
+
+In this video, I break down the chemistry behind the 2026 Chemistry Nobel Prize, starting with chirality, enantiomers, and asymmetric synthesis before exploring Kagan’s nonlinear effect and the remarkable Soai reaction.
+
+The chemistry gets wild: a tiny preference for one enantiomer can be amplified through asymmetric autocatalysis, eventually producing an overwhelmingly enantioenriched product. In other words, the molecules being produced can help make more of themselves—and amplify their own handedness in the process.
+
+We’ll explore why this matters for stereochemistry and asymmetric synthesis, how nonlinear effects arise, what makes the Soai reaction so unusual, and how this chemistry may help us understand how a chemically symmetric world could ultimately produce the molecular handedness we see throughout biology.
+
+And yes...I got my Nobel prediction wrong. 😂 After correctly predicting MOFs last year, my perfect record is officially over. But after digging into the winning chemistry, I understand why this work was recognized.
+
+⏱️ TIMESTAMPS
+0:00 2026 Nobel Prize in Chemistry: Kagan & Soai
+0:16 Chirality & Enantiomers Explained
+1:20 Enantioselective & Asymmetric Synthesis
+1:50 Henri Kagan & Nonlinear Effects
+2:10 ChemCore
+2:23 How Nonlinear Effects Work
+2:39 Asymmetric Amplification & Autocatalysis
+2:53 Kenso Soai & Asymmetric Autocatalysis
+2:57 The Soai Reaction Explained
+3:24 How Autocatalysis Amplifies Chirality
+4:05 Why This Chemistry Won the Nobel Prize
+4:23 Kagan’s Nonlinear Effects & Chiral Amplification
+4:40 Soai Reaction: Self-Amplifying Chirality
+4:51 Homochirality & the Chemistry of Life
+5:13 Why I Think the Nobel Prize Makes Sense
+5:23 My 2026 Nobel Prize Prediction Was Wrong
+6:10 Why Predicting the Chemistry Nobel Is So Hard
+6:22 Who Will Win the 2027 Nobel Prize in Chemistry?
+
+Who do you think will win the 2027 Nobel Prize in Chemistry? Drop your prediction in the comments!
+
+Subscribe to RojasLab for more chemistry lessons, organic chemistry, mechanisms, and explanations of the science making headlines.
+Master chemistry with more lessons from RojasLab + practice on ChemCore!
+
+#NobelPrize #NobelPrize2026 #Chemistry #OrganicChemistry #AsymmetricSynthesis
+
+TRANSCRIPT (auto-captions, ar-orig; machine captions can mishear names and numbers):
+لم أتوقع هذا. تم الإعلان للتو عن جائزة نوبل في الكيمياء لعام 2026، وقد مُنحت لهنري كاغان وهينز سواى لعملهما المتعلق بالتأثيرات غير الخطية والتحفيز الذاتي في التخليق غير المتماثل. وهذا الأمر رائع حقاً. كما تعلم، هناك جزيئات يمكنك رسمها، وإذا أخذت في الاعتبار بنيتها ثلاثية الأبعاد، ورسمت هذه الجزيئات باستخدام خطوط متقطعة وخطوط سميكة للإشارة إلى ذلك، على سبيل المثال، الخط المتقطع يتجه إلى داخل الشاشة، والخط السميك يبرز نحوك. يمكنك في الواقع رسم هذه الجزيئات وتوضيح بنيتها ثلاثية الأبعاد. وإذا وضعت مرآة أمامها، فافترض وجود مرآة مثالية، يمكنك رسم الصورة المرآتية لهذا الهيكل. وإذا قمت برسم الصورة المرآتية لهذا الهيكل ، في هذه الحالة تحديداً، ستجد أنها صور غير قابلة للتطابق . وهذا يعني أنك لا تستطيع وضعها فوق بعضها البعض. ويمكنك التفكير في هذا الأمر كما هو الحال مع يدك اليسرى ويدك اليمنى. لاحظ أنها صور مرآتية لبعضها البعض. ومع ذلك ، لا يمكننا في الواقع وضعهما فوق بعضهما البعض. في الواقع، لهذه الجزيئات اسم خاص في الكيمياء، وهي تُعرف باسم المتصاوغات المرآتية. وما هو رائع هو وجود كيميائيين، مثل الحائزين على هذه الجائزة، اكتشفوا طرقاً لتخليقها مع تفضيل أحدهما على الآخر. على سبيل المثال، مثال جيد على ذلك هو إذا قمت بإنتاج 99%من أحد المتصاوغات مقارنة بـ 1%فقط من المتصاوغ الآخر. وهذا يختلف عن اتباع مسار تخليق لا يمنحك أي نوع من التحديد، بل يمنحك خليطاً بنسبة 50/50. في الواقع، لا تعمل البيولوجيا بهذه الطريقة على الإطلاق. حتى الحياة البشرية تعتمد على حقيقة القدرة على تكوين مراكز فراغية محددة جداً في تطور مثل الأحماض الأمينية في جسمك. وعند التفكير في هذا التخليق الانتقائي للمتصاوغات ، هنا يبدأ عمل هنري كاغان في التألق حقاً. لقد أظهر أنه باستخدام محفز غير متماثل، يمكنك إجراء هذه التفاعلات مع تفضيل أحد المتصاوغين على الآخر. في الواقع، لقد أظهر أيضاً أنه يمكنك الحصول على تأثير غير خطي سلبي. وبسرعة، إذا كنت تدرس الكيمياء، فقد أنشأت تطبيقاً يسمى Chem Core ويمكنك العثور على رابط في الوصف. إنه في الأساس تطبيق تدريبي لمساعدتك على إتقان الكيمياء العامة أو العضوية للمستوى المتقدم. والأهم من ذلك، أن هذا ليس سحراً. أحد أسباب حدوث سلوك غير خطي هو أن جزيئات المحفز لا تعمل بالضرورة بشكل مستقل. يمكنها أن ترتبط مع بعضها البعض. يمكن للتركيبات متماثلة اليد ومختلفة اليد أن تمتلك أنشطة مختلفة. يطرح تأثير كاجان غير الخطي احتمالية رائعة. ماذا لو لم يقتصر إنتاج ذلك المنتج على إظهار نتائج التضخيم غير المتماثل فحسب؟ ماذا لو شارك بالفعل في إنتاج ذلك المتصاوغ المرآتي ودفعه؟ بمعنى آخر، ماذا لو كان بإمكانه المساعدة في صنع المزيد من نفسه؟ وهنا يأتي دور عمل هين سواي عندما يتعلق الأمر بالتحفيز الذاتي. إليك تفاعل سواي. يتفاعل ألدهيد يحتوي على بيريميدين مع ثنائي أيزوبروبيل الزنك لتكوين كحول ثانوي كيرالي. هذه كيمياء عضوية عادية بالفعل. والأمر الاستثنائي هو ما يحدث بعد ذلك. يشارك ناتج التفاعل في تكوين المحفز الذي يسرع إنتاج المزيد من نفس المنتج. لذا، مع استمرار التفاعل، أنت لا تصنع المنتج فحسب، بل تصنع المزيد من المحفز أيضاً. وهذا هو التحفيز الذاتي. وهذا الجزء مذهل حقاً. تخيل تفاعلاً تشكل فيه متصاوغين مرآتيين مختلفين. لنسمهما R و S. ولنفترض أن التفاعل يبدأ بوجود تفضيل طفيف لإنتاج R، لنقل 51%مقابل 49%. حسناً، يتبين أنه بمرور الوقت، وبفضل آلية التحفيز الذاتي تلك، يمكنك دفع هذا التفاوت أكثر حتى تصل إلى 99%مقابل 1%. وذلك لأنه بمجرد خلق المتصاوغ المرآتي السائد، فإنه يدفع نفسه لإنتاج المزيد والمزيد منه حتى تحصل في النهاية على نقاء متصاوغ مرآتي. الآن، فهم الكيمياء شيء، ولكن هناك سؤال آخر يجب أن نطرحه على أنفسنا. لماذا كان هذا الاكتشاف مستحقاً لجائزة نوبل؟ بمعنى آخر، ما هي حالة العلم قبل هذا الاكتشاف وبعده، وما الذي تغير وماذا نعرف بعد هذا العمل؟ كما ترى، قبل هذا العمل، كان الكيميائيون يفهمون بالتأكيد التخليق غير المتماثل والتحفيز الذاتي. لكن كاجان قدم لنا إطاراً لفهم كيف يمكن للأنظمة غير المتماثلة أن تتصرف بشكل غير خطي. كيف يمكن لخلل بسيط نسبياً في محفز كيرالي أن ينتج خللاً أكبر بكثير في المنتج. وقد أثبت سواي شيئاً رائعاً من الناحية التجريبية. تفاعل كيميائي يساعد فيه المنتج الكيرالي في تحفيز تكوينه الخاص مع تضخيم خاصية "اليد" الخاصة به. كما ترى، وكما ذكرت، حتى الأحماض الأمينية التي تشكل البروتينات في أجسامنا هي نقية كيرالياً. وقد يوضح لنا هذا العمل كيف يمكن لعالم متماثل كيميائياً أن ينتهي به المطاف بيولوجياً تحت سيطرة توجه جزيئي واحد . لا يخبرنا تفاعل سواي بالضبط كيف حدث هذا، لكنه يخبرنا بالتأكيد كيف قد يكون ذلك ممكناً. وبعد قضاء بعض الوقت منذ الإعلان في التفكير في هذا، يبدو منطقياً تماماً سبب وجوب منح هذه الكيمياء جائزة نوبل لعام 2026. لم أتوقع ذلك بالتأكيد، لكنني أفهم سبب فوزه. الآن، إذا شاهدتم الفيديو الذي نشرته يوم الإثنين، فأنتم تعلمون أن هذا ليس ما توقعته على الإطلاق. وقد كنت أشعر بثقة كبيرة أيضاً. لكن هذا هو الجزء الممتع في الأمر. في النهاية، أنا أحب العلم وأحب الكيمياء وأحب الحديث عنها. لذا، فإن قولي بأن تفاعل "بوخفالد- هارتفيغ" كان يجب أن يفوز بجائزة نوبل لم يغير قناعتي الأساسية. في الواقع، حتى عندما انضممت لمجموعة "ستيف" كطالب دراسات عليا في معهد ماساتشوستس للتكنولوجيا، انضممت لمجموعته تحديداً لأنني كنت أظن أن ما يفعله هو أفضل علم في العالم. لا أزال أشعر بذلك، وسأختاره مجدداً في كل مرة. وحتى عمل مجموعة "ديفيد ليو" في تحرير الجينات كان رائعاً. هاري غراي يستحق بالتأكيد جائزة نوبل. أعني، هيا، لقد حان الوقت بالفعل. لذا ، على الرغم من أن سجلي في التوقعات لم يعد مثالياً، إلا أنني لا أزال أستمتع بوقتي، وآمل أن تكونوا كذلك أيضاً. وهنا تكمن الحقيقة حول التنبؤ بجائزة نوبل. هناك الكثير من الأشخاص الذين يقومون بأعمال ثورية حقاً. وفي كل عام ، يمكن لثلاثة أشخاص فقط كحد أقصى الفوز بجائزة نوبل. لكن، لا يزال من الممتع جداً الحديث عمن قد يفوز. لذا، سؤالي لكم ليس من كان يجب أن يحصل عليها هذا العام، بل من تعتقدون أنه سيفوز في عام 2027؟ تأكدوا من ترك إجابتكم في التعليقات بالأسفل، وإذا لم تفعلوا بعد، فتأكدوا من الاشتراك في القناة . أنشر مقاطع فيديو مثل هذه لتعليم الكيمياء كل أسبوع، ويسعدني رؤيتكم في الفيديو القادم.

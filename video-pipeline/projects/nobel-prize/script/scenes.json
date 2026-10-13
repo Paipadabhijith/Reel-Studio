@@ -1,0 +1,534 @@
+{
+  "project": "nobel-prize",
+  "format": "reel",
+  "brand": "default",
+  "language": "hinglish",
+  "direction": {
+    "pack": "editorial",
+    "vibe": "curious and upbeat science explainer: clean, bright, a little wonder-struck, like a great chemistry teacher making mirror molecules feel fun",
+    "energy": "steady",
+    "grade": "cool",
+    "accent": "#4FD1C5",
+    "accent2": "#F6AD55",
+    "motifs": [
+      "left and right hands in a mirror",
+      "molecular models in 3D",
+      "laboratory glassware",
+      "ibuprofen tablets and pills",
+      "mirror reflections"
+    ],
+    "avoid": [
+      "generic smiling scientist stock photos",
+      "scraped photos of the laureates",
+      "random medical stock like surgeons and hospital beds",
+      "dark gloomy lab horror vibes"
+    ]
+  },
+  "packaging": [
+    {
+      "video": "reel_1",
+      "titles": [
+        "Nobel 2026: Mirror Molecules Kya Hain?",
+        "Aapke haath jaise molecules? Nobel 2026",
+        "Ibuprofen ka aadha hissa bekaar kyun?",
+        "Kagan aur Soai: Chemistry Nobel 2026",
+        "Chemistry Nobel 2026 aur aapki dawai"
+      ],
+      "thumbnail_text": "Mirror Molecules",
+      "description_lead": "Chemistry Nobel 2026 Henri Kagan aur Kenso Soai ko mila. Jaaniye chirality aur mirror molecules ka simple explanation, aur dawaiyon se iska connection.",
+      "hashtags": [
+        "#NobelPrize2026",
+        "#Chemistry",
+        "#Chirality",
+        "#Kagan",
+        "#Soai"
+      ],
+      "search_queries": [
+        "Nobel Prize Chemistry 2026 explained",
+        "what is chirality mirror image molecules",
+        "Kagan Soai Nobel Prize chemistry"
+      ]
+    },
+    {
+      "video": "reel_2",
+      "titles": [
+        "Ek molecule se 51% se 99% tak kaise?",
+        "Soai reaction: molecule khud ko banata hai",
+        "Nobel 2026: Life ka sabse bada mystery",
+        "Kagan aur Soai ne kya khoja? Simple mein",
+        "Nobel Chemistry 2026: 100 saal ka sawaal"
+      ],
+      "thumbnail_text": "Life ka Mystery",
+      "description_lead": "Soai reaction aur non-linear effect ko simple Hinglish mein samjhiye. Jaaniye kaise ek chhota sa fark 99 percent tak amplify hota hai aur life ke origin se iska link.",
+      "hashtags": [
+        "#NobelPrize2026",
+        "#SoaiReaction",
+        "#Autocatalysis",
+        "#ChemistryNobel",
+        "#OriginOfLife"
+      ],
+      "search_queries": [
+        "Soai reaction explained",
+        "Nobel Prize chemistry 2026 autocatalysis",
+        "why life uses one handed molecules"
+      ]
+    }
+  ],
+  "long_form": null,
+  "reels": [
+    {
+      "id": "reel_1",
+      "scene_ids": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8
+      ],
+      "hook_scene": 1
+    },
+    {
+      "id": "reel_2",
+      "scene_ids": [
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15
+      ],
+      "hook_scene": 9
+    }
+  ],
+  "scenes": [
+    {
+      "id": 1,
+      "text": "Aapke dono haath ek doosre ke mirror image hain, par ek ke upar doosra fit nahi hota. Molecules ke saath bhi yahi hota hai.",
+      "emphasis": [
+        "mirror image"
+      ],
+      "visual": {
+        "type": "blender",
+        "query": null,
+        "orientation": "portrait",
+        "motion": null,
+        "prompt": null,
+        "fallback": null,
+        "template": "title3d",
+        "params": {
+          "headline": "Mirror Molecules",
+          "subline": ""
+        },
+        "file": null,
+        "source": null,
+        "downgraded_from": null,
+        "on_missing": null
+      },
+      "overlay": null
+    },
+    {
+      "id": 2,
+      "text": "Aur isi idea pe Henri Kagan aur Kenso Soai ko mila 2026 ka Chemistry Nobel.",
+      "emphasis": [
+        "2026 ka Chemistry Nobel"
+      ],
+      "visual": {
+        "type": "animation",
+        "query": null,
+        "orientation": "portrait",
+        "motion": null,
+        "prompt": null,
+        "fallback": null,
+        "template": null,
+        "params": {
+          "template": "headline",
+          "style": "kinetic",
+          "headline": "Chemistry Nobel 2026",
+          "kicker": "KAGAN + SOAI",
+          "subline": "France and Japan"
+        },
+        "file": null,
+        "source": null,
+        "downgraded_from": null,
+        "on_missing": null
+      },
+      "overlay": null
+    },
+    {
+      "id": 3,
+      "text": "Aise molecules ko kehte hain chiral, Greek word se, jiska matlab hai haath.",
+      "emphasis": [
+        "chiral"
+      ],
+      "visual": {
+        "type": "video",
+        "query": "hands reflected in mirror close up",
+        "orientation": "portrait",
+        "motion": null,
+        "prompt": null,
+        "fallback": null,
+        "template": null,
+        "params": {},
+        "file": null,
+        "source": "stock",
+        "downgraded_from": null,
+        "on_missing": null
+      },
+      "overlay": null
+    },
+    {
+      "id": 4,
+      "text": "Nature mein zyada tar living cheezein bas ek hi version use karti hain, doosra version almost gayab hai.",
+      "emphasis": [
+        "ek hi version"
+      ],
+      "visual": {
+        "type": "animation",
+        "query": null,
+        "orientation": "portrait",
+        "motion": null,
+        "prompt": null,
+        "fallback": null,
+        "template": null,
+        "params": {
+          "template": "versus",
+          "headline": "Left vs Right",
+          "items": [
+            {
+              "label": "Life uses",
+              "value": "One version"
+            },
+            {
+              "label": "Mirror twin",
+              "value": "Mostly absent"
+            }
+          ]
+        },
+        "file": null,
+        "source": null,
+        "downgraded_from": null,
+        "on_missing": null
+      },
+      "overlay": null
+    },
+    {
+      "id": 5,
+      "text": "Ye sawaal sau saal se zyada se scientists ko uljha raha tha.",
+      "emphasis": [
+        "sau saal"
+      ],
+      "visual": {
+        "type": "video",
+        "query": "chemistry laboratory glassware blue light",
+        "orientation": "portrait",
+        "motion": null,
+        "prompt": null,
+        "fallback": null,
+        "template": null,
+        "params": {},
+        "file": null,
+        "source": "stock",
+        "downgraded_from": null,
+        "on_missing": null
+      },
+      "overlay": {
+        "type": "stat",
+        "value": "100+ yrs",
+        "label": "old puzzle"
+      }
+    },
+    {
+      "id": 6,
+      "text": "Ab dawaiyon mein ye kyun matter karta hai? Ketamine lo. Ek version painkiller hai, doosra hallucinogenic street drug.",
+      "emphasis": [
+        "Ketamine"
+      ],
+      "visual": {
+        "type": "animation",
+        "query": null,
+        "orientation": "portrait",
+        "motion": null,
+        "prompt": null,
+        "fallback": null,
+        "template": null,
+        "params": {
+          "template": "versus",
+          "headline": "Ketamine",
+          "kicker": "SAME MOLECULE, MIRROR TWIN",
+          "items": [
+            {
+              "label": "Version 1",
+              "value": "Painkiller"
+            },
+            {
+              "label": "Version 2",
+              "value": "Hallucinogen"
+            }
+          ]
+        },
+        "file": null,
+        "source": null,
+        "downgraded_from": null,
+        "on_missing": null
+      },
+      "overlay": null
+    },
+    {
+      "id": 7,
+      "text": "Aur ibuprofen? Har tablet mein dono versions aadhe aadhe hote hain, par asar sirf ek ka hota hai.",
+      "emphasis": [
+        "aadhe aadhe"
+      ],
+      "visual": {
+        "type": "chart",
+        "query": null,
+        "orientation": "portrait",
+        "motion": null,
+        "prompt": null,
+        "fallback": null,
+        "template": null,
+        "params": {
+          "kind": "pie",
+          "title": "Inside one ibuprofen tablet",
+          "unit": "%",
+          "labels": [
+            "Active version",
+            "Mirror version"
+          ],
+          "values": [
+            50,
+            50
+          ]
+        },
+        "file": null,
+        "source": null,
+        "downgraded_from": null,
+        "on_missing": null
+      },
+      "overlay": null
+    },
+    {
+      "id": 8,
+      "text": "Isliye sahi version bana paana dawaiyon ko safer aur zyada effective bana sakta hai. Follow karo aur science ka maza lo!",
+      "emphasis": [
+        "safer",
+        "effective"
+      ],
+      "visual": {
+        "type": "video",
+        "query": "white pills tablets pouring close up",
+        "orientation": "portrait",
+        "motion": null,
+        "prompt": null,
+        "fallback": null,
+        "template": null,
+        "params": {},
+        "file": null,
+        "source": "stock",
+        "downgraded_from": null,
+        "on_missing": null
+      },
+      "overlay": null
+    },
+    {
+      "id": 9,
+      "text": "51 percent se 99 percent. Ek chhota sa fark, ek molecule ne khud bada bana diya.",
+      "emphasis": [
+        "51 percent se 99 percent"
+      ],
+      "visual": {
+        "type": "stat",
+        "query": null,
+        "orientation": "portrait",
+        "motion": null,
+        "prompt": null,
+        "fallback": null,
+        "template": null,
+        "params": {},
+        "file": null,
+        "source": null,
+        "downgraded_from": null,
+        "on_missing": null
+      },
+      "overlay": {
+        "type": "stat",
+        "value": "51% → 99%",
+        "label": "Soai reaction"
+      }
+    },
+    {
+      "id": 10,
+      "text": "Pehle Henri Kagan ne dikhaya ki catalyst mein ek chhoti si kami product mein bahut bada imbalance bana sakti hai. Isko kehte hain non-linear effect.",
+      "emphasis": [
+        "non-linear effect"
+      ],
+      "visual": {
+        "type": "animation",
+        "query": null,
+        "orientation": "portrait",
+        "motion": null,
+        "prompt": null,
+        "fallback": null,
+        "template": null,
+        "params": {
+          "template": "headline",
+          "style": "rings",
+          "headline": "Non-Linear Effect",
+          "kicker": "HENRI KAGAN",
+          "subline": "Small flaw, big imbalance"
+        },
+        "file": null,
+        "source": null,
+        "downgraded_from": null,
+        "on_missing": null
+      },
+      "overlay": null
+    },
+    {
+      "id": 11,
+      "text": "Phir Kenso Soai ne ek kamaal ki reaction dikhayi, jahan product khud catalyst banne mein help karta hai.",
+      "emphasis": [
+        "product khud catalyst"
+      ],
+      "visual": {
+        "type": "video",
+        "query": "chemical reaction flask swirling liquid lab",
+        "orientation": "portrait",
+        "motion": null,
+        "prompt": null,
+        "fallback": null,
+        "template": null,
+        "params": {},
+        "file": null,
+        "source": "stock",
+        "downgraded_from": null,
+        "on_missing": null
+      },
+      "overlay": null
+    },
+    {
+      "id": 12,
+      "text": "Matlab molecule khud ka hi aur zyada version banata hai. Isko kehte hain autocatalysis.",
+      "emphasis": [
+        "autocatalysis"
+      ],
+      "visual": {
+        "type": "animation",
+        "query": null,
+        "orientation": "portrait",
+        "motion": null,
+        "prompt": null,
+        "fallback": null,
+        "template": null,
+        "params": {
+          "template": "timeline",
+          "headline": "How it grows",
+          "items": [
+            {
+              "label": "Start",
+              "value": "51% vs 49%"
+            },
+            {
+              "label": "Product helps",
+              "value": "makes more of itself"
+            },
+            {
+              "label": "Repeat",
+              "value": "gap keeps growing"
+            },
+            {
+              "label": "End",
+              "value": "99% vs 1%"
+            }
+          ]
+        },
+        "file": null,
+        "source": null,
+        "downgraded_from": null,
+        "on_missing": null
+      },
+      "overlay": null
+    },
+    {
+      "id": 13,
+      "text": "Hamare body ke amino acids bhi sirf ek handedness wale hain. Ye kaam shayad batata hai ki aisa kaise possible ho sakta hai.",
+      "emphasis": [
+        "ek handedness"
+      ],
+      "visual": {
+        "type": "video",
+        "query": "DNA molecular model 3D abstract blue",
+        "orientation": "portrait",
+        "motion": null,
+        "prompt": null,
+        "fallback": null,
+        "template": null,
+        "params": {},
+        "file": null,
+        "source": "stock",
+        "downgraded_from": null,
+        "on_missing": null
+      },
+      "overlay": null
+    },
+    {
+      "id": 14,
+      "text": "Dhyan rahe, Soai reaction ye exact nahi batata ki life mein aisa hua kaise. Par ye dikhata hai ki ye ho sakta hai.",
+      "emphasis": [
+        "ho sakta hai"
+      ],
+      "visual": {
+        "type": "animation",
+        "query": null,
+        "orientation": "portrait",
+        "motion": null,
+        "prompt": null,
+        "fallback": null,
+        "template": null,
+        "params": {
+          "template": "headline",
+          "style": "burst",
+          "headline": "Could Be Possible",
+          "subline": "Not proven, but a clue",
+          "kicker": "ORIGIN OF LIFE"
+        },
+        "file": null,
+        "source": null,
+        "downgraded_from": null,
+        "on_missing": null
+      },
+      "overlay": null
+    },
+    {
+      "id": 15,
+      "text": "Dono scientists 12 million Swedish crowns share karenge, aur 10 December ko Stockholm mein medal lenge. Science fans ke liye ye bada din hai!",
+      "emphasis": [
+        "12 million Swedish crowns",
+        "10 December"
+      ],
+      "visual": {
+        "type": "photo",
+        "query": "Stockholm City Hall waterfront evening",
+        "orientation": "portrait",
+        "motion": "slow-zoom-in",
+        "prompt": null,
+        "fallback": null,
+        "template": null,
+        "params": {},
+        "file": null,
+        "source": "wikimedia",
+        "downgraded_from": null,
+        "on_missing": null
+      },
+      "overlay": {
+        "type": "stat",
+        "value": "12M SEK",
+        "label": "prize money"
+      }
+    }
+  ]
+}

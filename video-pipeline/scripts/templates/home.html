@@ -6,6 +6,11 @@
 <section>
   <h1>Projects</h1>
   <p class="muted" style="margin-top:0">Saved in <code>projects/</code>. Newest first.</p>
+  <a class="card" href="{{ url_for('voice_page') }}" style="text-decoration:none; color:inherit; display:block; margin-bottom:14px">
+    <div class="row" style="justify-content:space-between"><strong>🎙 Your voice</strong>
+      <span class="pill {{ 'done' if voice_active else 'todo' }}">{{ 'in use' if voice_active else 'fill me in' }}</span></div>
+    <div class="muted" style="font-size:13px;margin-top:4px">How you talk, who you talk to, words you never use. Every script follows it.</div>
+  </a>
   {% if not projects %}<div class="card muted">No projects yet. Start one on the right.</div>{% endif %}
   <div style="display:flex; flex-direction:column; gap:10px">
   {% for p in projects %}
@@ -24,7 +29,9 @@
   <p class="muted" style="margin:4px 0 8px">Give the topic and your sources. You can add more articles later.</p>
   <form method="post" action="{{ url_for('new_project') }}">
     <div class="grid2">
-      <div><label>Project name (folder)</label><input name="slug" required placeholder="monsoon-delay" pattern="[a-z0-9][a-z0-9_\-]*"></div>
+      <div><label>Project name (folder)</label><input name="slug" required placeholder="monsoon-delay" pattern="[a-z0-9][a-z0-9_\-]*"
+        title="Lowercase letters, numbers, - and _ only, e.g. ipl-2026"
+        oninput="const p=this.selectionStart; this.value=this.value.toLowerCase().replace(/\s+/g,'-'); this.setSelectionRange(p,p)"></div>
       <div><label>Language</label><select name="language">
         <option value="hinglish" selected>Hinglish</option><option value="en">English</option><option value="hi">Hindi</option></select></div>
     </div>
@@ -33,10 +40,10 @@
       <div><label>Angle</label><input name="angle" placeholder="What it means for farmers"></div>
       <div><label>Audience</label><input name="target_audience" placeholder="Young urban viewers"></div>
       <div><label>Formats</label><select name="formats">
-        <option value="reel" selected>Reels only (long-form is Phase 3)</option><option value="both">Reels + long-form</option><option value="long">Long-form only</option></select></div>
+        <option value="reel" selected>Reels only</option><option value="both">Reels + long-form</option><option value="long">Long-form only</option></select></div>
       <div><label>Number of reels</label><select name="reel_count"><option>1</option><option>2</option><option>3</option></select></div>
     </div>
-    <label>Tone</label><input name="tone" placeholder="curious, calm, a bit witty">
+    <label>Tone <span class="muted" style="font-weight:400">(also picks the look &amp; feel)</span></label><input name="tone" placeholder="curious, calm, a bit witty">
     <label>Source links (one per line)</label>
     <textarea name="urls" placeholder="https://…&#10;https://…"></textarea>
     <label>Or paste article text</label>

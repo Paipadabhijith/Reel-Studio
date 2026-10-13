@@ -1,4 +1,5 @@
-"""`reel fetch`: download visuals from Pexels, Pixabay, Unsplash and Wikimedia Commons only.
+"""`reel fetch`: download visuals from Pexels, Pixabay, Coverr, Unsplash, Openverse, NASA, the Internet Archive
+and Wikimedia Commons only.
 
 Anything that can't be matched above the relevance threshold is downgraded to a
 manual scene and listed in inbox/README.txt.
@@ -11,6 +12,7 @@ import os
 import re
 from dataclasses import dataclass
 from pathlib import Path
+from urllib.parse import quote
 
 import httpx
 
@@ -22,11 +24,13 @@ from .lib.config import BRAND_FILE
 from .lib.schema import Credit, Scene, ScenesFile, dump_json, load_scenes
 
 RELEVANCE_MIN = 0.34
+NOTHING_FOUND = "Auto-fetch found nothing relevant"
 MIN_LONG_EDGE = 1080
 USER_AGENT = "video-pipeline/0.1 (personal, non-commercial; local tool)"
 STOPWORDS = {
     "a", "an", "the", "of", "in", "on", "at", "to", "for", "and", "or", "with", "by", "from",
     "is", "are", "photo", "image", "picture", "stock", "video", "footage", "shot", "view",
+    "landscape", "portrait", "vertical", "horizontal",  # shape words: the orientation is scored separately
 }
 
 
@@ -204,6 +208,174 @@ def pixabay_videos(http: httpx.Client, query: str, orientation: str | None) -> l
     return out
 
 
+def coverr_videos(http: httpx.Client, query: str, orientation: str | None) -> list[Candidate]:
+    key = os.getenv("COVERR_API_KEY")
+    if not key:
+        return []
+    r = http.get("https://api.coverr.co/videos", params={
+        "query": query[:100], "page_size": 20, "urls": "true",
+    }, headers={"Authorization": f"Bearer {key}"})
+    r.raise_for_status()
+    out = []
+    for h in r.json().get("hits", []):
+        url = (h.get("urls") or {}).get("mp4")
+        if h.get("is_ai_generated") or not url or not h.get("max_width"):
+            continue
+        w, ht = int(h["max_width"]), int(h["max_height"])
+        if h.get("is_vertical") and w > ht:
+            w, ht = ht, w
+        out.append(Candidate(
+            url=url, page_url=f"https://coverr.co/videos/{h.get('base_filename', h.get('id', ''))}",
+            text=f"{h.get('title', '')} {h.get('description', '')} {' '.join(h.get('tags') or [])}",
+            width=w, height=ht, source="Coverr", license="Coverr License",
+            attribution=f"Video from Coverr: {h.get('title', 'untitled')}", ext="mp4",
+            duration_s=float(h.get("duration") or 0),
+        ))
+    return out
+
+
+OPENVERSE_LICENSES = {
+    "cc0": "CC0 1.0", "pdm": "Public Domain Mark",
+    "by": "CC BY", "by-sa": "CC BY-SA",
+}
+
+
+def openverse_photos(http: httpx.Client, query: str, orientation: str | None) -> list[Candidate]:
+    """No key needed (anonymous rate limit). Only licences that allow edits and commercial use."""
+    r = http.get("https://api.openverse.org/v1/images/", params={
+        "q": query[:200], "page_size": 20, "license": ",".join(OPENVERSE_LICENSES), "mature": "false",
+        "category": "photograph",
+    }, headers={"User-Agent": USER_AGENT})
+    r.raise_for_status()
+    out = []
+    for h in r.json().get("results", []):
+        lic = OPENVERSE_LICENSES.get(h.get("license", ""))
+        if not lic or not h.get("url") or not h.get("width") or not h.get("height"):
+            continue
+        if h.get("license") in ("by", "by-sa") and h.get("license_version"):
+            lic = f"{lic} {h['license_version']}"
+        tags = " ".join(t.get("name", "") for t in h.get("tags") or [])
+        creator = h.get("creator") or "unknown"
+        out.append(Candidate(
+            url=h["url"], page_url=h.get("foreign_landing_url") or h["url"], text=f"{h.get('title') or ''} {tags}",
+            width=h["width"], height=h["height"], source="Openverse", license=lic,
+            attribution=f"{h.get('title') or 'Untitled'} by {creator}, {lic}, via Openverse ({h.get('source', '')})",
+            ext="png" if str(h.get("filetype", "")).lower() == "png" else "jpg",
+        ))
+    return out
+
+
+NASA_API = "https://images-api.nasa.gov/search"
+NASA_RESOLVE_MAX = 3  # extra requests per search, one per best-looking item
+
+
+def _nasa_search(http: httpx.Client, query: str, media: str) -> list[tuple[dict, str]]:
+    """Best few NASA items for the query (judged by their text), each with its asset-manifest URL."""
+    r = http.get(NASA_API, params={"q": query[:200], "media_type": media, "page_size": 15},
+                 headers={"User-Agent": USER_AGENT})
+    r.raise_for_status()
+    items = []
+    for it in r.json().get("collection", {}).get("items", []):
+        d = (it.get("data") or [{}])[0]
+        text = f"{d.get('title', '')} {d.get('description', '')} {' '.join(d.get('keywords') or [])}"
+        if it.get("href"):
+            items.append((relevance(query, text), d, it["href"]))
+    items.sort(key=lambda x: -x[0])
+    return [(d, href) for _, d, href in items[:NASA_RESOLVE_MAX]]
+
+
+def _nasa_pick(http: httpx.Client, manifest: str, prefer: list[str]) -> str | None:
+    r = http.get(manifest, headers={"User-Agent": USER_AGENT})
+    r.raise_for_status()
+    urls = [u.replace("http://", "https://") for u in r.json() if isinstance(u, str)]
+    for marker in prefer:
+        for u in urls:
+            if marker in u:
+                return u
+    return None
+
+
+def _nasa_candidates(http: httpx.Client, query: str, media: str, prefer: list[str], ext: str,
+                     width: int, height: int) -> list[Candidate]:
+    out = []
+    for d, manifest in _nasa_search(http, query, media):
+        url = _nasa_pick(http, manifest, prefer)
+        if not url:
+            continue
+        who = d.get("secondary_creator") or d.get("photographer") or d.get("center") or "NASA"
+        nid = d.get("nasa_id", "")
+        out.append(Candidate(
+            url=url, page_url=f"https://images.nasa.gov/details/{nid}",
+            text=f"{d.get('title', '')} {d.get('description', '')} {' '.join(d.get('keywords') or [])}",
+            width=width, height=height, source="NASA", license="NASA media usage guidelines",
+            attribution=f"{d.get('title', 'NASA')}: NASA/{who}", ext=ext,
+            duration_s=None,
+        ))
+    return out
+
+
+def nasa_photos(http: httpx.Client, query: str, orientation: str | None) -> list[Candidate]:
+    # The API gives no pixel size; NASA's `orig` is full resolution and almost always landscape.
+    return _nasa_candidates(http, query, "image", ["~orig.jpg", "~large.jpg"], "jpg", 2400, 1600)
+
+
+def nasa_videos(http: httpx.Client, query: str, orientation: str | None) -> list[Candidate]:
+    # `large` is 720p-class; the `orig` file can be several GB.
+    return _nasa_candidates(http, query, "video", ["~large.mp4", "~medium.mp4"], "mp4", 1280, 720)
+
+
+ARCHIVE_MAX_BYTES = 150 * 1024 * 1024  # old films run long; skip huge files
+ARCHIVE_RESOLVE_MAX = 3
+
+
+def archive_videos(http: httpx.Client, query: str, orientation: str | None) -> list[Candidate]:
+    """Internet Archive footage, only items whose licence is public domain or CC0. No key needed."""
+    words = " ".join(re.findall(r"[A-Za-z0-9]+", query))[:100]
+    if not words:
+        return []
+    r = http.get("https://archive.org/advancedsearch.php", params={
+        "q": f"({words}) AND mediatype:movies AND (licenseurl:*publicdomain* OR licenseurl:*zero*)",
+        "fl[]": ["identifier", "title", "description", "subject", "creator"], "rows": 15, "output": "json",
+    }, headers={"User-Agent": USER_AGENT})
+    r.raise_for_status()
+    docs = []
+    for d in r.json().get("response", {}).get("docs", []):
+        subj = d.get("subject") or []
+        desc = d.get("description") or ""
+        text = f"{d.get('title', '')} {' '.join(subj) if isinstance(subj, list) else subj} " \
+               f"{' '.join(desc) if isinstance(desc, list) else desc}"
+        docs.append((relevance(query, text), text, d))
+    docs.sort(key=lambda x: -x[0])
+    out = []
+    for _, text, d in docs[:ARCHIVE_RESOLVE_MAX]:
+        ident = d["identifier"]
+        m = http.get(f"https://archive.org/metadata/{ident}", headers={"User-Agent": USER_AGENT})
+        m.raise_for_status()
+        files = []
+        for f in m.json().get("files", []):
+            if f.get("format") != "h.264" or not f.get("name", "").endswith(".mp4"):
+                continue
+            try:
+                w, ht, size = int(f["width"]), int(f["height"]), int(f["size"])
+            except (KeyError, ValueError):
+                continue
+            if size <= ARCHIVE_MAX_BYTES and max(w, ht) <= 1920:
+                files.append((w * ht, f, w, ht))
+        if not files:
+            continue
+        _, f, w, ht = max(files, key=lambda x: x[0])
+        creator = d.get("creator") or "unknown"
+        creator = ", ".join(creator) if isinstance(creator, list) else creator
+        out.append(Candidate(
+            url=f"https://archive.org/download/{ident}/{quote(f['name'])}",
+            page_url=f"https://archive.org/details/{ident}", text=text, width=w, height=ht,
+            source="Internet Archive", license="Public domain / CC0",
+            attribution=f"{d.get('title', ident)} ({creator}), public domain, via the Internet Archive",
+            ext="mp4", duration_s=float(f.get("length") or 0),
+        ))
+    return out
+
+
 def _strip_html(s: str) -> str:
     return html.unescape(re.sub(r"<[^>]+>", "", s or "")).strip()
 
@@ -243,11 +415,13 @@ def wikimedia_photos(http: httpx.Client, query: str, orientation: str | None) ->
 
 # Unsplash last: its free tier allows 50 requests an hour, Pixabay 100 a minute
 PHOTO_ORDER = {
-    "stock": [pexels_photos, pixabay_photos, unsplash_photos],
-    "wikimedia": [wikimedia_photos, pexels_photos, pixabay_photos, unsplash_photos],
+    "stock": [pexels_photos, pixabay_photos, unsplash_photos, openverse_photos, nasa_photos],
+    "wikimedia": [wikimedia_photos, pexels_photos, pixabay_photos, unsplash_photos, openverse_photos, nasa_photos],
 }
-VIDEO_ORDER = [pexels_videos, pixabay_videos]
-STOCK_KEYS = ("PEXELS_API_KEY", "PIXABAY_API_KEY", "UNSPLASH_ACCESS_KEY")
+# Keyless sources go last: Openverse and NASA for photos, NASA and the Internet Archive for video
+VIDEO_ORDER = [pexels_videos, coverr_videos, pixabay_videos, nasa_videos, archive_videos]
+VIDEO_KEYS = ("PEXELS_API_KEY", "PIXABAY_API_KEY", "COVERR_API_KEY")
+STOCK_KEYS = VIDEO_KEYS + ("UNSPLASH_ACCESS_KEY",)
 
 
 def _redact(msg: str) -> str:
@@ -391,7 +565,7 @@ def fetch_scene(
             log(f"scene {scene.id}: nothing relevant for {v.query!r}; kept the current asset")
             return "nomatch"
         if not found:
-            outcome = _downgrade(scene, "Auto-fetch found nothing relevant", sf)
+            outcome = _downgrade(scene, NOTHING_FOUND, sf)
             log(f"scene {scene.id}: nothing relevant for {v.query!r}; "
                 + ("made an animation instead: " + animation.describe(scene) if outcome == "animated"
                    else "moved to the manual inbox"))
@@ -423,8 +597,8 @@ def fetch(
     scenes_path = project / "script" / "scenes.json"
     sf = load_scenes(scenes_path)
     if not any(os.getenv(k) for k in STOCK_KEYS):
-        log("warning: no PEXELS_API_KEY, PIXABAY_API_KEY or UNSPLASH_ACCESS_KEY in .env; "
-            "only Wikimedia and charts will work")
+        log("warning: no PEXELS_API_KEY, PIXABAY_API_KEY, COVERR_API_KEY or UNSPLASH_ACCESS_KEY in .env; "
+            "only the keyless sources (Wikimedia, Openverse, NASA, Internet Archive) and charts will work")
     own = http is None
     http = http or httpx.Client(timeout=30)
     summary: dict[str, int] = {}
@@ -446,4 +620,55 @@ def fetch(
     pending = manual_inbox.write_readme(project, sf)
     if pending:
         log(f"{len(pending)} scene(s) need a manual asset; see {project / 'inbox' / 'README.txt'}")
+    return summary
+
+
+
+def retryable(sf: ScenesFile, project: Path) -> list[Scene]:
+    """Scenes an earlier search gave up on (moved to manual) that have no file yet: worth a second search."""
+    return [s for s in sf.scenes if s.visual.type == "manual" and s.visual.downgraded_from in ("photo", "video")
+            and s.visual.query and not find_asset(project, s)]
+
+
+def retry_missing(project: Path, http: httpx.Client | None = None, log=print) -> dict[str, int]:
+    """Search again, with every current source, for scenes an earlier fetch moved to the manual inbox.
+
+    A match puts the scene back to photo/video with the new file; no match leaves it waiting in the inbox.
+    Nothing that already has a visual is touched.
+    """
+    scenes_path = project / "script" / "scenes.json"
+    sf = load_scenes(scenes_path)
+    todo = retryable(sf, project)
+    summary: dict[str, int] = {}
+    if not todo:
+        log("no scenes to search again")
+        return summary
+    own = http is None
+    http = http or httpx.Client(timeout=30)
+    try:
+        for scene in todo:
+            check_cancel()
+            v = scene.visual
+            before = v.model_copy()
+            v.type, v.downgraded_from = before.downgraded_from, None
+            try:
+                status = fetch_scene(project, sf, scene, http, force=True, downgrade=False, log=lambda *_: None)
+            except (httpx.HTTPError, ValueError) as e:
+                log(f"scene {scene.id}: error: {_redact(e)}")
+                status = "error"
+            if status == "fetched":
+                if (v.prompt or "").startswith(NOTHING_FOUND):
+                    v.prompt = None
+                log(f"scene {scene.id}: found a {v.type} for {v.query!r} -> {v.file}")
+            else:
+                scene.visual = before  # still nothing: stays in the manual inbox
+                if status == "nomatch":
+                    log(f"scene {scene.id}: still nothing relevant for {v.query!r}")
+                    status = "still missing"
+            summary[status] = summary.get(status, 0) + 1
+    finally:
+        if own:
+            http.close()
+    dump_json(sf, scenes_path)
+    manual_inbox.write_readme(project, sf)
     return summary

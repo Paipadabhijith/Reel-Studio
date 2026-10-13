@@ -2,6 +2,18 @@ export type Word = {w: string; t: number; end?: number | null};
 
 export type VisualKind = 'photo' | 'video' | 'chart' | 'stat' | 'blender' | 'animation' | 'text_card';
 
+/** The script's creative direction (see scripts/lib/schema.py Direction). */
+export type Direction = {
+  pack: 'broadcast' | 'archival' | 'editorial' | string;
+  vibe?: string;
+  energy: 'calm' | 'steady' | 'punchy' | string;
+  grade: 'neutral' | 'warm' | 'cool' | 'mono' | 'sepia' | string;
+  accent: string | null;
+  accent2: string | null;
+  motifs?: string[];
+  avoid?: string[];
+};
+
 export type Overlay = {type: string; value?: string | null; label?: string | null};
 
 export type SceneProps = {
@@ -45,6 +57,7 @@ export type VideoProps = {
   captions?: boolean;
   chapterTitle?: string | null;
   brand: Brand;
+  direction?: Direction | null;
   scenes: SceneProps[];
   emphasisMarks: {scene_id: number; word_index: number; kind: string}[];
 };

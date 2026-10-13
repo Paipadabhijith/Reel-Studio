@@ -7,7 +7,7 @@ from flask import Blueprint, abort, current_app, redirect, render_template, requ
 
 from . import animation, parts as parts_mod
 from . import plan
-from .lib.schema import Timeline, load_scenes
+from .lib.schema import ENERGIES, GRADES, PACKS, Direction, Timeline, load_scenes
 from .lib.state import _load_timeline, long_flow
 from .lib.targets import get_target, list_targets
 
@@ -39,6 +39,9 @@ def plan_page(slug: str):
     return render_template(
         "plan.html", slug=slug, sf=sf, member=member, secs=secs, locked=plan.is_locked(proj), recorded=recorded,
         visual_types=plan.VISUAL_TYPES, motions=plan.MOTIONS, anim_styles=animation.STYLE_LABELS, cameras=plan.CAMERAS, chart_kinds=plan.CHART_KINDS,
+        templates=animation.TEMPLATE_LABELS, items_text=plan.items_text,
+        direction=sf.direction or Direction(), has_direction=sf.direction is not None,
+        packs=PACKS, energies=ENERGIES, grades=GRADES, rhythm=plan.rhythm_warnings(sf),
         msg=request.args.get("msg"), err=request.args.get("err") == "1",
     )
 
@@ -53,6 +56,18 @@ def plan_save(slug: str, sid: int):
     except plan.PlanError as e:
         return _back_plan(slug, f"Scene {sid} not saved: {e}", True, sid)
     return _back_plan(slug, f"Scene {sid} saved.", sid=sid)
+
+
+@bp.post("/plan/direction")
+def plan_direction(slug: str):
+    proj = _project(slug)
+    sf = plan.load(proj)
+    try:
+        plan.apply_direction(sf, request.form)
+        plan.save(proj, sf)
+    except plan.PlanError as e:
+        return _back_plan(slug, f"Direction not saved: {e}", True)
+    return redirect(url_for("qc.plan_page", slug=slug, msg="Direction saved. The next render uses it.") + "#direction")
 
 
 @bp.post("/plan/insert")

@@ -35,6 +35,34 @@
   {% endif %}
 </div>
 
+<section class="card" id="direction">
+  <h2 style="margin:0 0 4px">Look &amp; feel</h2>
+  <p class="muted" style="margin:0 0 12px">{% if has_direction %}Set by the script from the topic's vibe. Change it here; every render uses it.{% else %}This script was written before directions existed, so it uses the editorial look. Pick a style for this topic.{% endif %}</p>
+  <form method="post" action="{{ url_for('qc.plan_direction', slug=slug) }}">
+    <label>Vibe (one line)</label><input name="vibe" value="{{ direction.vibe }}" placeholder="underdog nostalgia: grainy, proud, a little wistful">
+    <div class="two">
+      <div><label>Style pack</label><select name="pack">{% for k in packs %}<option value="{{ k }}" {{ 'selected' if direction.pack == k }}>{{ {'broadcast': 'Broadcast sports (scoreboards, stingers)', 'archival': 'Archival (paper, typewriter, sepia)', 'editorial': 'Editorial (flat, bold, clean)'}[k] }}</option>{% endfor %}</select></div>
+      <div><label>Energy</label><select name="energy">{% for k in energies %}<option {{ 'selected' if direction.energy == k }}>{{ k }}</option>{% endfor %}</select></div>
+    </div>
+    <div class="two">
+      <div><label>Photo &amp; clip grade</label><select name="grade">{% for k in grades %}<option {{ 'selected' if direction.grade == k }}>{{ k }}</option>{% endfor %}</select></div>
+      <div><label><input type="checkbox" name="use_accent" value="1" {{ 'checked' if direction.accent }} style="width:auto"> Own colours (else the pack's)</label>
+        <div class="row" style="gap:8px"><input type="color" name="accent" value="{{ direction.accent or '#FFD23F' }}" style="width:70px;height:38px;padding:2px">
+          <input type="color" name="accent2" value="{{ direction.accent2 or '#2F7BFF' }}" style="width:70px;height:38px;padding:2px"></div></div>
+    </div>
+    <div class="two">
+      <div><label>Motifs (comma separated)</label><input name="motifs" value="{{ direction.motifs|join(', ') }}" placeholder="floodlights, scoreboard, newspaper clippings"></div>
+      <div><label>Avoid</label><input name="avoid" value="{{ direction.avoid|join(', ') }}" placeholder="modern stadiums, office stock photos"></div>
+    </div>
+    <button class="primary" style="margin-top:10px">Save look</button>
+  </form>
+  {% if rhythm %}
+  <div style="margin-top:14px;padding:10px 14px;border:1px solid var(--accent);border-radius:8px;background:rgba(255,210,63,0.06)"><strong>Rhythm</strong>
+    <ul style="margin:6px 0">{% for w in rhythm %}<li>{{ w }}</li>{% endfor %}</ul>
+    <span class="muted" style="font-size:13px">Back-to-back graphics of the same kind are what make a video feel templated.</span></div>
+  {% endif %}
+</section>
+
 {% for s in sf.scenes %}
 {% set v = s.visual %}
 {% set cur = 'title3d' if (v.type == 'blender' and v.template == 'title3d') else v.type %}
@@ -65,8 +93,8 @@
 
         <div class="grp" data-for="photo video">
           <label>Search words</label><input name="query" value="{{ v.query or '' }}" placeholder="kerala monsoon rain">
-          <div class="two"><div><label>Look in</label><select name="source">
-              <option value="" {{ 'selected' if v.source != 'wikimedia' }}>stock sites (Pexels, Pixabay, Unsplash)</option><option value="wikimedia" {{ 'selected' if v.source == 'wikimedia' }}>Wikimedia first (landmarks, people)</option></select></div>
+          <div class="two"><div><label>Look in</label><select name="source" title="Stock sites: photos from Pexels, Pixabay, Unsplash, Openverse, NASA; videos from Pexels, Coverr, Pixabay, NASA, Internet Archive. Wikimedia first applies to photos only.">
+              <option value="" {{ 'selected' if v.source != 'wikimedia' }}>Stock sites</option><option value="wikimedia" {{ 'selected' if v.source == 'wikimedia' }}>Wikimedia first</option></select></div>
             <div><label>Shape</label><select name="orientation">{% for o in ['portrait', 'landscape', 'square'] %}<option {{ 'selected' if v.orientation == o }}>{{ o }}</option>{% endfor %}</select></div></div>
           <label>If no picture is found</label>
           <select name="on_missing"><option value="" {{ 'selected' if v.on_missing != 'manual' }}>make an animation from the sentence</option><option value="manual" {{ 'selected' if v.on_missing == 'manual' }}>ask me for a file</option></select>
@@ -77,7 +105,14 @@
           <label>Line under it</label><input name="subline" value="{{ v.params.get('subline') or '' }}">
         </div>
         <div class="grp" data-for="animation">
-          <div class="two"><div><label>Style</label><select name="anim_style">{% for k, lab in anim_styles.items() %}<option value="{{ k }}" {{ 'selected' if v.params.get('style') == k }}>{{ lab }}</option>{% endfor %}</select></div>
+          {% set tpl = v.params.get('template') or 'headline' %}
+          <div class="two"><div><label>Graphic</label><select name="template">{% for k, lab in templates.items() %}<option value="{{ k }}" {{ 'selected' if tpl == k }}>{{ lab }}</option>{% endfor %}</select></div>
+            <div><label>Small label above (optional)</label><input name="kicker" value="{{ v.params.get('kicker') or '' }}" placeholder="1983 WORLD CUP"></div></div>
+          <label>Items, one per line: label | value (versus 2, timeline 2-5, list 3-5, scorecard 2-5)</label>
+          <textarea name="items" rows="3" placeholder="1983 | India win at Lord's">{{ items_text(v.params.get('items')) }}</textarea>
+          <div class="two"><div><label>Quote (quote graphic)</label><input name="quote" value="{{ v.params.get('quote') or '' }}"></div>
+            <div><label>Who said it</label><input name="attribution" value="{{ v.params.get('attribution') or '' }}"></div></div>
+          <div class="two"><div><label>Entrance (headline)</label><select name="anim_style">{% for k, lab in anim_styles.items() %}<option value="{{ k }}" {{ 'selected' if v.params.get('style') == k }}>{{ lab }}</option>{% endfor %}</select></div>
             <div><label>Tags (comma separated)</label><input name="keywords" value="{{ (v.params.get('keywords') or [])|join(', ') }}"></div></div>
         </div>
         <div class="grp" data-for="manual"><label>What file you will add</label><input name="prompt" value="{{ v.prompt or '' }}" placeholder="Screenshot of the press release headline"></div>

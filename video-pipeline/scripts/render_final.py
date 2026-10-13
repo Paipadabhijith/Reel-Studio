@@ -15,7 +15,7 @@ from .lib import cache
 from .lib.assets import find_asset
 from .lib.config import BRAND_FILE, REMOTION_CONCURRENCY, TARGET_LUFS, TEMPLATE_DIR, heavy_lock
 from .lib.progress import check_cancel, report, run_remotion
-from .lib.schema import Scene, ScenesFile, Timeline
+from .lib.schema import Direction, Scene, ScenesFile, Timeline
 from .lib.targets import Target, chapters_for
 
 FPS = 30
@@ -46,9 +46,11 @@ def visual_props(project: Path, scene: Scene, mode: str, log=print, kind: str = 
             return out
         log(f"scene {scene.id}: {reason}, using text card")
         out["placeholder"] = label if mode == "draft" else None
+        out["params"] = {"headline": animation.card_headline(scene)}
         return out
 
     if v.type == "text_card":
+        out["params"] = {"headline": animation.card_headline(scene)}
         return out
     if v.type == "animation":
         params = {**animation.auto_params(scene), **{k: val for k, val in v.params.items() if val not in (None, "", [])}}
@@ -143,6 +145,8 @@ def build_props(
         "durationInFrames": f1 - f0, "audioSrc": None, "draft": mode == "draft",
         "captions": target.kind == "reel", "chapterTitle": title if len(chapters) > 1 else None,
         "brand": brand, "scenes": scenes,
+        # the look: style pack, energy, grade, accents (projects made before directions existed get "editorial")
+        "direction": (sf.direction or Direction()).model_dump(),
         "emphasisMarks": [m.model_dump() for m in tl.emphasis_marks if m.scene_id in ids],
     }
 

@@ -2,7 +2,7 @@
 
 Turns a topic and reference articles into a narration script, fetches visuals, renders a draft, then aligns your recorded voice and renders a 9:16 Reel with animated word-by-word captions. Runs locally on an M1 Mac (8 GB). Zero recurring cost: `reel script --manual` writes the script through claude.ai with no API key.
 
-**Status: Phases 1-3.** Working: `new`, `script`, `fetch`, `inbox`, `draft`, `review`, `align`, `final`, `status`, `clean`, `studio`, for Reels (9:16, burned-in captions) and long-form (16:9, chaptered, `.srt`), with animated charts, stats and a 3D India map. `package` and `publish` are Phase 4.
+**Status: Phases 1-3.** Working: `new`, `script`, `fetch`, `inbox`, `draft`, `review`, `align`, `final`, `status`, `clean`, `studio`, for Reels (9:16, burned-in captions) and long-form (16:9, chaptered, `.srt`), with animated charts, stats and a 3D India map. `package` writes titles, descriptions and captions; `publish` (uploading) is not built.
 
 ## Setup (macOS)
 
@@ -24,10 +24,17 @@ The first `reel final` downloads the Whisper model (`mlx-community/whisper-small
 | --- | --- | --- |
 | `ANTHROPIC_API_KEY` (optional) | `reel script` without `--manual` (Claude Opus 5.5) | console.anthropic.com (paid per token; each run prints its token usage, and reruns with the same brief and articles are cached for free) |
 | `PEXELS_API_KEY` | `reel fetch` photos + videos | pexels.com/api (free) |
+| `COVERR_API_KEY` | `reel fetch` videos | coverr.co/developers (free; apps start in Demo mode with lower limits until published; AI-generated clips are skipped) |
 | `UNSPLASH_ACCESS_KEY` | `reel fetch` photos (tried last) | unsplash.com/developers (free, 50 req/hour in demo mode) |
 | `PIXABAY_API_KEY` | `reel fetch` photos + videos | pixabay.com/api/docs, shown when logged in (free, 100 req/minute; photos up to 1280 px; AI-generated images are skipped) |
 
-No Anthropic key? Use `reel script <slug> --manual` (below). Wikimedia Commons needs no key. Photo search order: Pexels → Pixabay → Unsplash (Wikimedia first when a scene asks for it); videos: Pexels → Pixabay. With no stock keys at all, stock scenes go straight to the manual inbox.
+**Source links** in the brief are read once and saved in `input/articles/`. YouTube links (videos and Shorts) give their
+title, description and subtitles or auto-captions through yt-dlp, with nothing else downloaded. A page that yields almost no text
+(sites built with JavaScript) is read again through Jina Reader (r.jina.ai, free, no key). That sends the URL to Jina; set
+`JINA_READER=0` in `.env` to turn it off. The Studio marks any link that still gives under 80 words, which usually means a menu
+or a video page. Paste the article text instead.
+
+No Anthropic key? Use `reel script <slug> --manual` (below). Wikimedia Commons, Openverse, NASA and the Internet Archive need no key. Photo search order: Pexels → Pixabay → Unsplash → Openverse → NASA (Wikimedia first when a scene asks for it); videos: Pexels → Coverr → Pixabay → NASA → Internet Archive. The keyless sources are fallbacks: Openverse keeps only CC0, public-domain and CC BY / BY-SA photos (credit is written to `credits.json`), NASA images and videos are space and science only, and the Internet Archive is limited to public-domain or CC0 films under 150 MB (often low resolution). With no stock keys at all, scenes can still be filled from the keyless sources; anything they can't match goes to the manual inbox.
 
 ## Studio (web interface)
 
@@ -67,8 +74,8 @@ reel final my-reel               # align + render -> out/reel_01_9x16.mp4
 
 You can also skip `script` and hand-write `scenes.json` (see `projects/demo/`), and place images yourself at `assets/images/scene_NN.jpg`; hand-placed files are never overwritten by `fetch`.
 
-- **Visual types:** `photo`, `video` (stock clips, muted and looped), `chart` (from `params`: kind, labels, values, title, unit), `text_card`, `manual`. `stat` and `blender` render as text cards until Phase 3.
-- **Relevance:** a fetched result must share at least a third of the query's words with its description, or the scene is downgraded to `manual`. Refetch from the review page with better words, or `reel fetch my-reel --scene 4 --force`.
+- **Visual types:** `photo`, `video` (stock clips, muted and looped), `chart` (from `params`: kind, labels, values, title, unit), `text_card`, `manual`, plus `stat`, `auto`, `animation`, `title3d` and `blender` (see Phase 3 below).
+- **Relevance:** a fetched result must share at least a third of the query's words with its description, or the scene is downgraded to `manual`. Refetch from the review page with better words, or `reel fetch my-reel --scene 4 --force`. After new sources are added, `reel fetch my-reel --retry-missing` (or **Search again** under Manual assets in the Studio) searches only the scenes an earlier fetch gave up on; scenes that already have a visual are left alone.
 - **Credits:** every asset gets a line in `assets/credits.json` (source, license, URL, attribution). Manual files record the rights you chose: own / licensed / press-kit / commentary.
 - `reel inbox my-reel [--watch]` ingests inbox files without rendering.
 
@@ -127,6 +134,40 @@ stay on your machine (git-ignored). Blender renders with Eevee at 32 samples; ex
 5-second map scene is a few minutes, and it is cached by template, parameters, length and aspect.
 **Check the boundaries before you publish a map of India**: the data's licence is not stated, and maps published in India
 are expected to follow the official boundary, which this third-party data may not.
+
+## Look & feel: creative direction and style packs
+
+The script prompt makes Claude act as art director first: before writing scenes it fills `direction` in `scenes.json`
+from the brief's topic, angle, audience and tone (fill in `tone`; if it is blank Claude infers it).
+
+- `pack`: **broadcast** (live sports TV: scoreboards, skewed panels, stingers, condensed type), **archival** (paper,
+  typewriter labels, serif headlines, sepia/black-and-white photos), or **editorial** (flat, bold, clean; also the look of
+  scripts written before directions existed).
+- `energy` (calm / steady / punchy) sets the transitions and how fast things enter; `grade` (neutral, warm, cool, mono,
+  sepia) colours every photo and clip; `accent`/`accent2` are checked for contrast and fall back to the pack's colours.
+- `motifs` and `avoid` steer the search queries and graphics so the video reads as one piece.
+- Graphic scenes (`type: "animation"`) pick a template that fits what is said: headline, versus, timeline, list, quote,
+  scorecard. Each pack draws every template its own way.
+
+Change any of it on the plan page (**Look & feel**, at the top). The same card lists rhythm problems: the same graphic
+twice in a row, three graphics without a photo or clip between them, or a reel with fewer than three kinds of visual.
+Fonts (Anton, Inter, Playfair Display, Special Elite, Noto Sans Devanagari) are bundled in `template/src/fonts/` with
+their licences.
+
+## Your voice, hooks and packaging
+
+- **Your voice** (Studio home → 🎙 Your voice, or `shared/voice.md`): who you talk to, how you actually talk (paste your
+  best Reel's transcript), words you never use, claims you won't make. Every script prompt includes it once it's filled in.
+- **Hooks**: the prompt gives Claude 18 hook formulas (Statistic, Contrarian Flip, The Receipt, …) and their rules;
+  `hooks.md` lists alternatives labelled with their formula.
+- **Dead air**: each recording is checked for pauses over 1 s (1.6 s in long-form) and silence at the start or end; the
+  Record step shows where.
+- **Package** (after the final render; Studio button, or `reel package <slug>`): `out/<video>_package.md` with title
+  options ranked and checked (length, all caps, vague words, thumbnail echoing the title), thumbnail text, the YouTube
+  description (with long-form chapters from the real timings, checked against YouTube's rules), the Instagram caption,
+  sources, credits and hashtags. Titles and thumbnail text are written by Claude with the script. Nothing is uploaded.
+
+Ideas and rules adapted from [youtube-agent-skill](https://github.com/Jakeschincariol/youtube-agent-skill) (MIT).
 
 ## Plan, parts and checks (before the final render)
 

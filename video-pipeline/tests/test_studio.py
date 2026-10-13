@@ -139,6 +139,23 @@ def test_audio_upload_converts_to_m4a(project_factory, app_for, tmp_path):
     assert "err=1" in r.location
 
 
+def test_visuals_step_names_manual_waits_and_charts_without_numbers(project_factory):
+    from scripts import plan as plan_mod
+    proj = project_factory([
+        {"id": 1, "text": "hello world", "visual": {"type": "photo", "query": "q"}},
+        {"id": 2, "text": "need a screenshot", "visual": {"type": "manual", "prompt": "press release"}},
+        {"id": 3, "text": "india earns most", "visual": {"type": "chart", "params": {}}},
+    ])
+    plan_mod.set_locked(proj, True)
+    (proj / "build/cache/fetch.json").write_text("{}")
+    (proj / "assets/images/scene_01.jpg").write_bytes(b"x")
+    fetch = next(s for s in project_state(proj) if s.key == "fetch")
+    assert fetch.status == "todo", "a chart with no numbers can't be fetched, so the step isn't done"
+    assert "1/3" in fetch.detail and "1 wait for your file (Manual assets)" in fetch.detail
+    assert fetch.todos == ["Scene 3: the chart has no numbers. Add labels and values in the plan, "
+                           "or change it to another visual."]
+
+
 def test_state_walks_through_the_pipeline(project_factory):
     proj = project_factory([
         {"id": 1, "text": "hello world", "visual": {"type": "photo", "query": "q"}},
@@ -197,3 +214,23 @@ def test_project_page_renders_every_state(project_factory, app_for):
     assert "err=1" in r.location
     assert client.get("/p/nope").status_code == 404
     assert client.get("/api/p/proj/state").get_json()["steps"][0]["key"] == "brief"
+
+
+def test_search_again_button_for_scenes_that_found_nothing(project_factory, app_for, runner, monkeypatch):
+    from scripts import fetch_assets
+    from scripts import plan as plan_mod
+    monkeypatch.setattr(fetch_assets, "retry_missing", lambda project, log=print: {"still missing": 1})  # no network
+    proj = project_factory([
+        {"id": 1, "text": "steam train", "visual": {"type": "manual", "downgraded_from": "photo",
+         "query": "steam train", "prompt": "Auto-fetch found nothing relevant. Wanted: steam train"}},
+        {"id": 2, "text": "a screenshot", "visual": {"type": "manual", "prompt": "press release"}},
+    ])
+    plan_mod.set_locked(proj, True)
+    client = app_for(proj.parent)
+    page = client.get("/p/proj").get_data(as_text=True)
+    assert "Search again (1)" in page
+    r = client.post("/p/proj/run/retry_missing")
+    assert r.status_code == 302 and "Started" in r.location
+    runner.wait_idle(10)
+    job = runner.recent("proj", 1)[0]
+    assert job.step == "retry_missing" and job.status == "done" and job.result == "1 still missing"

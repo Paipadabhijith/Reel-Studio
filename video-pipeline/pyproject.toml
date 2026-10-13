@@ -19,6 +19,7 @@ dependencies = [
   "indic-transliteration>=2.3",
   "anthropic>=1.9",
   "trafilatura>=2.0",
+  "yt-dlp>=2025.1",
   "matplotlib>=3.8",
   "flask>=3.0",
   "shapely>=2.0",

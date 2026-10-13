@@ -1,0 +1,1672 @@
+{
+  "project": "ipl-2026",
+  "format": "long",
+  "brand": "default",
+  "language": "hinglish",
+  "long_form": {
+    "chapters": [
+      {
+        "title": "Hook aur Setup",
+        "scene_ids": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6
+        ]
+      },
+      {
+        "title": "2025: Winning Ka Saal",
+        "scene_ids": [
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
+          16
+        ]
+      },
+      {
+        "title": "Final 2026: Ahmedabad Ki Raat",
+        "scene_ids": [
+          17,
+          18,
+          19,
+          20,
+          21,
+          22,
+          23,
+          24,
+          25,
+          26,
+          27,
+          28,
+          29,
+          30,
+          31,
+          32
+        ]
+      },
+      {
+        "title": "Winning vs Domination",
+        "scene_ids": [
+          33,
+          34,
+          35,
+          36,
+          37,
+          38,
+          39,
+          40,
+          41,
+          42
+        ]
+      },
+      {
+        "title": "Fans Ke Liye Iska Matlab",
+        "scene_ids": [
+          43,
+          44,
+          45,
+          46,
+          47,
+          48,
+          49,
+          50,
+          51,
+          52,
+          53
+        ]
+      },
+      {
+        "title": "Aage Kya?",
+        "scene_ids": [
+          54,
+          55,
+          56,
+          57,
+          58,
+          59,
+          60
+        ]
+      }
+    ]
+  },
+  "reels": [],
+  "scenes": [
+    {
+      "id": 1,
+      "text": "Ek baar trophy jeetna luck bhi ho sakta hai. Lekin doosri baar usi trophy ko defend karna? Woh luck nahi hota, bhai.",
+      "emphasis": [
+        "defend karna",
+        "luck nahi"
+      ],
+      "visual": {
+        "type": "animation",
+        "query": null,
+        "orientation": "landscape",
+        "motion": null,
+        "prompt": null,
+        "fallback": null,
+        "template": null,
+        "params": {
+          "style": "kinetic",
+          "headline": "DEFEND KARNA",
+          "subline": "Jeetna easy, tikna mushkil"
+        },
+        "file": null,
+        "source": null,
+        "downgraded_from": null,
+        "on_missing": null
+      },
+      "overlay": null
+    },
+    {
+      "id": 2,
+      "text": "Namaste doston! Aaj hum baat karenge IPL 2026 ki, jahan RCB ne phir se trophy uthayi, aur fans ke liye sab kuch badal gaya.",
+      "emphasis": [
+        "IPL 2026",
+        "RCB"
+      ],
+      "visual": {
+        "type": "photo",
+        "query": "cricket stadium crowd night lights",
+        "orientation": "landscape",
+        "motion": "slow-zoom-in",
+        "prompt": null,
+        "fallback": null,
+        "template": null,
+        "params": {},
+        "file": "assets/images/scene_02.jpg",
+        "source": "stock",
+        "downgraded_from": null,
+        "on_missing": null
+      },
+      "overlay": null
+    },
+    {
+      "id": 3,
+      "text": "Kehte hain 2025 winning ka saal tha, aur 2026 domination ka. Aaj hum dekhenge ki yeh line kitni sahi hai, aur kitni nahi.",
+      "emphasis": [
+        "winning",
+        "domination"
+      ],
+      "visual": {
+        "type": "animation",
+        "query": null,
+        "orientation": "landscape",
+        "motion": null,
+        "prompt": null,
+        "fallback": null,
+        "template": null,
+        "params": {
+          "style": "burst",
+          "headline": "2025 vs 2026",
+          "subline": "Winning ya Domination?"
+        },
+        "file": null,
+        "source": null,
+        "downgraded_from": null,
+        "on_missing": null
+      },
+      "overlay": null
+    },
+    {
+      "id": 4,
+      "text": "Hum final ke numbers dekhenge, Kohli ki innings samjhenge, aur sabse zaroori baat, ek fan ke nazariye se is jeet ka matlab nikalenge.",
+      "emphasis": [
+        "numbers",
+        "fan ke nazariye"
+      ],
+      "visual": {
+        "type": "animation",
+        "query": null,
+        "orientation": "landscape",
+        "motion": null,
+        "prompt": null,
+        "fallback": null,
+        "template": null,
+        "params": {
+          "style": "rings",
+          "headline": "FAN LENS",
+          "subline": "Jeet ka asli matlab"
+        },
+        "file": null,
+        "source": null,
+        "downgraded_from": null,
+        "on_missing": null
+      },
+      "overlay": null
+    },
+    {
+      "id": 5,
+      "text": "Tareekh thi 31 May 2026. Jagah, Ahmedabad ka Narendra Modi Stadium. Ek taraf RCB, doosri taraf Gujarat Titans, aur beech mein ek trophy.",
+      "emphasis": [
+        "31 May 2026",
+        "Ahmedabad"
+      ],
+      "visual": {
+        "type": "blender",
+        "query": "Narendra Modi Stadium Ahmedabad exterior",
+        "orientation": "landscape",
+        "motion": "slow-zoom-out",
+        "prompt": null,
+        "fallback": null,
+        "template": "india_map",
+        "params": {
+          "highlight_states": [
+            "GJ"
+          ],
+          "camera": "top_down_tilt",
+          "why": "Blender · map: names GJ: a 3D map (the places are the point)"
+        },
+        "file": null,
+        "source": "wikimedia",
+        "downgraded_from": "photo",
+        "on_missing": null
+      },
+      "overlay": {
+        "type": "stat",
+        "value": "31",
+        "label": "May"
+      }
+    },
+    {
+      "id": 6,
+      "text": "IPL ne is final ko naam diya tha Battle for Glory, aur sach kahun toh yeh naam bilkul sahi baitha.",
+      "emphasis": [
+        "Battle for Glory"
+      ],
+      "visual": {
+        "type": "manual",
+        "query": null,
+        "orientation": "landscape",
+        "motion": null,
+        "prompt": "Screenshot of the IPL official website video page showing the title 'Battle for Glory: TATA IPL 2026 Final' and the date 31 May 2026.",
+        "fallback": null,
+        "template": null,
+        "params": {},
+        "file": null,
+        "source": null,
+        "downgraded_from": null,
+        "on_missing": null
+      },
+      "overlay": null
+    },
+    {
+      "id": 7,
+      "text": "Lekin pehle thoda peeche chalte hain, 2025 mein. Us saal RCB ne final sirf chhe runs se jeeta tha. Margin bahut patla tha.",
+      "emphasis": [
+        "2025",
+        "chhe runs"
+      ],
+      "visual": {
+        "type": "stat",
+        "query": null,
+        "orientation": "landscape",
+        "motion": null,
+        "prompt": null,
+        "fallback": null,
+        "template": null,
+        "params": {},
+        "file": null,
+        "source": null,
+        "downgraded_from": null,
+        "on_missing": null
+      },
+      "overlay": {
+        "type": "stat",
+        "value": "6 runs",
+        "label": "2025 final ka margin"
+      }
+    },
+    {
+      "id": 8,
+      "text": "Woh jeet pehli IPL trophy thi. Saalon ka intezaar, saalon ke meme, aur har saal ek hi line: is baar nahi hua, agli baar.",
+      "emphasis": [
+        "pehli IPL trophy",
+        "intezaar"
+      ],
+      "visual": {
+        "type": "photo",
+        "query": "fans waiting outside cricket stadium",
+        "orientation": "landscape",
+        "motion": "pan-left",
+        "prompt": null,
+        "fallback": null,
+        "template": null,
+        "params": {},
+        "file": "assets/images/scene_08.jpg",
+        "source": "stock",
+        "downgraded_from": null,
+        "on_missing": null
+      },
+      "overlay": null
+    },
+    {
+      "id": 9,
+      "text": "Har saal kahani wahi hoti thi. Team strong dikhti, fans ummeed lagate, aur phir kisi ek bure match mein sapna toot jata tha.",
+      "emphasis": [
+        "ummeed",
+        "sapna toot"
+      ],
+      "visual": {
+        "type": "animation",
+        "query": null,
+        "orientation": "landscape",
+        "motion": null,
+        "prompt": null,
+        "fallback": null,
+        "template": null,
+        "params": {
+          "style": "kinetic",
+          "headline": "INTEZAAR",
+          "subline": "Saalon ki ummeed"
+        },
+        "file": null,
+        "source": null,
+        "downgraded_from": null,
+        "on_missing": null
+      },
+      "overlay": null
+    },
+    {
+      "id": 10,
+      "text": "2025 mein woh chakra toota. Bengaluru ke fans ke liye woh sirf ek jeet nahi thi, ek bojh ka utar jana tha.",
+      "emphasis": [
+        "chakra toota",
+        "bojh"
+      ],
+      "visual": {
+        "type": "photo",
+        "query": "fans celebrating red jerseys cricket",
+        "orientation": "landscape",
+        "motion": "slow-zoom-in",
+        "prompt": null,
+        "fallback": null,
+        "template": null,
+        "params": {},
+        "file": "assets/images/scene_10.jpg",
+        "source": "stock",
+        "downgraded_from": null,
+        "on_missing": null
+      },
+      "overlay": null
+    },
+    {
+      "id": 11,
+      "text": "Aur sach batao, us din har fan ne bhi ek sawaal socha. Kya yeh ek lucky season tha, ya ek aisi team ki shuruaat?",
+      "emphasis": [
+        "lucky season",
+        "shuruaat"
+      ],
+      "visual": {
+        "type": "animation",
+        "query": null,
+        "orientation": "landscape",
+        "motion": null,
+        "prompt": null,
+        "fallback": null,
+        "template": null,
+        "params": {
+          "style": "rings",
+          "headline": "FLUKE YA FORM?",
+          "subline": "2025 ke baad ka sawaal"
+        },
+        "file": null,
+        "source": null,
+        "downgraded_from": null,
+        "on_missing": null
+      },
+      "overlay": null
+    },
+    {
+      "id": 12,
+      "text": "Jab tak 2026 nahi aaya, is sawaal ka jawab kisi ke paas nahi tha. Sirf ummeed thi, aur thodi si ghabrahat bhi.",
+      "emphasis": [
+        "2026",
+        "ghabrahat"
+      ],
+      "visual": {
+        "type": "photo",
+        "query": "young man watching cricket on phone",
+        "orientation": "landscape",
+        "motion": "slow-zoom-in",
+        "prompt": null,
+        "fallback": null,
+        "template": null,
+        "params": {},
+        "file": "assets/images/scene_12.jpg",
+        "source": "stock",
+        "downgraded_from": null,
+        "on_missing": null
+      },
+      "overlay": null
+    },
+    {
+      "id": 13,
+      "text": "Kyunki trophy jeetne ke baad ek naya pressure aata hai. Ab aap underdog nahi ho, ab har team aapko haraana chahti hai.",
+      "emphasis": [
+        "pressure",
+        "underdog"
+      ],
+      "visual": {
+        "type": "animation",
+        "query": null,
+        "orientation": "landscape",
+        "motion": null,
+        "prompt": null,
+        "fallback": null,
+        "template": null,
+        "params": {
+          "style": "burst",
+          "headline": "TARGET ON BACK",
+          "subline": "Champion banne ka pressure"
+        },
+        "file": null,
+        "source": null,
+        "downgraded_from": null,
+        "on_missing": null
+      },
+      "overlay": null
+    },
+    {
+      "id": 14,
+      "text": "Defending champion hona ek bhaari tag hai. Zyadatar teams us pressure mein bikhar jaati hain, aur season ke beech mein hi ladkhadane lagti hain.",
+      "emphasis": [
+        "Defending champion",
+        "pressure"
+      ],
+      "visual": {
+        "type": "photo",
+        "query": "cricket team huddle stadium evening",
+        "orientation": "landscape",
+        "motion": "pan-right",
+        "prompt": null,
+        "fallback": null,
+        "template": null,
+        "params": {},
+        "file": "assets/images/scene_14.jpg",
+        "source": "stock",
+        "downgraded_from": null,
+        "on_missing": null
+      },
+      "overlay": null
+    },
+    {
+      "id": 15,
+      "text": "Lekin RCB ne is baar alag script likhi. Season ke end tak woh final tak pahunche, aur wahan unka saamna hua Gujarat Titans se.",
+      "emphasis": [
+        "alag script",
+        "Gujarat Titans"
+      ],
+      "visual": {
+        "type": "photo",
+        "query": "cricket fans waving flags stadium",
+        "orientation": "landscape",
+        "motion": "slow-zoom-out",
+        "prompt": null,
+        "fallback": null,
+        "template": null,
+        "params": {},
+        "file": "assets/images/scene_15.jpg",
+        "source": "stock",
+        "downgraded_from": null,
+        "on_missing": null
+      },
+      "overlay": null
+    },
+    {
+      "id": 16,
+      "text": "Gujarat ke liye yeh unka teesra IPL final tha. Matlab dono teams ke paas bharosa tha, aur dono ke paas kuch sabit karne ko tha.",
+      "emphasis": [
+        "teesra IPL final",
+        "sabit karne"
+      ],
+      "visual": {
+        "type": "stat",
+        "query": null,
+        "orientation": "landscape",
+        "motion": null,
+        "prompt": null,
+        "fallback": null,
+        "template": null,
+        "params": {},
+        "file": null,
+        "source": null,
+        "downgraded_from": null,
+        "on_missing": null
+      },
+      "overlay": {
+        "type": "stat",
+        "value": "3rd",
+        "label": "GT ka IPL final"
+      }
+    },
+    {
+      "id": 17,
+      "text": "Ab chalte hain final ki raat par. Toss RCB ne jeeta, aur unhone pehle field karne ka faisla liya. Bada call tha.",
+      "emphasis": [
+        "toss",
+        "field karne"
+      ],
+      "visual": {
+        "type": "photo",
+        "query": "cricket captains toss coin stadium",
+        "orientation": "landscape",
+        "motion": "slow-zoom-in",
+        "prompt": null,
+        "fallback": null,
+        "template": null,
+        "params": {},
+        "file": "assets/images/scene_17.jpg",
+        "source": "stock",
+        "downgraded_from": null,
+        "on_missing": null
+      },
+      "overlay": null
+    },
+    {
+      "id": 18,
+      "text": "Final mein pehle batting karna aksar safe maana jaata hai. Lekin RCB ne chase pe bharosa dikhaya, aur yahi bharosa unki pehchan ban gaya.",
+      "emphasis": [
+        "chase",
+        "bharosa"
+      ],
+      "visual": {
+        "type": "animation",
+        "query": null,
+        "orientation": "landscape",
+        "motion": null,
+        "prompt": null,
+        "fallback": null,
+        "template": null,
+        "params": {
+          "style": "kinetic",
+          "headline": "CHASE KA BHAROSA",
+          "subline": "Toss ke baad bada faisla"
+        },
+        "file": null,
+        "source": null,
+        "downgraded_from": null,
+        "on_missing": null
+      },
+      "overlay": null
+    },
+    {
+      "id": 19,
+      "text": "Shuruaat hi tight rahi. Josh Hazlewood aur Bhuvneshwar Kumar ne Gujarat ke top order ko jaldi hi hilakar rakh diya.",
+      "emphasis": [
+        "Hazlewood",
+        "Bhuvneshwar Kumar"
+      ],
+      "visual": {
+        "type": "photo",
+        "query": "fast bowler running in cricket stadium",
+        "orientation": "landscape",
+        "motion": "pan-left",
+        "prompt": null,
+        "fallback": null,
+        "template": null,
+        "params": {},
+        "file": "assets/images/scene_19.jpg",
+        "source": "stock",
+        "downgraded_from": null,
+        "on_missing": null
+      },
+      "overlay": null
+    },
+    {
+      "id": 20,
+      "text": "Shubman Gill aur Sai Sudharsan, jinpe Gujarat ki poori batting tiki thi, powerplay ke andar hi pavilion laut gaye.",
+      "emphasis": [
+        "Shubman Gill",
+        "Sai Sudharsan"
+      ],
+      "visual": {
+        "type": "manual",
+        "query": null,
+        "orientation": "landscape",
+        "motion": null,
+        "prompt": "Find a licensed or official scorecard graphic or screenshot showing the fall of wickets for GT in the IPL 2026 final (Gill and Sudharsan dismissals). Do not use match footage.",
+        "fallback": null,
+        "template": null,
+        "params": {},
+        "file": null,
+        "source": null,
+        "downgraded_from": null,
+        "on_missing": null
+      },
+      "overlay": null
+    },
+    {
+      "id": 21,
+      "text": "Washington Sundar ne ek end sambhala aur adhi-shatak banaya. Unhone 37 gend mein naabad pachaas run banaye, jo ek solid knock tha.",
+      "emphasis": [
+        "Washington Sundar",
+        "naabad pachaas"
+      ],
+      "visual": {
+        "type": "stat",
+        "query": null,
+        "orientation": "landscape",
+        "motion": null,
+        "prompt": null,
+        "fallback": null,
+        "template": null,
+        "params": {},
+        "file": null,
+        "source": null,
+        "downgraded_from": null,
+        "on_missing": null
+      },
+      "overlay": {
+        "type": "stat",
+        "value": "50*",
+        "label": "Sundar, 37 gend mein"
+      }
+    },
+    {
+      "id": 22,
+      "text": "Phir bhi Gujarat kabhi khul ke nahi khel paayi. Regular wickets girte rahe, aur woh poore 20 overs mein sirf 155 par 8 tak pahunche.",
+      "emphasis": [
+        "regular wickets",
+        "155"
+      ],
+      "visual": {
+        "type": "stat",
+        "query": null,
+        "orientation": "landscape",
+        "motion": null,
+        "prompt": null,
+        "fallback": null,
+        "template": null,
+        "params": {},
+        "file": null,
+        "source": null,
+        "downgraded_from": null,
+        "on_missing": null
+      },
+      "overlay": {
+        "type": "stat",
+        "value": "155/8",
+        "label": "Gujarat Titans ka score"
+      }
+    },
+    {
+      "id": 23,
+      "text": "RCB ke gendbaazon mein Rasikh Salam Dar chamke. Unhone 27 run dekar teen wicket nikaale, aur Gujarat ki ummeed todne mein bada role nibhaya.",
+      "emphasis": [
+        "Rasikh Salam Dar",
+        "teen wicket"
+      ],
+      "visual": {
+        "type": "stat",
+        "query": null,
+        "orientation": "landscape",
+        "motion": null,
+        "prompt": null,
+        "fallback": null,
+        "template": null,
+        "params": {},
+        "file": null,
+        "source": null,
+        "downgraded_from": null,
+        "on_missing": null
+      },
+      "overlay": {
+        "type": "stat",
+        "value": "3/27",
+        "label": "Rasikh Salam Dar"
+      }
+    },
+    {
+      "id": 24,
+      "text": "Bhuvneshwar Kumar aur Hazlewood ne bhi do-do wicket liye. Yeh ek poora team effort tha, sirf ek star ka show nahi.",
+      "emphasis": [
+        "do-do wicket",
+        "team effort"
+      ],
+      "visual": {
+        "type": "chart",
+        "query": null,
+        "orientation": "landscape",
+        "motion": null,
+        "prompt": null,
+        "fallback": null,
+        "template": null,
+        "params": {
+          "kind": "bar",
+          "title": "RCB gendbaazon ke wickets (final)",
+          "unit": "wickets",
+          "labels": [
+            "Rasikh",
+            "Bhuvneshwar",
+            "Hazlewood"
+          ],
+          "values": [
+            3,
+            2,
+            2
+          ]
+        },
+        "file": null,
+        "source": null,
+        "downgraded_from": null,
+        "on_missing": null
+      },
+      "overlay": null
+    },
+    {
+      "id": 25,
+      "text": "Target tha 156. T20 final ke hisaab se chhota lagta hai, lekin final ka pressure score ko bada bana deta hai.",
+      "emphasis": [
+        "156",
+        "pressure"
+      ],
+      "visual": {
+        "type": "animation",
+        "query": null,
+        "orientation": "landscape",
+        "motion": null,
+        "prompt": null,
+        "fallback": null,
+        "template": null,
+        "params": {
+          "style": "rings",
+          "headline": "156",
+          "subline": "Jeet ka target"
+        },
+        "file": null,
+        "source": null,
+        "downgraded_from": null,
+        "on_missing": null
+      },
+      "overlay": null
+    },
+    {
+      "id": 26,
+      "text": "Aur is pressure ke beech jo aadmi khada tha, woh tha Virat Kohli. Aise hi pal ke liye toh fans ne saalon intezaar kiya tha.",
+      "emphasis": [
+        "Virat Kohli",
+        "intezaar"
+      ],
+      "visual": {
+        "type": "photo",
+        "query": "Virat Kohli batting",
+        "orientation": "landscape",
+        "motion": "slow-zoom-in",
+        "prompt": null,
+        "fallback": null,
+        "template": null,
+        "params": {},
+        "file": "assets/images/scene_26.jpg",
+        "source": "wikimedia",
+        "downgraded_from": null,
+        "on_missing": null
+      },
+      "overlay": null
+    },
+    {
+      "id": 27,
+      "text": "Kohli ne sirf 25 gend mein fifty puri ki. Reports ke mutabik yeh IPL final ki sabse tez fifty hai.",
+      "emphasis": [
+        "25 gend",
+        "sabse tez fifty"
+      ],
+      "visual": {
+        "type": "stat",
+        "query": null,
+        "orientation": "landscape",
+        "motion": null,
+        "prompt": null,
+        "fallback": null,
+        "template": null,
+        "params": {},
+        "file": null,
+        "source": null,
+        "downgraded_from": null,
+        "on_missing": null
+      },
+      "overlay": {
+        "type": "stat",
+        "value": "25",
+        "label": "Gend mein fifty"
+      }
+    },
+    {
+      "id": 28,
+      "text": "Log kehte the ki Kohli anchor hai, dheere khelta hai. Is innings ne woh kahani bhi badal di, aur bohot saari baatein chup kara di.",
+      "emphasis": [
+        "anchor",
+        "kahani badal di"
+      ],
+      "visual": {
+        "type": "animation",
+        "query": null,
+        "orientation": "landscape",
+        "motion": null,
+        "prompt": null,
+        "fallback": null,
+        "template": null,
+        "params": {
+          "style": "kinetic",
+          "headline": "ANCHOR NAHI",
+          "subline": "Attacker mode ON"
+        },
+        "file": null,
+        "source": null,
+        "downgraded_from": null,
+        "on_missing": null
+      },
+      "overlay": null
+    },
+    {
+      "id": 29,
+      "text": "Kohli 42 gend mein 75 par naabad rahe, aur unhe Man of the Match ka award mila. Final ka sabse bada hero wohi tha.",
+      "emphasis": [
+        "75",
+        "Man of the Match"
+      ],
+      "visual": {
+        "type": "stat",
+        "query": null,
+        "orientation": "landscape",
+        "motion": null,
+        "prompt": null,
+        "fallback": null,
+        "template": null,
+        "params": {},
+        "file": null,
+        "source": null,
+        "downgraded_from": null,
+        "on_missing": null
+      },
+      "overlay": {
+        "type": "stat",
+        "value": "75*",
+        "label": "Kohli, 42 gend mein"
+      }
+    },
+    {
+      "id": 30,
+      "text": "Aur phir aakhir mein, ek chhakka. Kohli ne apne trademark style mein chase khatam kiya, aur RCB paanch wicket se jeet gaye.",
+      "emphasis": [
+        "chhakka",
+        "paanch wicket"
+      ],
+      "visual": {
+        "type": "photo",
+        "query": "cricket ball flying over stadium crowd",
+        "orientation": "landscape",
+        "motion": "slow-zoom-out",
+        "prompt": null,
+        "fallback": null,
+        "template": null,
+        "params": {},
+        "file": "assets/images/scene_30.jpg",
+        "source": "stock",
+        "downgraded_from": null,
+        "on_missing": null
+      },
+      "overlay": null
+    },
+    {
+      "id": 31,
+      "text": "Is jeet ke saath RCB back-to-back champion ban gaye. Jeetne wali team ko 20 crore mile, aur Gujarat ko saade bahara crore.",
+      "emphasis": [
+        "back-to-back",
+        "20 crore"
+      ],
+      "visual": {
+        "type": "chart",
+        "query": null,
+        "orientation": "landscape",
+        "motion": null,
+        "prompt": null,
+        "fallback": null,
+        "template": null,
+        "params": {
+          "kind": "bar",
+          "title": "IPL 2026 prize money",
+          "unit": "Rs crore",
+          "labels": [
+            "Winner RCB",
+            "Runner-up GT"
+          ],
+          "values": [
+            20,
+            12.5
+          ]
+        },
+        "file": null,
+        "source": null,
+        "downgraded_from": null,
+        "on_missing": null
+      },
+      "overlay": null
+    },
+    {
+      "id": 32,
+      "text": "Gujarat ke captain Shubman Gill ne bhi maana ki unki team final mein momentum hi nahi bana paayi. Haar ka dard saaf dikha.",
+      "emphasis": [
+        "Shubman Gill",
+        "momentum"
+      ],
+      "visual": {
+        "type": "animation",
+        "query": null,
+        "orientation": "landscape",
+        "motion": null,
+        "prompt": null,
+        "fallback": null,
+        "template": null,
+        "params": {
+          "style": "rings",
+          "headline": "NO MOMENTUM",
+          "subline": "GT ki final haar"
+        },
+        "file": null,
+        "source": null,
+        "downgraded_from": null,
+        "on_missing": null
+      },
+      "overlay": null
+    },
+    {
+      "id": 33,
+      "text": "Ab asli sawaal par aate hain. Kya 2026 sach mein domination tha, ya bas ek aur close jeet? Chalo numbers se samjhte hain.",
+      "emphasis": [
+        "domination",
+        "numbers"
+      ],
+      "visual": {
+        "type": "animation",
+        "query": null,
+        "orientation": "landscape",
+        "motion": null,
+        "prompt": null,
+        "fallback": null,
+        "template": null,
+        "params": {
+          "style": "burst",
+          "headline": "DOMINATION?",
+          "subline": "Numbers kya kehte hain"
+        },
+        "file": null,
+        "source": null,
+        "downgraded_from": null,
+        "on_missing": null
+      },
+      "overlay": null
+    },
+    {
+      "id": 34,
+      "text": "2025 final mein RCB ne 190 banaye aur chhe run se jeete. 2026 mein unhone 161 ka score banaya aur chase karke jeete.",
+      "emphasis": [
+        "190",
+        "161"
+      ],
+      "visual": {
+        "type": "chart",
+        "query": null,
+        "orientation": "landscape",
+        "motion": null,
+        "prompt": null,
+        "fallback": null,
+        "template": null,
+        "params": {
+          "kind": "bar",
+          "title": "Do finals ke scores",
+          "unit": "runs",
+          "labels": [
+            "RCB 2025",
+            "Rival 2025",
+            "RCB 2026",
+            "GT 2026"
+          ],
+          "values": [
+            190,
+            184,
+            161,
+            155
+          ]
+        },
+        "file": null,
+        "source": null,
+        "downgraded_from": null,
+        "on_missing": null
+      },
+      "overlay": null
+    },
+    {
+      "id": 35,
+      "text": "Dekha? Dono finals ke scorelines bahut kareeb ke the. Toh agar domination ka matlab bade margin se jeetna hai, toh yeh poora sach nahi hai.",
+      "emphasis": [
+        "kareeb",
+        "bade margin"
+      ],
+      "visual": {
+        "type": "animation",
+        "query": null,
+        "orientation": "landscape",
+        "motion": null,
+        "prompt": null,
+        "fallback": null,
+        "template": null,
+        "params": {
+          "style": "kinetic",
+          "headline": "CLOSE CALLS",
+          "subline": "Scoreboard ki kahani"
+        },
+        "file": null,
+        "source": null,
+        "downgraded_from": null,
+        "on_missing": null
+      },
+      "overlay": null
+    },
+    {
+      "id": 36,
+      "text": "Lekin domination ka ek aur matlab bhi hota hai. Woh ki aap pressure mein bhi apni cheezein sahi karo, baar baar, bina ghabraye.",
+      "emphasis": [
+        "pressure",
+        "baar baar"
+      ],
+      "visual": {
+        "type": "photo",
+        "query": "cricket team celebrating trophy confetti",
+        "orientation": "landscape",
+        "motion": "slow-zoom-in",
+        "prompt": null,
+        "fallback": null,
+        "template": null,
+        "params": {},
+        "file": "assets/images/scene_36.jpg",
+        "source": "stock",
+        "downgraded_from": null,
+        "on_missing": null
+      },
+      "overlay": null
+    },
+    {
+      "id": 37,
+      "text": "2025 mein RCB ne jeet haasil ki. 2026 mein unhone ek aur kaam kiya: woh jeet ko defend kar paaye, jo bahut kam teams kar paati hain.",
+      "emphasis": [
+        "defend",
+        "bahut kam teams"
+      ],
+      "visual": {
+        "type": "animation",
+        "query": null,
+        "orientation": "landscape",
+        "motion": null,
+        "prompt": null,
+        "fallback": null,
+        "template": null,
+        "params": {
+          "style": "rings",
+          "headline": "REPEAT",
+          "subline": "Back-to-back champions"
+        },
+        "file": null,
+        "source": null,
+        "downgraded_from": null,
+        "on_missing": null
+      },
+      "overlay": null
+    },
+    {
+      "id": 38,
+      "text": "Isi liye hum kehte hain ki 2025 winning ka saal tha. Woh ek sapna poora hone ka saal tha, ek bhaari intezaar ka ant.",
+      "emphasis": [
+        "winning",
+        "sapna poora"
+      ],
+      "visual": {
+        "type": "photo",
+        "query": "red jersey cricket fans emotional celebration",
+        "orientation": "landscape",
+        "motion": "pan-right",
+        "prompt": null,
+        "fallback": null,
+        "template": null,
+        "params": {},
+        "file": "assets/images/scene_38.jpg",
+        "source": "stock",
+        "downgraded_from": null,
+        "on_missing": null
+      },
+      "overlay": null
+    },
+    {
+      "id": 39,
+      "text": "Aur 2026 domination ka saal isliye tha, kyunki ab RCB ko koi lucky ya fluke nahi keh sakta. Ab woh hi champion hain.",
+      "emphasis": [
+        "domination",
+        "fluke"
+      ],
+      "visual": {
+        "type": "animation",
+        "query": null,
+        "orientation": "landscape",
+        "motion": null,
+        "prompt": null,
+        "fallback": null,
+        "template": null,
+        "params": {
+          "style": "burst",
+          "headline": "NOT A FLUKE",
+          "subline": "2026 ne proof de diya"
+        },
+        "file": null,
+        "source": null,
+        "downgraded_from": null,
+        "on_missing": null
+      },
+      "overlay": null
+    },
+    {
+      "id": 40,
+      "text": "Vaise IPL 2026 ka Orange Cap Vaibhav Sooryavanshi ne jeeta. Yaani naye youngsters bhi aa gaye hain, aur lead lene ko tayyar hain.",
+      "emphasis": [
+        "Orange Cap",
+        "Vaibhav Sooryavanshi"
+      ],
+      "visual": {
+        "type": "manual",
+        "query": null,
+        "orientation": "landscape",
+        "motion": null,
+        "prompt": "Screenshot of an article headline or stats page confirming Vaibhav Sooryavanshi as the IPL 2026 Orange Cap winner. Do not use player photos scraped from the web.",
+        "fallback": null,
+        "template": null,
+        "params": {},
+        "file": null,
+        "source": null,
+        "downgraded_from": null,
+        "on_missing": null
+      },
+      "overlay": null
+    },
+    {
+      "id": 41,
+      "text": "Yeh bhi yaad rakhna ki RCB ne jis team ko haraya, woh koi kamzor nahi thi. Gujarat Titans bhi ek strong, tough side thi.",
+      "emphasis": [
+        "Gujarat Titans",
+        "strong"
+      ],
+      "visual": {
+        "type": "blender",
+        "query": null,
+        "orientation": "landscape",
+        "motion": null,
+        "prompt": null,
+        "fallback": null,
+        "template": "india_map",
+        "params": {
+          "highlight_states": [
+            "GJ",
+            "KA"
+          ],
+          "camera": "top_down_tilt"
+        },
+        "file": null,
+        "source": null,
+        "downgraded_from": null,
+        "on_missing": null
+      },
+      "overlay": null
+    },
+    {
+      "id": 42,
+      "text": "Gujarat ke Ahmedabad mein hi, Karnataka ki team ne jeet ka jhanda gaada. Dono rajyon ka ek hi stadium mein aamna-saamna tha.",
+      "emphasis": [
+        "Ahmedabad",
+        "Karnataka"
+      ],
+      "visual": {
+        "type": "animation",
+        "query": null,
+        "orientation": "landscape",
+        "motion": null,
+        "prompt": null,
+        "fallback": null,
+        "template": null,
+        "params": {
+          "style": "rings",
+          "headline": "GJ vs KA",
+          "subline": "Ek stadium, do sapne"
+        },
+        "file": null,
+        "source": null,
+        "downgraded_from": null,
+        "on_missing": null
+      },
+      "overlay": null
+    },
+    {
+      "id": 43,
+      "text": "Ab sabse important hissa: fans ke liye iska kya matlab hai? Ek urban youth fan ke liye yeh sirf cricket nahi hai.",
+      "emphasis": [
+        "fans",
+        "urban youth"
+      ],
+      "visual": {
+        "type": "animation",
+        "query": null,
+        "orientation": "landscape",
+        "motion": null,
+        "prompt": null,
+        "fallback": null,
+        "template": null,
+        "params": {
+          "style": "kinetic",
+          "headline": "FAN KE LIYE",
+          "subline": "Sirf cricket nahi"
+        },
+        "file": null,
+        "source": null,
+        "downgraded_from": null,
+        "on_missing": null
+      },
+      "overlay": null
+    },
+    {
+      "id": 44,
+      "text": "Yeh ek identity hai. Group chats, college canteen, office ki lunch table, har jagah jeet ka maza ek alag hi level ka hota hai.",
+      "emphasis": [
+        "identity",
+        "group chats"
+      ],
+      "visual": {
+        "type": "photo",
+        "query": "friends watching cricket match together living room",
+        "orientation": "landscape",
+        "motion": "slow-zoom-in",
+        "prompt": null,
+        "fallback": null,
+        "template": null,
+        "params": {},
+        "file": "assets/images/scene_44.jpg",
+        "source": "stock",
+        "downgraded_from": null,
+        "on_missing": null
+      },
+      "overlay": null
+    },
+    {
+      "id": 45,
+      "text": "Pehle RCB fans ko mazaak ka saamna karna padta tha. Ab woh mazaak palat gaya hai, aur ab kehne ka haq unke paas hai.",
+      "emphasis": [
+        "mazaak",
+        "haq"
+      ],
+      "visual": {
+        "type": "animation",
+        "query": null,
+        "orientation": "landscape",
+        "motion": null,
+        "prompt": null,
+        "fallback": null,
+        "template": null,
+        "params": {
+          "style": "burst",
+          "headline": "MEME FLIP",
+          "subline": "Ab kehne ka haq unka"
+        },
+        "file": null,
+        "source": null,
+        "downgraded_from": null,
+        "on_missing": null
+      },
+      "overlay": null
+    },
+    {
+      "id": 46,
+      "text": "Do saal, do trophies. Yeh bhi ek tarah ka sukoon hai, ki wafadari aur sabr ka phal sach mein milta hai.",
+      "emphasis": [
+        "do trophies",
+        "sabr"
+      ],
+      "visual": {
+        "type": "stat",
+        "query": null,
+        "orientation": "landscape",
+        "motion": null,
+        "prompt": null,
+        "fallback": null,
+        "template": null,
+        "params": {},
+        "file": null,
+        "source": null,
+        "downgraded_from": null,
+        "on_missing": null
+      },
+      "overlay": {
+        "type": "stat",
+        "value": "2",
+        "label": "IPL titles RCB ke naam"
+      }
+    },
+    {
+      "id": 47,
+      "text": "Dusra matlab hai Virat Kohli ki legacy. Fans ne unhe saalon tak ek trophy ke liye lagataar ladte hue dekha tha.",
+      "emphasis": [
+        "Kohli",
+        "legacy"
+      ],
+      "visual": {
+        "type": "photo",
+        "query": "Virat Kohli celebrating public event",
+        "orientation": "landscape",
+        "motion": "slow-zoom-out",
+        "prompt": null,
+        "fallback": null,
+        "template": null,
+        "params": {},
+        "file": "assets/images/scene_47.jpg",
+        "source": "wikimedia",
+        "downgraded_from": null,
+        "on_missing": null
+      },
+      "overlay": null
+    },
+    {
+      "id": 48,
+      "text": "Aur final mein unki jo innings thi, woh us legacy ka perfect jawab thi. Pressure mein bhi woh sirf khelte nahi, jeet dilate hain.",
+      "emphasis": [
+        "legacy",
+        "jeet dilate"
+      ],
+      "visual": {
+        "type": "animation",
+        "query": null,
+        "orientation": "landscape",
+        "motion": null,
+        "prompt": null,
+        "fallback": null,
+        "template": null,
+        "params": {
+          "style": "rings",
+          "headline": "CLUTCH",
+          "subline": "Pressure mein bhi khel"
+        },
+        "file": null,
+        "source": null,
+        "downgraded_from": null,
+        "on_missing": null
+      },
+      "overlay": null
+    },
+    {
+      "id": 49,
+      "text": "Teesra matlab, ab fans ke paas ek sach mein strong team hai jo expectations ke saath jee sakti hai, aur unhe todti nahi.",
+      "emphasis": [
+        "expectations",
+        "strong team"
+      ],
+      "visual": {
+        "type": "photo",
+        "query": "cricket fans cheering stadium stands",
+        "orientation": "landscape",
+        "motion": "pan-left",
+        "prompt": null,
+        "fallback": null,
+        "template": null,
+        "params": {},
+        "file": "assets/images/scene_49.jpg",
+        "source": "stock",
+        "downgraded_from": null,
+        "on_missing": null
+      },
+      "overlay": null
+    },
+    {
+      "id": 50,
+      "text": "Pehle har season mein ek dar rehta tha ki is baar bhi toh nahi tootenge? Ab yeh dar thoda kam hai, aur bharosa zyada.",
+      "emphasis": [
+        "dar",
+        "bharosa"
+      ],
+      "visual": {
+        "type": "animation",
+        "query": null,
+        "orientation": "landscape",
+        "motion": null,
+        "prompt": null,
+        "fallback": null,
+        "template": null,
+        "params": {
+          "style": "kinetic",
+          "headline": "DAR KAM",
+          "subline": "Bharosa zyada"
+        },
+        "file": null,
+        "source": null,
+        "downgraded_from": null,
+        "on_missing": null
+      },
+      "overlay": null
+    },
+    {
+      "id": 51,
+      "text": "Lekin ek honest baat bhi. Domination ek bada shabd hai, aur ab har season mein expectations bhi usi level ki hongi.",
+      "emphasis": [
+        "honest baat",
+        "expectations"
+      ],
+      "visual": {
+        "type": "animation",
+        "query": null,
+        "orientation": "landscape",
+        "motion": null,
+        "prompt": null,
+        "fallback": null,
+        "template": null,
+        "params": {
+          "style": "burst",
+          "headline": "BAAR UTHI",
+          "subline": "Ab expectations bhi badi"
+        },
+        "file": null,
+        "source": null,
+        "downgraded_from": null,
+        "on_missing": null
+      },
+      "overlay": null
+    },
+    {
+      "id": 52,
+      "text": "Cricket mein koi bhi jeet permanent nahi hoti. Trophy sirf ek saal ke liye hoti hai, aur agle season mein sab kuch phir shuru hota hai.",
+      "emphasis": [
+        "permanent nahi",
+        "agle season"
+      ],
+      "visual": {
+        "type": "photo",
+        "query": "empty cricket stadium sunset",
+        "orientation": "landscape",
+        "motion": "slow-zoom-out",
+        "prompt": null,
+        "fallback": null,
+        "template": null,
+        "params": {},
+        "file": "assets/images/scene_52.jpg",
+        "source": "stock",
+        "downgraded_from": null,
+        "on_missing": null
+      },
+      "overlay": null
+    },
+    {
+      "id": 53,
+      "text": "Isliye fans ke liye sabse bada sabak yeh hai ki jeet ko enjoy karo, lekin usse apni khushi ka akela bharosa mat banao.",
+      "emphasis": [
+        "enjoy karo",
+        "akela bharosa"
+      ],
+      "visual": {
+        "type": "animation",
+        "query": null,
+        "orientation": "landscape",
+        "motion": null,
+        "prompt": null,
+        "fallback": null,
+        "template": null,
+        "params": {
+          "style": "rings",
+          "headline": "ENJOY IT",
+          "subline": "Par balance rakho"
+        },
+        "file": null,
+        "source": null,
+        "downgraded_from": null,
+        "on_missing": null
+      },
+      "overlay": null
+    },
+    {
+      "id": 54,
+      "text": "Toh aage kya hoga? Sach kahun toh abhi koi nahi jaanta. Cricket ki khoobsurti hi yeh hai ki har saal naya hota hai.",
+      "emphasis": [
+        "aage kya",
+        "naya"
+      ],
+      "visual": {
+        "type": "animation",
+        "query": null,
+        "orientation": "landscape",
+        "motion": null,
+        "prompt": null,
+        "fallback": null,
+        "template": null,
+        "params": {
+          "style": "kinetic",
+          "headline": "AAGE KYA?",
+          "subline": "Har season ek naya sawaal"
+        },
+        "file": null,
+        "source": null,
+        "downgraded_from": null,
+        "on_missing": null
+      },
+      "overlay": null
+    },
+    {
+      "id": 55,
+      "text": "Kya RCB teesri baar bhi trophy jeet paayegi? Kya Gujarat Titans bounce back karegi? Aur kya koi naya star ubhrega?",
+      "emphasis": [
+        "teesri baar",
+        "bounce back"
+      ],
+      "visual": {
+        "type": "photo",
+        "query": "cricket trophy on stage spotlight",
+        "orientation": "landscape",
+        "motion": "slow-zoom-in",
+        "prompt": null,
+        "fallback": null,
+        "template": null,
+        "params": {},
+        "file": "assets/images/scene_55.jpg",
+        "source": "stock",
+        "downgraded_from": null,
+        "on_missing": null
+      },
+      "overlay": null
+    },
+    {
+      "id": 56,
+      "text": "Ek cheez pakki hai. Agle IPL mein bhi stadiums bharenge, aur phone par fans chipke rahenge. Yeh junoon kabhi khatam nahi hota.",
+      "emphasis": [
+        "junoon",
+        "stadiums bharenge"
+      ],
+      "visual": {
+        "type": "photo",
+        "query": "crowd cheering cricket stadium lights",
+        "orientation": "landscape",
+        "motion": "pan-right",
+        "prompt": null,
+        "fallback": null,
+        "template": null,
+        "params": {},
+        "file": "assets/images/scene_56.jpg",
+        "source": "stock",
+        "downgraded_from": null,
+        "on_missing": null
+      },
+      "overlay": null
+    },
+    {
+      "id": 57,
+      "text": "Toh yaad rakhiye, 2025 mein RCB ne trophy jeeti thi, aur 2026 mein unhone sabit kiya ki woh us trophy ke haqdaar hain.",
+      "emphasis": [
+        "2025",
+        "haqdaar"
+      ],
+      "visual": {
+        "type": "animation",
+        "query": null,
+        "orientation": "landscape",
+        "motion": null,
+        "prompt": null,
+        "fallback": null,
+        "template": null,
+        "params": {
+          "style": "burst",
+          "headline": "2025 + 2026",
+          "subline": "Winning se domination tak"
+        },
+        "file": null,
+        "source": null,
+        "downgraded_from": null,
+        "on_missing": null
+      },
+      "overlay": null
+    },
+    {
+      "id": 58,
+      "text": "Aapko kya lagta hai? Kya yeh sach mein domination tha, ya abhi bhi kuch baaki hai? Comments mein apni raay zaroor batao.",
+      "emphasis": [
+        "domination",
+        "comments"
+      ],
+      "visual": {
+        "type": "animation",
+        "query": null,
+        "orientation": "landscape",
+        "motion": null,
+        "prompt": null,
+        "fallback": null,
+        "template": null,
+        "params": {
+          "style": "rings",
+          "headline": "AAPKI RAAY?",
+          "subline": "Comments mein batao"
+        },
+        "file": null,
+        "source": null,
+        "downgraded_from": null,
+        "on_missing": null
+      },
+      "overlay": null
+    },
+    {
+      "id": 59,
+      "text": "Agar video pasand aaya ho, toh like karo, channel ko subscribe karo, aur apne us dost ko share karo jo RCB ka diehard fan hai.",
+      "emphasis": [
+        "subscribe",
+        "share karo"
+      ],
+      "visual": {
+        "type": "photo",
+        "query": "friends cheering together smartphone cricket",
+        "orientation": "landscape",
+        "motion": "slow-zoom-out",
+        "prompt": null,
+        "fallback": null,
+        "template": null,
+        "params": {},
+        "file": "assets/images/scene_59.jpg",
+        "source": "stock",
+        "downgraded_from": null,
+        "on_missing": null
+      },
+      "overlay": null
+    },
+    {
+      "id": 60,
+      "text": "Milte hain agle video mein, tab tak cricket dekhte raho, enjoy karte raho, aur haan, hamesha khelte hue ummeed zinda rakhna. Jai ho!",
+      "emphasis": [
+        "ummeed zinda",
+        "Jai ho"
+      ],
+      "visual": {
+        "type": "animation",
+        "query": null,
+        "orientation": "landscape",
+        "motion": null,
+        "prompt": null,
+        "fallback": null,
+        "template": null,
+        "params": {
+          "style": "kinetic",
+          "headline": "JAI HO",
+          "subline": "Milte hain agli baar"
+        },
+        "file": null,
+        "source": null,
+        "downgraded_from": null,
+        "on_missing": null
+      },
+      "overlay": null
+    }
+  ]
+}

@@ -112,7 +112,7 @@ details > summary { cursor: pointer; color: var(--accent); margin-top: 10px; }
         <div><label>Audience</label><input name="target_audience" value="{{ brief.target_audience or '' }}"></div>
         <div><label>Formats</label><select name="formats">{% for f in ['reel', 'both', 'long'] %}<option {{ 'selected' if brief.formats == f else '' }}>{{ f }}</option>{% endfor %}</select></div>
         <div><label>Number of reels</label><select name="reel_count">{% for n in [1, 2, 3] %}<option {{ 'selected' if brief.reel_count == n else '' }}>{{ n }}</option>{% endfor %}</select></div>
-        <div><label>Tone</label><input name="tone" value="{{ brief.tone or '' }}"></div>
+        <div><label>Tone <span class="muted" style="font-weight:400">(also picks the look &amp; feel)</span></label><input name="tone" value="{{ brief.tone or '' }}" placeholder="peppy, proud"></div>
         <div><label>Language</label><select name="language">{% for l, n in [('hinglish', 'Hinglish'), ('en', 'English'), ('hi', 'Hindi')] %}<option value="{{ l }}" {{ 'selected' if brief.language == l else '' }}>{{ n }}</option>{% endfor %}</select></div>
       </div>
       <label>Source links (one per line)</label>
@@ -123,7 +123,9 @@ details > summary { cursor: pointer; color: var(--accent); margin-top: 10px; }
     <h3>Articles ({{ articles|length }})</h3>
     {% if articles %}<ul class="articles">{% for a in articles %}
       <li><span class="src" title="{{ a.source }}">{{ '🔗 ' if a.downloaded else '📄 ' }}{{ a.source }}</span>
-        <span class="muted">{{ a.words }} words</span>
+        {% if a.via %}<span class="muted" style="font-size:12px">via {{ a.via }}</span>{% endif %}
+        {% if a.thin %}<span style="color:var(--warn, #f5a623);font-size:13px" title="Probably a menu, a cookie wall or a video page. Paste the article text instead.">⚠ only {{ a.words }} words</span>
+        {% else %}<span class="muted">{{ a.words }} words</span>{% endif %}
         <form method="post" action="{{ url_for('delete_article', slug=slug) }}" style="margin:0"><input type="hidden" name="name" value="{{ a.name }}"><button style="padding:2px 8px;font-size:12px">remove</button></form></li>
     {% endfor %}</ul>{% else %}<p class="muted" style="margin:4px 0">Links are downloaded when the script is generated. Paste text here for paywalled pages.</p>{% endif %}
     <details><summary>Add article text or file</summary>
@@ -159,6 +161,9 @@ details > summary { cursor: pointer; color: var(--accent); margin-top: 10px; }
           {% if S.script.status in ['done', 'stale'] %}<input type="hidden" name="force" value="1">{% endif %}
           <button title="Needs ANTHROPIC_API_KEY in .env (paid per use)">{{ 'Regenerate' if S.script.status in ['done', 'stale'] else 'Write' }} with Claude API</button></form>
       </div>
+      <p style="font-size:13px;margin:8px 0 0">{% if voice_active %}🎙 Written in <a href="{{ url_for('voice_page') }}">your voice</a>.
+        {% else %}<span class="muted">🎙 No voice profile yet: scripts use a generic voice.</span> <a href="{{ url_for('voice_page') }}">Fill in your voice</a> first for scripts that sound like you.{% endif %}
+        <span class="muted">The script also sets the look &amp; feel, hooks and title options.</span></p>
       {% if S.script.status in ['done', 'stale'] %}<p class="muted" style="font-size:13px;margin:8px 0 0">Regenerating replaces scenes.json (the old copy is kept as scenes.json.bak). Run Fetch again afterwards; files you added by hand stay attached to the same scene numbers, so check them in review.</p>{% endif %}
     {% endif %}
     {{ outputs(S.script) }}
@@ -194,11 +199,11 @@ details > summary { cursor: pointer; color: var(--accent); margin-top: 10px; }
     {{ head(S.fetch, N.fetch) }}
     {% if S.fetch.status != 'blocked' %}
     <div class="row" style="margin-top:12px">
-      <form method="post" action="{{ url_for('run_step', slug=slug, step='fetch') }}"><button class="{{ 'primary' if S.fetch.status == 'todo' else '' }}">Fetch visuals</button></form>
-      <form method="post" action="{{ url_for('run_step', slug=slug, step='fetch') }}"><input type="hidden" name="force" value="1"><button title="Re-download every auto-fetched scene">Refetch all</button></form>
+      <form method="post" action="{{ url_for('run_step', slug=slug, step='fetch') }}"><button class="{{ 'primary' if S.fetch.status == 'todo' and 'Fetch visuals.' in S.fetch.todos else '' }}">Fetch visuals</button></form>
+      <form method="post" action="{{ url_for('run_step', slug=slug, step='fetch') }}"><input type="hidden" name="force" value="1"><button title="Re-download every auto-fetched scene. This can replace pictures you already kept.">Refetch all</button></form>
       <a class="btn" href="{{ url_for('review.index', slug=slug) }}">Open scene review</a>
     </div>
-    <p class="muted" style="font-size:13px;margin:8px 0 0">Sources: Pexels, Pixabay, Unsplash, Wikimedia Commons only. Hand-placed files are never replaced.
+    <p class="muted" style="font-size:13px;margin:8px 0 0">Sources: Pexels, Pixabay, Coverr, Unsplash, Openverse, NASA, Internet Archive, Wikimedia Commons only. Hand-placed files are never replaced.
       <strong>If no relevant picture is found, the scene becomes an animation</strong> chosen from its own words: figures, lists and timelines become animated infographics (Remotion); places become a 3D map and scenes that need motion a 3D title (Blender). The reason is shown on each scene; change it in the plan, or choose “ask me for a file”.</p>
     {% endif %}
     {{ outputs(S.fetch) }}
@@ -210,6 +215,12 @@ details > summary { cursor: pointer; color: var(--accent); margin-top: 10px; }
     {% if S.manual.status == 'todo' %}
     <p style="margin:10px 0 0">Add each file on the <a href="{{ url_for('review.index', slug=slug) }}">review page</a> (Replace), or drop
       <code>sceneNN.jpg/png/mp4</code> into the inbox folder and pick it there.</p>
+    {% if retry_count %}
+    <div class="row" style="margin-top:12px;align-items:center">
+      <form method="post" action="{{ url_for('run_step', slug=slug, step='retry_missing') }}" style="margin:0"><button>Search again ({{ retry_count }})</button></form>
+      <span class="muted" style="font-size:13px">{{ retry_count }} scene(s) found nothing on an earlier search. Sources added since then may have a match. Scenes that already have a visual are not touched.</span>
+    </div>
+    {% endif %}
     {% endif %}
     {{ outputs(S.manual) }}
   </section>
@@ -261,6 +272,12 @@ details > summary { cursor: pointer; color: var(--accent); margin-top: 10px; }
         <input type="hidden" name="video" value="{{ v.id }}">
         <input type="file" name="audio" accept="audio/*,.m4a,.mp3,.wav,.aiff" style="flex:1; min-width:200px"><button>Upload instead</button></form>
       {% if v.has_audio %}<audio controls preload="metadata" style="margin-top:8px" src="{{ file_url(slug, v.audio) }}"></audio>{% endif %}
+      {% if v.check %}{% if v.check.warnings %}
+      <div style="margin-top:8px;padding:8px 12px;border:1px solid var(--accent);border-radius:8px;font-size:13px">
+        <strong>Dead air</strong> <span class="muted">({{ v.check.dead_air }} s of the {{ v.check.duration }} s take is pause)</span>
+        <ul style="margin:4px 0 2px">{% for w in v.check.warnings %}<li>{{ w }}</li>{% endfor %}</ul>
+        <span class="muted">Each long pause is a still picture on screen. Re-record those lines tighter, or keep it if the pause is for effect.</span></div>
+      {% else %}<div class="muted" style="font-size:13px;margin-top:6px">✓ No dead air: {{ v.check.duration }} s, no pause over {{ '1.6' if v.kind == 'long' else '1.0' }} s.</div>{% endif %}{% endif %}
     </div>
     {% endfor %}
     <p class="muted" style="font-size:13px">Any audio format works; it's converted to m4a and the previous take is kept as <code>*.prev.m4a</code>.</p>
@@ -367,7 +384,23 @@ details > summary { cursor: pointer; color: var(--accent); margin-top: 10px; }
   </section>
 
   {# ---------------- later phases ---------------- #}
-  <section class="card step later" id="publish">{{ head(S.publish, N.publish) }}</section>
+  <section class="card step {{ S.publish.status }}" id="publish">
+    {{ head(S.publish, N.publish) }}
+    {% if S.publish.status != 'blocked' %}
+    <div class="row" style="margin-top:12px">
+      <form method="post" action="{{ url_for('run_step', slug=slug, step='package') }}" style="margin:0">
+        <button class="{{ 'primary' if S.publish.status == 'todo' else '' }}">{{ 'Write package' if not packages else 'Write again' }}</button></form>
+      <span class="muted" style="font-size:13px">Titles ranked with what's wrong with each, thumbnail text, YouTube description, Instagram caption,
+        chapters (long-form), sources, credits, hashtags. Uploading stays with you.</span></div>
+    {% for pk in packages %}
+    <details {{ 'open' if loop.first }} style="margin-top:12px"><summary><strong>{{ pk.label }}</strong> <span class="muted">{{ pk.rel }}</span></summary>
+      <div class="row" style="margin:8px 0"><button type="button" onclick="navigator.clipboard.writeText(this.closest('details').querySelector('pre').innerText); this.textContent='Copied'">Copy all</button></div>
+      <pre style="white-space:pre-wrap; font-size:13px; background:#11131a; padding:12px; border-radius:8px; border:1px solid var(--line); max-height:520px; overflow:auto">{{ pk.text }}</pre>
+    </details>
+    {% endfor %}
+    {% endif %}
+    {{ outputs(S.publish) }}
+  </section>
 
   {% if jobs %}
   <section class="card" id="history">

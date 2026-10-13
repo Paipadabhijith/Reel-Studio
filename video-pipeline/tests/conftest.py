@@ -29,4 +29,9 @@ def project_factory(tmp_path):
 def fake_keys(monkeypatch):
     monkeypatch.setenv("PEXELS_API_KEY", "test-pexels")
     monkeypatch.setenv("UNSPLASH_ACCESS_KEY", "test-unsplash")
+    monkeypatch.setenv("COVERR_API_KEY", "test-coverr-secret")
     monkeypatch.setenv("PIXABAY_API_KEY", "test-pixabay-secret")  # never the real key from .env
+    import scripts.generate_script as _G
+    monkeypatch.setattr(_G, "read_voice", lambda: None)  # never your real shared/voice.md
+    import scripts.lib.voice as _V
+    monkeypatch.setattr(_V, "read_voice", lambda *a: None)

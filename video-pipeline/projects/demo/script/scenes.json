@@ -1,53 +1,2531 @@
 {
   "project": "demo",
-  "format": "reel",
+  "format": "both",
   "brand": "default",
   "language": "hinglish",
+  "long_form": {
+    "chapters": [
+      {
+        "title": "Ek angrezi khel, Hindustani zameen",
+        "scene_ids": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14
+        ]
+      },
+      {
+        "title": "Jab hockey ka raj tha",
+        "scene_ids": [
+          15,
+          16,
+          17,
+          18,
+          19,
+          20,
+          21,
+          22,
+          23,
+          24,
+          25
+        ]
+      },
+      {
+        "title": "Lamba intezaar aur 83",
+        "scene_ids": [
+          26,
+          78,
+          79,
+          27,
+          28,
+          29,
+          30,
+          31,
+          32,
+          33,
+          34,
+          35,
+          36
+        ]
+      },
+      {
+        "title": "TV, paisa aur BCCI",
+        "scene_ids": [
+          37,
+          38,
+          39,
+          40,
+          41,
+          42,
+          43,
+          44,
+          45,
+          46,
+          47
+        ]
+      },
+      {
+        "title": "IPL Revolution",
+        "scene_ids": [
+          48,
+          49,
+          50,
+          51,
+          52,
+          53,
+          54,
+          55,
+          56,
+          57,
+          58
+        ]
+      },
+      {
+        "title": "Domination",
+        "scene_ids": [
+          59,
+          60,
+          61,
+          62,
+          63,
+          64,
+          65,
+          66,
+          67,
+          68,
+          69
+        ]
+      },
+      {
+        "title": "Legacy",
+        "scene_ids": [
+          70,
+          71,
+          72,
+          73,
+          74,
+          75,
+          76,
+          77
+        ]
+      }
+    ]
+  },
   "reels": [
     {
-      "id": "reel_01",
+      "id": "reel_1983",
       "scene_ids": [
-        1,
-        2,
-        3
+        80,
+        81,
+        82,
+        83,
+        84,
+        85,
+        86,
+        87
       ],
-      "hook_scene": 1
+      "hook_scene": 80
+    },
+    {
+      "id": "reel_hockey_to_cricket",
+      "scene_ids": [
+        88,
+        89,
+        90,
+        91,
+        92,
+        93,
+        94,
+        95
+      ],
+      "hook_scene": 88
+    },
+    {
+      "id": "reel_ipl_domination",
+      "scene_ids": [
+        96,
+        97,
+        98,
+        99,
+        100,
+        101,
+        102,
+        103
+      ],
+      "hook_scene": 96
     }
   ],
   "scenes": [
     {
       "id": 1,
-      "text": "Ek second ruko, yeh baat sabko pata honi chahiye.",
+      "text": "Har gali mein ek pitch hota hai, jise kisi ne mark nahi kiya. Teen eent ke stumps, aur ek lakdi ka bat.",
       "emphasis": [
-        "ruko"
+        "pitch",
+        "lakdi ka bat"
       ],
       "visual": {
-        "type": "photo",
-        "file": "assets/images/scene_01.jpg",
-        "motion": "slow-zoom-in"
-      }
+        "type": "video",
+        "query": "boys playing cricket narrow street",
+        "orientation": "landscape",
+        "motion": null,
+        "prompt": null,
+        "fallback": null,
+        "template": null,
+        "params": {},
+        "file": null,
+        "source": "stock",
+        "downgraded_from": null
+      },
+      "overlay": null
     },
     {
       "id": 2,
-      "text": "Aaj hum dekhenge ki yeh pipeline kaise kaam karti hai.",
+      "text": "Ball? Tennis ball par electrical tape. Rules? Local law. Ball padosi ki khidki par lagi, toh game over.",
       "emphasis": [
-        "pipeline"
+        "Local law",
+        "game over"
       ],
       "visual": {
         "type": "photo",
-        "file": "assets/images/scene_02.jpg",
-        "motion": "slow-zoom-out"
-      }
+        "query": "tennis ball wrapped black tape",
+        "orientation": "landscape",
+        "motion": "slow-zoom-in",
+        "prompt": null,
+        "fallback": null,
+        "template": null,
+        "params": {},
+        "file": null,
+        "source": "stock",
+        "downgraded_from": null
+      },
+      "overlay": null
     },
     {
       "id": 3,
-      "text": "Bas ek voice record karo, baaki sab automatic.",
+      "text": "Ye kahani hai ek angrezi gaon ke khel ki, jo ek arab logon ki zubaan ban gaya.",
       "emphasis": [
-        "automatic"
+        "arab logon"
       ],
       "visual": {
-        "type": "text_card"
+        "type": "video",
+        "query": "crowd cheering stadium india",
+        "orientation": "landscape",
+        "motion": null,
+        "prompt": null,
+        "fallback": null,
+        "template": null,
+        "params": {},
+        "file": "assets/videos/scene_03.mp4",
+        "source": "stock",
+        "downgraded_from": null
+      },
+      "overlay": null
+    },
+    {
+      "id": 4,
+      "text": "Lekin shuru karne ke liye humein wahan jaana hoga, jab India ka sabse bada khel cricket tha hi nahi.",
+      "emphasis": [
+        "cricket tha hi nahi"
+      ],
+      "visual": {
+        "type": "text_card",
+        "query": null,
+        "orientation": "landscape",
+        "motion": null,
+        "prompt": "Dark card with text: Jab cricket India ka khel tha hi nahi",
+        "fallback": null,
+        "template": null,
+        "params": {},
+        "file": null,
+        "source": null,
+        "downgraded_from": null
+      },
+      "overlay": null
+    },
+    {
+      "id": 5,
+      "text": "1721 mein Cambay ke samundar kinare, East India Company ke sailors ne India ka pehla recorded match khela.",
+      "emphasis": [
+        "1721",
+        "Cambay"
+      ],
+      "visual": {
+        "type": "photo",
+        "query": "old sailing ships east india company",
+        "orientation": "landscape",
+        "motion": "slow-zoom-in",
+        "prompt": null,
+        "fallback": null,
+        "template": null,
+        "params": {},
+        "file": "assets/images/scene_05.jpg",
+        "source": "wikimedia",
+        "downgraded_from": null
+      },
+      "overlay": null
+    },
+    {
+      "id": 6,
+      "text": "Phir 1792 mein Calcutta Cricket Club bana. Hindustaniyon ka kaam sirf ball uthakar dena tha.",
+      "emphasis": [
+        "1792",
+        "ball uthakar"
+      ],
+      "visual": {
+        "type": "manual",
+        "query": "calcutta maidan colonial era",
+        "orientation": "landscape",
+        "motion": "pan-left",
+        "prompt": "Auto-fetch found nothing relevant. Wanted: calcutta maidan colonial era",
+        "fallback": "text_card",
+        "template": null,
+        "params": {},
+        "file": null,
+        "source": "wikimedia",
+        "downgraded_from": "photo"
+      },
+      "overlay": null
+    },
+    {
+      "id": 7,
+      "text": "Phir Parsiyon ne kahani badli. 1848 mein Bombay mein Oriental Cricket Club bana, Indians ka pehla club.",
+      "emphasis": [
+        "Parsiyon",
+        "1848"
+      ],
+      "visual": {
+        "type": "photo",
+        "query": "bombay maidan old cricket",
+        "orientation": "landscape",
+        "motion": "slow-zoom-out",
+        "prompt": null,
+        "fallback": null,
+        "template": null,
+        "params": {},
+        "file": "assets/images/scene_07.jpg",
+        "source": "wikimedia",
+        "downgraded_from": null
+      },
+      "overlay": null
+    },
+    {
+      "id": 8,
+      "text": "1886 mein Parsi team England gayi. Zyada match haari, par ek line paar ho chuki thi.",
+      "emphasis": [
+        "1886",
+        "ek line paar"
+      ],
+      "visual": {
+        "type": "photo",
+        "query": "english village cricket green",
+        "orientation": "landscape",
+        "motion": "pan-right",
+        "prompt": null,
+        "fallback": null,
+        "template": null,
+        "params": {},
+        "file": "assets/images/scene_08.jpg",
+        "source": "stock",
+        "downgraded_from": null
+      },
+      "overlay": null
+    },
+    {
+      "id": 9,
+      "text": "Ranjitsinhji ne England ke liye apne pehle Test mein 154 not out thok diya. Unke naam par Ranji Trophy hai.",
+      "emphasis": [
+        "154 not out",
+        "Ranji Trophy"
+      ],
+      "visual": {
+        "type": "manual",
+        "query": null,
+        "orientation": "landscape",
+        "motion": null,
+        "prompt": "Archival public-domain portrait of Ranjitsinhji (Jam Sahib of Nawanagar) from Wikimedia Commons, if available",
+        "fallback": "text_card",
+        "template": null,
+        "params": {},
+        "file": null,
+        "source": null,
+        "downgraded_from": null
+      },
+      "overlay": {
+        "type": "stat",
+        "value": "154*",
+        "label": "Ranji's Test debut"
       }
+    },
+    {
+      "id": 10,
+      "text": "Ek taraf mahal the, doosri taraf galiyan. 1912 tak Bombay ka Quadrangular bhari bheed kheench raha tha.",
+      "emphasis": [
+        "mahal",
+        "Quadrangular"
+      ],
+      "visual": {
+        "type": "manual",
+        "query": "large crowd watching cricket match",
+        "orientation": "landscape",
+        "motion": null,
+        "prompt": "Auto-fetch found nothing relevant. Wanted: large crowd watching cricket match",
+        "fallback": "text_card",
+        "template": null,
+        "params": {},
+        "file": null,
+        "source": "stock",
+        "downgraded_from": "video"
+      },
+      "overlay": null
+    },
+    {
+      "id": 11,
+      "text": "Wahan ek ghulam kaum, kuch ghanton ke liye, apne hukmaranon ke barabar khadi thi.",
+      "emphasis": [
+        "barabar"
+      ],
+      "visual": {
+        "type": "photo",
+        "query": "silhouette crowd stadium dusk",
+        "orientation": "landscape",
+        "motion": "slow-zoom-in",
+        "prompt": null,
+        "fallback": null,
+        "template": null,
+        "params": {},
+        "file": "assets/images/scene_11.jpg",
+        "source": "stock",
+        "downgraded_from": null
+      },
+      "overlay": null
+    },
+    {
+      "id": 12,
+      "text": "Shuruaat mein ye gentleman ka khel tha. Paanch din ka Test, lunch, tea, aur draw bhi ho sakta tha.",
+      "emphasis": [
+        "paanch din",
+        "draw"
+      ],
+      "visual": {
+        "type": "video",
+        "query": "cricket pitch white clothes slow",
+        "orientation": "landscape",
+        "motion": null,
+        "prompt": null,
+        "fallback": null,
+        "template": null,
+        "params": {},
+        "file": "assets/videos/scene_12.mp4",
+        "source": "stock",
+        "downgraded_from": null
+      },
+      "overlay": null
+    },
+    {
+      "id": 13,
+      "text": "India ne ise apna accent diya. Dheeli pitch, spin ka jaadu, aur kalaai ka kamaal.",
+      "emphasis": [
+        "spin",
+        "kalaai"
+      ],
+      "visual": {
+        "type": "photo",
+        "query": "cricket ball spinning dry pitch",
+        "orientation": "landscape",
+        "motion": "slow-zoom-in",
+        "prompt": null,
+        "fallback": null,
+        "template": null,
+        "params": {},
+        "file": "assets/images/scene_13.jpg",
+        "source": "stock",
+        "downgraded_from": null
+      },
+      "overlay": null
+    },
+    {
+      "id": 14,
+      "text": "1932 mein Lord's par India ka pehla Test hua. 158 runs se haare, par ek desh ne entry maar di.",
+      "emphasis": [
+        "1932",
+        "158 runs"
+      ],
+      "visual": {
+        "type": "photo",
+        "query": "lords cricket ground london",
+        "orientation": "landscape",
+        "motion": "pan-right",
+        "prompt": null,
+        "fallback": null,
+        "template": null,
+        "params": {},
+        "file": "assets/images/scene_14.jpg",
+        "source": "wikimedia",
+        "downgraded_from": null
+      },
+      "overlay": null
+    },
+    {
+      "id": 15,
+      "text": "Aaj ke bahut se log nahi jaante, par ek zamaane mein duniya ki sabse badi team hamari hockey team thi.",
+      "emphasis": [
+        "hockey team"
+      ],
+      "visual": {
+        "type": "photo",
+        "query": "field hockey sticks grass vintage",
+        "orientation": "landscape",
+        "motion": "slow-zoom-in",
+        "prompt": null,
+        "fallback": null,
+        "template": null,
+        "params": {},
+        "file": "assets/images/scene_15.jpg",
+        "source": "stock",
+        "downgraded_from": null
+      },
+      "overlay": null
+    },
+    {
+      "id": 16,
+      "text": "1928, Amsterdam. India ka pehla Olympic gold. Dhyan Chand ki stick par vipaksh bole, isme chumbak laga hai.",
+      "emphasis": [
+        "1928",
+        "Dhyan Chand"
+      ],
+      "visual": {
+        "type": "manual",
+        "query": null,
+        "orientation": "landscape",
+        "motion": null,
+        "prompt": "Archival public-domain photo of Dhyan Chand or the 1928 Indian Olympic hockey team (Wikimedia Commons)",
+        "fallback": "text_card",
+        "template": null,
+        "params": {},
+        "file": null,
+        "source": null,
+        "downgraded_from": null
+      },
+      "overlay": null
+    },
+    {
+      "id": 17,
+      "text": "1936, Berlin. Final mein host Germany ko 8-1 se rounda. Dhyan Chand ban gaye The Wizard.",
+      "emphasis": [
+        "8-1",
+        "The Wizard"
+      ],
+      "visual": {
+        "type": "stat",
+        "query": null,
+        "orientation": "landscape",
+        "motion": null,
+        "prompt": null,
+        "fallback": null,
+        "template": null,
+        "params": {},
+        "file": null,
+        "source": null,
+        "downgraded_from": null
+      },
+      "overlay": {
+        "type": "stat",
+        "value": "8-1",
+        "label": "India vs Germany, Berlin 1936"
+      }
+    },
+    {
+      "id": 18,
+      "text": "Azaadi ke baad bhi raj chala: 1948, 1952, 1956. Lagataar chhe Olympic gold.",
+      "emphasis": [
+        "Lagataar",
+        "chhe Olympic gold"
+      ],
+      "visual": {
+        "type": "stat",
+        "query": null,
+        "orientation": "landscape",
+        "motion": null,
+        "prompt": null,
+        "fallback": null,
+        "template": null,
+        "params": {},
+        "file": null,
+        "source": null,
+        "downgraded_from": null
+      },
+      "overlay": {
+        "type": "stat",
+        "value": "6",
+        "label": "Olympic hockey golds in a row"
+      }
+    },
+    {
+      "id": 19,
+      "text": "Us zamaane mein kisi se poochte ki desh ka khel kaun sa hai, toh jawab hota: hockey.",
+      "emphasis": [
+        "hockey"
+      ],
+      "visual": {
+        "type": "photo",
+        "query": "village boys playing hockey field",
+        "orientation": "landscape",
+        "motion": "pan-left",
+        "prompt": null,
+        "fallback": null,
+        "template": null,
+        "params": {},
+        "file": "assets/images/scene_19.jpg",
+        "source": "stock",
+        "downgraded_from": null
+      },
+      "overlay": null
+    },
+    {
+      "id": 20,
+      "text": "Toh hockey ka raja desh cricket ka pujari kaise ban gaya? Koi ek din nahi tha, ye dheere dheere khisakna tha.",
+      "emphasis": [
+        "cricket ka pujari",
+        "dheere dheere"
+      ],
+      "visual": {
+        "type": "text_card",
+        "query": null,
+        "orientation": "landscape",
+        "motion": null,
+        "prompt": "Dark card with text: Hockey se cricket tak: ek khamosh badlaav",
+        "fallback": null,
+        "template": null,
+        "params": {},
+        "file": null,
+        "source": null,
+        "downgraded_from": null
+      },
+      "overlay": null
+    },
+    {
+      "id": 21,
+      "text": "Pehli wajah: cricket sasta tha. Ek bat, ek ball, ek deewar. Bas, game shuru.",
+      "emphasis": [
+        "sasta",
+        "ek deewar"
+      ],
+      "visual": {
+        "type": "video",
+        "query": "kids playing cricket against wall",
+        "orientation": "landscape",
+        "motion": null,
+        "prompt": null,
+        "fallback": null,
+        "template": null,
+        "params": {},
+        "file": "assets/videos/scene_21.mp4",
+        "source": "stock",
+        "downgraded_from": null
+      },
+      "overlay": null
+    },
+    {
+      "id": 22,
+      "text": "Doosri: cricket mein hero banta hai. Ek bowler, ek batsman, poora desh dekh raha. Averages aur records par bahas chalti rehti.",
+      "emphasis": [
+        "hero",
+        "records"
+      ],
+      "visual": {
+        "type": "photo",
+        "query": "batsman bowler duel stadium floodlights",
+        "orientation": "landscape",
+        "motion": "slow-zoom-in",
+        "prompt": null,
+        "fallback": null,
+        "template": null,
+        "params": {},
+        "file": "assets/images/scene_22.jpg",
+        "source": "stock",
+        "downgraded_from": null
+      },
+      "overlay": null
+    },
+    {
+      "id": 23,
+      "text": "Teesri: radio. All India Radio ki commentary ne Test match ko poore desh ka saajha soundtrack bana diya.",
+      "emphasis": [
+        "radio",
+        "saajha soundtrack"
+      ],
+      "visual": {
+        "type": "manual",
+        "query": "vintage radio men listening tea stall",
+        "orientation": "landscape",
+        "motion": "slow-zoom-in",
+        "prompt": "Auto-fetch found nothing relevant. Wanted: vintage radio men listening tea stall",
+        "fallback": "text_card",
+        "template": null,
+        "params": {},
+        "file": null,
+        "source": "stock",
+        "downgraded_from": "photo"
+      },
+      "overlay": null
+    },
+    {
+      "id": 24,
+      "text": "Phir 1976 mein Montreal Olympics mein artificial turf aaya. Europe aur Australia ne apna liya, India ke liye mehenga pad gaya.",
+      "emphasis": [
+        "artificial turf",
+        "mehenga"
+      ],
+      "visual": {
+        "type": "photo",
+        "query": "artificial turf hockey pitch blue",
+        "orientation": "landscape",
+        "motion": "pan-right",
+        "prompt": null,
+        "fallback": null,
+        "template": null,
+        "params": {},
+        "file": "assets/images/scene_24.jpg",
+        "source": "stock",
+        "downgraded_from": null
+      },
+      "overlay": null
+    },
+    {
+      "id": 25,
+      "text": "Desh ne hockey se pyaar karna nahi chhoda. Bas dekhna chhod diya. Paisa aur hero cricket ki taraf khisakte gaye.",
+      "emphasis": [
+        "dekhna chhod diya",
+        "paisa"
+      ],
+      "visual": {
+        "type": "photo",
+        "query": "empty stadium seats dim light",
+        "orientation": "landscape",
+        "motion": "slow-zoom-out",
+        "prompt": null,
+        "fallback": null,
+        "template": null,
+        "params": {},
+        "file": "assets/images/scene_25.jpg",
+        "source": "stock",
+        "downgraded_from": null
+      },
+      "overlay": null
+    },
+    {
+      "id": 26,
+      "text": "Cricket mein bhi lamba andhera tha. 1952 mein Madras mein pehli Test jeet aayi, par phir haar ka silsila chala.",
+      "emphasis": [
+        "lamba andhera",
+        "1952"
+      ],
+      "visual": {
+        "type": "photo",
+        "query": "empty cricket ground overcast sky",
+        "orientation": "landscape",
+        "motion": "slow-zoom-in",
+        "prompt": null,
+        "fallback": null,
+        "template": null,
+        "params": {},
+        "file": "assets/images/scene_26.jpg",
+        "source": "stock",
+        "downgraded_from": null
+      },
+      "overlay": null
+    },
+    {
+      "id": 78,
+      "text": "Phir Pataudi ne ikkees saal ki umar mein captaincy sambhali aur India ko khud par yakeen karna sikhaya.",
+      "emphasis": [
+        "Pataudi",
+        "yakeen"
+      ],
+      "visual": {
+        "type": "manual",
+        "query": null,
+        "orientation": "landscape",
+        "motion": null,
+        "prompt": "Public-domain or Wikimedia Commons photo of Mansur Ali Khan Pataudi at a public event, if available; else a black-and-white vintage cricket field image",
+        "fallback": "text_card",
+        "template": null,
+        "params": {},
+        "file": null,
+        "source": null,
+        "downgraded_from": null
+      },
+      "overlay": null
+    },
+    {
+      "id": 79,
+      "text": "Unke peeche Bedi, Chandrasekhar, Prasanna aur Venkat ki spin chaukdi, jo ball ko jaadugar ki tarah ghumati thi.",
+      "emphasis": [
+        "spin chaukdi",
+        "jaadugar"
+      ],
+      "visual": {
+        "type": "photo",
+        "query": "spin bowler hand grip cricket ball",
+        "orientation": "landscape",
+        "motion": "slow-zoom-in",
+        "prompt": null,
+        "fallback": null,
+        "template": null,
+        "params": {},
+        "file": "assets/images/scene_79.jpg",
+        "source": "stock",
+        "downgraded_from": null
+      },
+      "overlay": null
+    },
+    {
+      "id": 27,
+      "text": "1971 mein West Indies aur England dono jagah series jeet. Gavaskar ne us series mein 774 runs banaye.",
+      "emphasis": [
+        "1971",
+        "774 runs"
+      ],
+      "visual": {
+        "type": "stat",
+        "query": null,
+        "orientation": "landscape",
+        "motion": null,
+        "prompt": null,
+        "fallback": null,
+        "template": null,
+        "params": {},
+        "file": null,
+        "source": null,
+        "downgraded_from": null
+      },
+      "overlay": {
+        "type": "stat",
+        "value": "774",
+        "label": "Gavaskar's runs, 1971 series"
+      }
+    },
+    {
+      "id": 28,
+      "text": "Par one-day cricket mein hum mazaak the. 1975 World Cup mein Gavaskar ne 60 over khel kar 36 not out banaye.",
+      "emphasis": [
+        "mazaak",
+        "36 not out"
+      ],
+      "visual": {
+        "type": "stat",
+        "query": null,
+        "orientation": "landscape",
+        "motion": null,
+        "prompt": null,
+        "fallback": null,
+        "template": null,
+        "params": {},
+        "file": null,
+        "source": null,
+        "downgraded_from": null
+      },
+      "overlay": {
+        "type": "stat",
+        "value": "36*",
+        "label": "off 60 overs, 1975"
+      }
+    },
+    {
+      "id": 29,
+      "text": "1983 aate aate umeedein lagbhag zero thi. Bookmakers ke hisaab se India ke chances sirf 66 to 1.",
+      "emphasis": [
+        "zero",
+        "66 to 1"
+      ],
+      "visual": {
+        "type": "stat",
+        "query": null,
+        "orientation": "landscape",
+        "motion": null,
+        "prompt": null,
+        "fallback": null,
+        "template": null,
+        "params": {},
+        "file": null,
+        "source": null,
+        "downgraded_from": null
+      },
+      "overlay": {
+        "type": "stat",
+        "value": "66 to 1",
+        "label": "India's reported odds, 1983"
+      }
+    },
+    {
+      "id": 30,
+      "text": "17 for 5. Zimbabwe ke saamne India khatam ho raha tha. Tabhi Kapil Dev bahar nikle.",
+      "emphasis": [
+        "17 for 5",
+        "Kapil Dev"
+      ],
+      "visual": {
+        "type": "stat",
+        "query": null,
+        "orientation": "landscape",
+        "motion": null,
+        "prompt": null,
+        "fallback": null,
+        "template": null,
+        "params": {},
+        "file": null,
+        "source": null,
+        "downgraded_from": null
+      },
+      "overlay": {
+        "type": "stat",
+        "value": "17/5",
+        "label": "India vs Zimbabwe, Tunbridge Wells"
+      }
+    },
+    {
+      "id": 31,
+      "text": "175 not out. Lekin BBC ki strike ki wajah se wo innings kabhi televise hi nahi hui.",
+      "emphasis": [
+        "175 not out",
+        "televise hi nahi"
+      ],
+      "visual": {
+        "type": "manual",
+        "query": null,
+        "orientation": "landscape",
+        "motion": null,
+        "prompt": "Archival still or newspaper clipping about Kapil Dev's 175 not out at Tunbridge Wells (licensed, no match footage); a screenshot of a headline works",
+        "fallback": "text_card",
+        "template": null,
+        "params": {},
+        "file": null,
+        "source": null,
+        "downgraded_from": null
+      },
+      "overlay": null
+    },
+    {
+      "id": 32,
+      "text": "Final mein West Indies. Sabse khatarnaak team. India sirf 183 par out. Stands mein umeed bujh rahi thi.",
+      "emphasis": [
+        "West Indies",
+        "183"
+      ],
+      "visual": {
+        "type": "photo",
+        "query": "lords pavilion cricket crowd evening",
+        "orientation": "landscape",
+        "motion": "slow-zoom-in",
+        "prompt": null,
+        "fallback": null,
+        "template": null,
+        "params": {},
+        "file": "assets/images/scene_32.jpg",
+        "source": "wikimedia",
+        "downgraded_from": null
+      },
+      "overlay": null
+    },
+    {
+      "id": 33,
+      "text": "Sandhu ka inswinger, aur Kapil ka peeche daudte hue wo catch jisne Viv Richards ko rok diya.",
+      "emphasis": [
+        "inswinger",
+        "catch"
+      ],
+      "visual": {
+        "type": "manual",
+        "query": null,
+        "orientation": "landscape",
+        "motion": null,
+        "prompt": "Archival newspaper photo or illustration of the Kapil Dev catch dismissing Viv Richards, 1983 final (no match footage)",
+        "fallback": "text_card",
+        "template": null,
+        "params": {},
+        "file": null,
+        "source": null,
+        "downgraded_from": null
+      },
+      "overlay": null
+    },
+    {
+      "id": 34,
+      "text": "West Indies 140 par all out. India 43 runs se jeeta. Duniya badal gayi.",
+      "emphasis": [
+        "140",
+        "43 runs"
+      ],
+      "visual": {
+        "type": "stat",
+        "query": null,
+        "orientation": "landscape",
+        "motion": null,
+        "prompt": null,
+        "fallback": null,
+        "template": null,
+        "params": {},
+        "file": null,
+        "source": null,
+        "downgraded_from": null
+      },
+      "overlay": {
+        "type": "stat",
+        "value": "43",
+        "label": "runs, India win the 1983 final"
+      }
+    },
+    {
+      "id": 35,
+      "text": "Gali-gali mein khidkiyan khuli, log sadkon par daude, anjaano ko mithai baati gayi.",
+      "emphasis": [
+        "sadkon par",
+        "mithai"
+      ],
+      "visual": {
+        "type": "video",
+        "query": "people celebrating street india sweets",
+        "orientation": "landscape",
+        "motion": null,
+        "prompt": null,
+        "fallback": null,
+        "template": null,
+        "params": {},
+        "file": "assets/videos/scene_35.mp4",
+        "source": "stock",
+        "downgraded_from": null
+      },
+      "overlay": null
+    },
+    {
+      "id": 36,
+      "text": "Agle din subah, ek poori peedhi ne bat utha liya.",
+      "emphasis": [
+        "bat utha liya"
+      ],
+      "visual": {
+        "type": "video",
+        "query": "children playing cricket sunrise india",
+        "orientation": "landscape",
+        "motion": null,
+        "prompt": null,
+        "fallback": null,
+        "template": null,
+        "params": {},
+        "file": "assets/videos/scene_36.mp4",
+        "source": "stock",
+        "downgraded_from": null
+      },
+      "overlay": null
+    },
+    {
+      "id": 37,
+      "text": "83 ne aag lagayi, par aag ko eendhan chahiye tha. Pehla eendhan: television.",
+      "emphasis": [
+        "eendhan",
+        "television"
+      ],
+      "visual": {
+        "type": "photo",
+        "query": "old television family living room",
+        "orientation": "landscape",
+        "motion": "slow-zoom-in",
+        "prompt": null,
+        "fallback": null,
+        "template": null,
+        "params": {},
+        "file": "assets/images/scene_37.jpg",
+        "source": "stock",
+        "downgraded_from": null
+      },
+      "overlay": null
+    },
+    {
+      "id": 38,
+      "text": "1982 Asian Games ke saath colour TV aaya, aur Doordarshan poore desh ka campfire ban gaya.",
+      "emphasis": [
+        "colour TV",
+        "Doordarshan"
+      ],
+      "visual": {
+        "type": "photo",
+        "query": "family watching vintage tv india",
+        "orientation": "landscape",
+        "motion": "pan-left",
+        "prompt": null,
+        "fallback": null,
+        "template": null,
+        "params": {},
+        "file": "assets/images/scene_38.jpg",
+        "source": "stock",
+        "downgraded_from": null
+      },
+      "overlay": null
+    },
+    {
+      "id": 39,
+      "text": "1989 mein sirf solah saal ka ladka, Sachin Tendulkar, Pakistan mein debut karta hai. Khoon ponchta hai, aur khelta rehta hai.",
+      "emphasis": [
+        "solah saal",
+        "Sachin Tendulkar"
+      ],
+      "visual": {
+        "type": "manual",
+        "query": null,
+        "orientation": "landscape",
+        "motion": null,
+        "prompt": "Archival image or headline about Sachin Tendulkar's 1989 Test debut in Pakistan (licensed still or screenshot of a news headline, no match footage)",
+        "fallback": "text_card",
+        "template": null,
+        "params": {},
+        "file": null,
+        "source": null,
+        "downgraded_from": null
+      },
+      "overlay": {
+        "type": "stat",
+        "value": "16",
+        "label": "Tendulkar's age at debut"
+      }
+    },
+    {
+      "id": 40,
+      "text": "Dusra eendhan: 1991 ki liberalisation. Satellite channels, sponsors, advertisers aaye, aur sabko chahiye the audience.",
+      "emphasis": [
+        "1991",
+        "audience"
+      ],
+      "visual": {
+        "type": "photo",
+        "query": "satellite dishes rooftops indian city",
+        "orientation": "landscape",
+        "motion": "pan-right",
+        "prompt": null,
+        "fallback": null,
+        "template": null,
+        "params": {},
+        "file": "assets/images/scene_40.jpg",
+        "source": "stock",
+        "downgraded_from": null
+      },
+      "overlay": null
+    },
+    {
+      "id": 41,
+      "text": "Aur cricket ke paas desh ki sabse badi audience thi.",
+      "emphasis": [
+        "sabse badi audience"
+      ],
+      "visual": {
+        "type": "video",
+        "query": "crowd stadium india cricket fans",
+        "orientation": "landscape",
+        "motion": null,
+        "prompt": null,
+        "fallback": null,
+        "template": null,
+        "params": {},
+        "file": "assets/videos/scene_41.mp4",
+        "source": "stock",
+        "downgraded_from": null
+      },
+      "overlay": null
+    },
+    {
+      "id": 42,
+      "text": "Teesra: Jagmohan Dalmiya. Calcutta ka businessman, jisne dekha ki asli taaqat broadcasting rights mein hai.",
+      "emphasis": [
+        "Jagmohan Dalmiya",
+        "broadcasting rights"
+      ],
+      "visual": {
+        "type": "manual",
+        "query": null,
+        "orientation": "landscape",
+        "motion": null,
+        "prompt": "Photo of Jagmohan Dalmiya at a public event from Wikimedia Commons, if available; else a text card with his name and years as BCCI/ICC president",
+        "fallback": "text_card",
+        "template": null,
+        "params": {},
+        "file": null,
+        "source": null,
+        "downgraded_from": null
+      },
+      "overlay": null
+    },
+    {
+      "id": 43,
+      "text": "1995 mein Supreme Court ne kaha, airwaves public property hain. Doordarshan ka monopoly khatam.",
+      "emphasis": [
+        "Supreme Court",
+        "monopoly khatam"
+      ],
+      "visual": {
+        "type": "photo",
+        "query": "supreme court of india building",
+        "orientation": "landscape",
+        "motion": "slow-zoom-in",
+        "prompt": null,
+        "fallback": null,
+        "template": null,
+        "params": {},
+        "file": "assets/images/scene_43.jpg",
+        "source": "wikimedia",
+        "downgraded_from": null
+      },
+      "overlay": null
+    },
+    {
+      "id": 44,
+      "text": "Ab BCCI apne match sabse ooncha bolne walon ko bech sakta tha.",
+      "emphasis": [
+        "BCCI",
+        "bech sakta"
+      ],
+      "visual": {
+        "type": "photo",
+        "query": "auction hammer contract signing",
+        "orientation": "landscape",
+        "motion": "slow-zoom-in",
+        "prompt": null,
+        "fallback": null,
+        "template": null,
+        "params": {},
+        "file": "assets/images/scene_44.jpg",
+        "source": "stock",
+        "downgraded_from": null
+      },
+      "overlay": null
+    },
+    {
+      "id": 45,
+      "text": "1996 World Cup commercial hit raha, aur 1997 mein Dalmiya ICC ke president ban gaye.",
+      "emphasis": [
+        "1996",
+        "ICC ke president"
+      ],
+      "visual": {
+        "type": "photo",
+        "query": "cricket world cup trophy stadium",
+        "orientation": "landscape",
+        "motion": "pan-left",
+        "prompt": null,
+        "fallback": null,
+        "template": null,
+        "params": {},
+        "file": "assets/images/scene_45.jpg",
+        "source": "stock",
+        "downgraded_from": null
+      },
+      "overlay": null
+    },
+    {
+      "id": 46,
+      "text": "England aur Australia ke paas history thi. India ke paas ek arab dekhne waale the.",
+      "emphasis": [
+        "history",
+        "ek arab"
+      ],
+      "visual": {
+        "type": "video",
+        "query": "massive crowd india street aerial",
+        "orientation": "landscape",
+        "motion": null,
+        "prompt": null,
+        "fallback": null,
+        "template": null,
+        "params": {},
+        "file": "assets/videos/scene_46.mp4",
+        "source": "stock",
+        "downgraded_from": null
+      },
+      "overlay": null
+    },
+    {
+      "id": 47,
+      "text": "Par saaya bhi tha. 2000 ka match-fixing scandal. Phir bhi fans wapas aaye, aur board ko apni taaqat ka andaza ho gaya.",
+      "emphasis": [
+        "match-fixing scandal",
+        "taaqat"
+      ],
+      "visual": {
+        "type": "photo",
+        "query": "dark shadow empty stadium night",
+        "orientation": "landscape",
+        "motion": "slow-zoom-out",
+        "prompt": null,
+        "fallback": null,
+        "template": null,
+        "params": {},
+        "file": "assets/images/scene_47.jpg",
+        "source": "stock",
+        "downgraded_from": null
+      },
+      "overlay": null
+    },
+    {
+      "id": 48,
+      "text": "2007 World Cup mein India pehle round mein hi bahar. Poore desh mein maatam.",
+      "emphasis": [
+        "pehle round",
+        "maatam"
+      ],
+      "visual": {
+        "type": "photo",
+        "query": "disappointed fans sitting stadium",
+        "orientation": "landscape",
+        "motion": "slow-zoom-in",
+        "prompt": null,
+        "fallback": null,
+        "template": null,
+        "params": {},
+        "file": "assets/images/scene_48.jpg",
+        "source": "stock",
+        "downgraded_from": null
+      },
+      "overlay": null
+    },
+    {
+      "id": 49,
+      "text": "Kuch mahino baad, Dhoni ki naya-naya team ne pehla T20 World Cup jeet liya, Pakistan ko last over mein haraakar.",
+      "emphasis": [
+        "Dhoni",
+        "T20 World Cup"
+      ],
+      "visual": {
+        "type": "video",
+        "query": "fans celebrating street firecrackers night",
+        "orientation": "landscape",
+        "motion": null,
+        "prompt": null,
+        "fallback": null,
+        "template": null,
+        "params": {},
+        "file": "assets/videos/scene_49.mp4",
+        "source": "stock",
+        "downgraded_from": null
+      },
+      "overlay": null
+    },
+    {
+      "id": 50,
+      "text": "Udhar Zee ke Indian Cricket League ne BCCI ko challenge kiya. Board ka jawab tha: Lalit Modi aur IPL.",
+      "emphasis": [
+        "BCCI",
+        "IPL"
+      ],
+      "visual": {
+        "type": "text_card",
+        "query": null,
+        "orientation": "landscape",
+        "motion": null,
+        "prompt": "Neon-style card with text: IPL 2008 - The Board Strikes Back",
+        "fallback": null,
+        "template": null,
+        "params": {},
+        "file": null,
+        "source": null,
+        "downgraded_from": null
+      },
+      "overlay": null
+    },
+    {
+      "id": 51,
+      "text": "2008. Aath city franchises, business houses aur film stars ke maalik, auction, cheerleaders, floodlights.",
+      "emphasis": [
+        "Aath city franchises",
+        "auction"
+      ],
+      "visual": {
+        "type": "blender",
+        "query": null,
+        "orientation": "landscape",
+        "motion": null,
+        "prompt": null,
+        "fallback": null,
+        "template": "india_map",
+        "params": {
+          "highlight_states": [
+            "MH",
+            "TN",
+            "KA",
+            "WB",
+            "DL",
+            "TS",
+            "RJ",
+            "PB"
+          ],
+          "camera": "orbit"
+        },
+        "file": null,
+        "source": null,
+        "downgraded_from": null
+      },
+      "overlay": null
+    },
+    {
+      "id": 52,
+      "text": "18 April 2008, Bangalore. McCullum ne 158 not out thoka, aur cricket ek tyohaar ban gaya.",
+      "emphasis": [
+        "McCullum",
+        "158 not out"
+      ],
+      "visual": {
+        "type": "photo",
+        "query": "stadium floodlights night fireworks crowd",
+        "orientation": "landscape",
+        "motion": "slow-zoom-in",
+        "prompt": null,
+        "fallback": null,
+        "template": null,
+        "params": {},
+        "file": "assets/images/scene_52.jpg",
+        "source": "stock",
+        "downgraded_from": null
+      },
+      "overlay": {
+        "type": "stat",
+        "value": "158*",
+        "label": "McCullum, first IPL match"
+      }
+    },
+    {
+      "id": 53,
+      "text": "Pehla champion? Rajasthan Royals, Shane Warne ki captaincy mein, aakhri ball par Chennai ko haraakar.",
+      "emphasis": [
+        "Rajasthan Royals",
+        "aakhri ball"
+      ],
+      "visual": {
+        "type": "photo",
+        "query": "trophy confetti celebration night",
+        "orientation": "landscape",
+        "motion": "slow-zoom-in",
+        "prompt": null,
+        "fallback": null,
+        "template": null,
+        "params": {},
+        "file": "assets/images/scene_53.jpg",
+        "source": "stock",
+        "downgraded_from": null
+      },
+      "overlay": null
+    },
+    {
+      "id": 54,
+      "text": "Paisa: broadcast rights lagbhag ek billion dollar se badhkar takriban 6 billion dollar tak pahunch gaye.",
+      "emphasis": [
+        "broadcast rights",
+        "6 billion"
+      ],
+      "visual": {
+        "type": "chart",
+        "query": null,
+        "orientation": "landscape",
+        "motion": null,
+        "prompt": null,
+        "fallback": null,
+        "template": null,
+        "params": {
+          "kind": "bar",
+          "title": "IPL broadcast rights (approx.)",
+          "unit": "USD billion",
+          "labels": [
+            "First 10-year deal",
+            "2023-2027 package"
+          ],
+          "values": [
+            1,
+            6
+          ]
+        },
+        "file": null,
+        "source": null,
+        "downgraded_from": null
+      },
+      "overlay": null
+    },
+    {
+      "id": 55,
+      "text": "Talent: chhote shehron ke bachche ek hi season mein star ban sakte the, aur duniya ke best players ke saath dressing room share karte.",
+      "emphasis": [
+        "chhote shehron",
+        "dressing room"
+      ],
+      "visual": {
+        "type": "manual",
+        "query": "young cricketer practicing nets sunrise",
+        "orientation": "landscape",
+        "motion": null,
+        "prompt": "Auto-fetch found nothing relevant. Wanted: young cricketer practicing nets sunrise",
+        "fallback": "text_card",
+        "template": null,
+        "params": {},
+        "file": null,
+        "source": "stock",
+        "downgraded_from": "video"
+      },
+      "overlay": null
+    },
+    {
+      "id": 56,
+      "text": "Power: har cricketer ko IPL chahiye, aur BCCI ke haath mein poore calendar ki chaabi aa gayi.",
+      "emphasis": [
+        "Power",
+        "BCCI"
+      ],
+      "visual": {
+        "type": "photo",
+        "query": "businessman holding keys boardroom",
+        "orientation": "landscape",
+        "motion": "slow-zoom-in",
+        "prompt": null,
+        "fallback": null,
+        "template": null,
+        "params": {},
+        "file": "assets/images/scene_56.jpg",
+        "source": "stock",
+        "downgraded_from": null
+      },
+      "overlay": null
+    },
+    {
+      "id": 57,
+      "text": "Toofan bhi aaye. 2013 ka spot-fixing, do franchises suspend, Modi ki giraavat, court ke reforms.",
+      "emphasis": [
+        "spot-fixing",
+        "court ke reforms"
+      ],
+      "visual": {
+        "type": "photo",
+        "query": "storm clouds over stadium",
+        "orientation": "landscape",
+        "motion": "slow-zoom-out",
+        "prompt": null,
+        "fallback": null,
+        "template": null,
+        "params": {},
+        "file": "assets/images/scene_57.jpg",
+        "source": "stock",
+        "downgraded_from": null
+      },
+      "overlay": null
+    },
+    {
+      "id": 58,
+      "text": "Phir bhi IPL tikka raha. Itna bada ho chuka tha ki girna mumkin nahi tha.",
+      "emphasis": [
+        "tikka raha",
+        "girna mumkin nahi"
+      ],
+      "visual": {
+        "type": "video",
+        "query": "packed stadium crowd night lights",
+        "orientation": "landscape",
+        "motion": null,
+        "prompt": null,
+        "fallback": null,
+        "template": null,
+        "params": {},
+        "file": "assets/videos/scene_58.mp4",
+        "source": "stock",
+        "downgraded_from": null
+      },
+      "overlay": null
+    },
+    {
+      "id": 59,
+      "text": "IPL ne India ko sirf amir nahi banaya, khelne ka tareeka bhi badal diya.",
+      "emphasis": [
+        "tareeka bhi badal diya"
+      ],
+      "visual": {
+        "type": "video",
+        "query": "batsman hitting six stadium lights",
+        "orientation": "landscape",
+        "motion": null,
+        "prompt": null,
+        "fallback": null,
+        "template": null,
+        "params": {},
+        "file": "assets/videos/scene_59.mp4",
+        "source": "stock",
+        "downgraded_from": null
+      },
+      "overlay": null
+    },
+    {
+      "id": 60,
+      "text": "2011, Wankhede. Dhoni ka six, aur Tendulkar ne aakhirkaar World Cup uthaya, jiska wo bees saal se zyada intezaar kar rahe the.",
+      "emphasis": [
+        "Dhoni ka six",
+        "World Cup"
+      ],
+      "visual": {
+        "type": "photo",
+        "query": "wankhede stadium mumbai",
+        "orientation": "landscape",
+        "motion": "slow-zoom-in",
+        "prompt": null,
+        "fallback": null,
+        "template": null,
+        "params": {},
+        "file": "assets/images/scene_60.jpg",
+        "source": "wikimedia",
+        "downgraded_from": null
+      },
+      "overlay": null
+    },
+    {
+      "id": 61,
+      "text": "2020-21 Australia tour: ghayal team ne Gabba jeeta, jahan Australia 32 saal se nahi haara tha.",
+      "emphasis": [
+        "Gabba",
+        "32 saal"
+      ],
+      "visual": {
+        "type": "stat",
+        "query": null,
+        "orientation": "landscape",
+        "motion": null,
+        "prompt": null,
+        "fallback": null,
+        "template": null,
+        "params": {},
+        "file": null,
+        "source": null,
+        "downgraded_from": null
+      },
+      "overlay": {
+        "type": "stat",
+        "value": "32",
+        "label": "years Australia unbeaten at the Gabba"
+      }
+    },
+    {
+      "id": 62,
+      "text": "2024 mein Barbados mein T20 World Cup. 2025 mein Dubai mein Champions Trophy.",
+      "emphasis": [
+        "T20 World Cup",
+        "Champions Trophy"
+      ],
+      "visual": {
+        "type": "photo",
+        "query": "trophy lift team celebration confetti",
+        "orientation": "landscape",
+        "motion": "slow-zoom-in",
+        "prompt": null,
+        "fallback": null,
+        "template": null,
+        "params": {},
+        "file": "assets/images/scene_62.jpg",
+        "source": "stock",
+        "downgraded_from": null
+      },
+      "overlay": null
+    },
+    {
+      "id": 63,
+      "text": "November 2025: Harmanpreet Kaur ki team ne ghar par women's ODI World Cup jeet kar nayi kahani likhi.",
+      "emphasis": [
+        "Harmanpreet Kaur",
+        "women's ODI World Cup"
+      ],
+      "visual": {
+        "type": "manual",
+        "query": null,
+        "orientation": "landscape",
+        "motion": null,
+        "prompt": "Screenshot of a news headline about India winning the 2025 women's ODI World Cup (no match footage)",
+        "fallback": "text_card",
+        "template": null,
+        "params": {},
+        "file": null,
+        "source": null,
+        "downgraded_from": null
+      },
+      "overlay": null
+    },
+    {
+      "id": 64,
+      "text": "Lekin asli badlaav field ke bahar tha. 2005 mein ICC ka headquarter Lord's se Dubai gaya.",
+      "emphasis": [
+        "field ke bahar",
+        "Dubai"
+      ],
+      "visual": {
+        "type": "photo",
+        "query": "dubai skyline night",
+        "orientation": "landscape",
+        "motion": "pan-right",
+        "prompt": null,
+        "fallback": null,
+        "template": null,
+        "params": {},
+        "file": "assets/images/scene_64.jpg",
+        "source": "stock",
+        "downgraded_from": null
+      },
+      "overlay": null
+    },
+    {
+      "id": 65,
+      "text": "Cricket ki global kamai ka sabse bada hissa aaj bhi India ke paas hai.",
+      "emphasis": [
+        "sabse bada hissa"
+      ],
+      "visual": {
+        "type": "chart",
+        "query": null,
+        "orientation": "landscape",
+        "motion": null,
+        "prompt": null,
+        "fallback": null,
+        "template": null,
+        "params": {},
+        "file": null,
+        "source": null,
+        "downgraded_from": null
+      },
+      "overlay": {
+        "type": "text",
+        "value": "Biggest slice of cricket's global income",
+        "label": "India"
+      }
+    },
+    {
+      "id": 66,
+      "text": "December 2024 mein BCCI ke former secretary Jay Shah ICC ke chairman bane.",
+      "emphasis": [
+        "Jay Shah",
+        "ICC ke chairman"
+      ],
+      "visual": {
+        "type": "manual",
+        "query": null,
+        "orientation": "landscape",
+        "motion": null,
+        "prompt": "Screenshot of the ICC announcement headline about Jay Shah becoming chairman (December 2024)",
+        "fallback": "text_card",
+        "template": null,
+        "params": {},
+        "file": null,
+        "source": null,
+        "downgraded_from": null
+      },
+      "overlay": null
+    },
+    {
+      "id": 67,
+      "text": "2023 World Cup final, Ahmedabad mein ek lakh logon ke saamne haar. Koi samrajya sthayi nahi hota.",
+      "emphasis": [
+        "ek lakh",
+        "sthayi nahi"
+      ],
+      "visual": {
+        "type": "stat",
+        "query": null,
+        "orientation": "landscape",
+        "motion": null,
+        "prompt": null,
+        "fallback": null,
+        "template": null,
+        "params": {},
+        "file": null,
+        "source": null,
+        "downgraded_from": null
+      },
+      "overlay": {
+        "type": "stat",
+        "value": "1,00,000",
+        "label": "fans in Ahmedabad, 2023 final"
+      }
+    },
+    {
+      "id": 68,
+      "text": "Phir bhi sach ye hai: pehli baar cricket ki taaqat London ya Melbourne mein nahi, India mein hai.",
+      "emphasis": [
+        "pehli baar",
+        "India mein"
+      ],
+      "visual": {
+        "type": "video",
+        "query": "india flag crowd stadium waving",
+        "orientation": "landscape",
+        "motion": null,
+        "prompt": null,
+        "fallback": null,
+        "template": null,
+        "params": {},
+        "file": "assets/videos/scene_68.mp4",
+        "source": "stock",
+        "downgraded_from": null
+      },
+      "overlay": null
+    },
+    {
+      "id": 69,
+      "text": "2028 Los Angeles Olympics mein cricket wapas aa raha hai, aur India favourite hoga.",
+      "emphasis": [
+        "2028",
+        "favourite"
+      ],
+      "visual": {
+        "type": "photo",
+        "query": "los angeles skyline sunset",
+        "orientation": "landscape",
+        "motion": "slow-zoom-in",
+        "prompt": null,
+        "fallback": null,
+        "template": null,
+        "params": {},
+        "file": "assets/images/scene_69.jpg",
+        "source": "stock",
+        "downgraded_from": null
+      },
+      "overlay": null
+    },
+    {
+      "id": 70,
+      "text": "Aaj bhi gali mein wahi plank aur tape-ball ka khel chalta hai.",
+      "emphasis": [
+        "plank",
+        "tape-ball"
+      ],
+      "visual": {
+        "type": "video",
+        "query": "street cricket evening india lane",
+        "orientation": "landscape",
+        "motion": null,
+        "prompt": null,
+        "fallback": null,
+        "template": null,
+        "params": {},
+        "file": "assets/videos/scene_70.mp4",
+        "source": "stock",
+        "downgraded_from": null
+      },
+      "overlay": null
+    },
+    {
+      "id": 71,
+      "text": "Dada kursi par baithe dekhte hain. Papa batting order par ladte hain. Bachcha phone par player auction ke daam jaanta hai.",
+      "emphasis": [
+        "Dada",
+        "phone"
+      ],
+      "visual": {
+        "type": "photo",
+        "query": "three generations watching phone together",
+        "orientation": "landscape",
+        "motion": "slow-zoom-in",
+        "prompt": null,
+        "fallback": null,
+        "template": null,
+        "params": {},
+        "file": "assets/images/scene_71.jpg",
+        "source": "stock",
+        "downgraded_from": null
+      },
+      "overlay": null
+    },
+    {
+      "id": 72,
+      "text": "Cricket ne humein ek zubaan di. Gujarati vyapari, Tamil student, Punjabi kisaan, sab samajhte hain jab koi kehta hai, \"Dhoni finishes it off.\"",
+      "emphasis": [
+        "ek zubaan",
+        "Dhoni finishes it off"
+      ],
+      "visual": {
+        "type": "manual",
+        "query": "diverse people watching tv together india",
+        "orientation": "landscape",
+        "motion": null,
+        "prompt": "Auto-fetch found nothing relevant. Wanted: diverse people watching tv together india",
+        "fallback": "text_card",
+        "template": null,
+        "params": {},
+        "file": null,
+        "source": "stock",
+        "downgraded_from": "video"
+      },
+      "overlay": null
+    },
+    {
+      "id": 73,
+      "text": "Cricket ne chhote shehron ke ladke-ladkiyon ko gareebi se bahar nikalne ka raasta diya.",
+      "emphasis": [
+        "raasta"
+      ],
+      "visual": {
+        "type": "photo",
+        "query": "girl batting village ground",
+        "orientation": "landscape",
+        "motion": "slow-zoom-in",
+        "prompt": null,
+        "fallback": null,
+        "template": null,
+        "params": {},
+        "file": "assets/images/scene_73.jpg",
+        "source": "stock",
+        "downgraded_from": null
+      },
+      "overlay": null
+    },
+    {
+      "id": 74,
+      "text": "Par ek keemat bhi hai. Hockey, kabaddi, kushti, badminton aur athletics cricket ki parchhai mein rehte hain.",
+      "emphasis": [
+        "keemat",
+        "parchhai"
+      ],
+      "visual": {
+        "type": "photo",
+        "query": "wrestlers training akhara india",
+        "orientation": "landscape",
+        "motion": "pan-left",
+        "prompt": null,
+        "fallback": null,
+        "template": null,
+        "params": {},
+        "file": "assets/images/scene_74.jpg",
+        "source": "stock",
+        "downgraded_from": null
+      },
+      "overlay": null
+    },
+    {
+      "id": 75,
+      "text": "Taaqat kuch haathon mein simti hai, aur scandals ne dikhaya ki bharosa kitna nazuk hota hai.",
+      "emphasis": [
+        "kuch haathon",
+        "bharosa"
+      ],
+      "visual": {
+        "type": "photo",
+        "query": "shadowy boardroom table silhouettes",
+        "orientation": "landscape",
+        "motion": "slow-zoom-out",
+        "prompt": null,
+        "fallback": null,
+        "template": null,
+        "params": {},
+        "file": "assets/images/scene_75.jpg",
+        "source": "stock",
+        "downgraded_from": null
+      },
+      "overlay": null
+    },
+    {
+      "id": 76,
+      "text": "Phir bhi safar kamaal ka hai. Jo desh kabhi guest tha, aaj khel ke niyam likhta hai.",
+      "emphasis": [
+        "guest",
+        "niyam likhta hai"
+      ],
+      "visual": {
+        "type": "video",
+        "query": "cricket stadium aerial night lights",
+        "orientation": "landscape",
+        "motion": null,
+        "prompt": null,
+        "fallback": null,
+        "template": null,
+        "params": {},
+        "file": "assets/videos/scene_76.mp4",
+        "source": "stock",
+        "downgraded_from": null
+      },
+      "overlay": null
+    },
+    {
+      "id": 77,
+      "text": "Kahin ek bachcha deewar par tennis ball maar raha hai. Agla chapter pehle se warm up kar raha hai.",
+      "emphasis": [
+        "tennis ball",
+        "Agla chapter"
+      ],
+      "visual": {
+        "type": "video",
+        "query": "child hitting tennis ball wall",
+        "orientation": "landscape",
+        "motion": null,
+        "prompt": null,
+        "fallback": null,
+        "template": null,
+        "params": {},
+        "file": "assets/videos/scene_77.mp4",
+        "source": "stock",
+        "downgraded_from": null
+      },
+      "overlay": null
+    },
+    {
+      "id": 80,
+      "text": "Bookmakers ne India ko 66 to 1 par rakha tha. Matlab, koi umeed hi nahi.",
+      "emphasis": [
+        "66 to 1",
+        "koi umeed hi nahi"
+      ],
+      "visual": {
+        "type": "stat",
+        "query": null,
+        "orientation": "portrait",
+        "motion": null,
+        "prompt": null,
+        "fallback": null,
+        "template": null,
+        "params": {},
+        "file": null,
+        "source": null,
+        "downgraded_from": null
+      },
+      "overlay": {
+        "type": "stat",
+        "value": "66 to 1",
+        "label": "India's reported odds, 1983"
+      }
+    },
+    {
+      "id": 81,
+      "text": "17 for 5. Zimbabwe ke saamne poori team dhah rahi thi. Tabhi Kapil Dev crease par aaye.",
+      "emphasis": [
+        "17 for 5",
+        "Kapil Dev"
+      ],
+      "visual": {
+        "type": "photo",
+        "query": "lone batsman walking dark stadium",
+        "orientation": "portrait",
+        "motion": "slow-zoom-in",
+        "prompt": null,
+        "fallback": null,
+        "template": null,
+        "params": {},
+        "file": "assets/images/scene_81.jpg",
+        "source": "stock",
+        "downgraded_from": null
+      },
+      "overlay": null
+    },
+    {
+      "id": 82,
+      "text": "175 not out. Aur ye innings kabhi televise hi nahi hui, kyunki BBC ki strike thi.",
+      "emphasis": [
+        "175 not out",
+        "BBC ki strike"
+      ],
+      "visual": {
+        "type": "manual",
+        "query": null,
+        "orientation": "portrait",
+        "motion": null,
+        "prompt": "Archival still or news clipping of Kapil Dev's 175 not out at Tunbridge Wells (no match footage)",
+        "fallback": "text_card",
+        "template": null,
+        "params": {},
+        "file": null,
+        "source": null,
+        "downgraded_from": null
+      },
+      "overlay": {
+        "type": "stat",
+        "value": "175*",
+        "label": "never televised"
+      }
+    },
+    {
+      "id": 83,
+      "text": "Phir Lord's final. India sirf 183 par out. West Indies ke saamne ye kuch bhi nahi tha.",
+      "emphasis": [
+        "183",
+        "West Indies"
+      ],
+      "visual": {
+        "type": "photo",
+        "query": "lords cricket ground london",
+        "orientation": "portrait",
+        "motion": "slow-zoom-in",
+        "prompt": null,
+        "fallback": null,
+        "template": null,
+        "params": {},
+        "file": "assets/images/scene_83.jpg",
+        "source": "wikimedia",
+        "downgraded_from": null
+      },
+      "overlay": null
+    },
+    {
+      "id": 84,
+      "text": "Sandhu ka inswinger. Kapil ka peeche daudte hue catch. Viv Richards gaye.",
+      "emphasis": [
+        "inswinger",
+        "catch"
+      ],
+      "visual": {
+        "type": "manual",
+        "query": null,
+        "orientation": "portrait",
+        "motion": null,
+        "prompt": "Archival newspaper photo of the Kapil Dev catch dismissing Viv Richards, 1983 final (no match footage)",
+        "fallback": "text_card",
+        "template": null,
+        "params": {},
+        "file": null,
+        "source": null,
+        "downgraded_from": null
+      },
+      "overlay": null
+    },
+    {
+      "id": 85,
+      "text": "West Indies 140 par all out. India 43 runs se jeeta.",
+      "emphasis": [
+        "140",
+        "43 runs"
+      ],
+      "visual": {
+        "type": "stat",
+        "query": null,
+        "orientation": "portrait",
+        "motion": null,
+        "prompt": null,
+        "fallback": null,
+        "template": null,
+        "params": {},
+        "file": null,
+        "source": null,
+        "downgraded_from": null
+      },
+      "overlay": {
+        "type": "stat",
+        "value": "43",
+        "label": "runs, World Champions"
+      }
+    },
+    {
+      "id": 86,
+      "text": "Sadkon par log daude, anjaano ko mithai baati gayi.",
+      "emphasis": [
+        "sadkon par",
+        "mithai"
+      ],
+      "visual": {
+        "type": "video",
+        "query": "people celebrating street india sweets",
+        "orientation": "portrait",
+        "motion": null,
+        "prompt": null,
+        "fallback": null,
+        "template": null,
+        "params": {},
+        "file": "assets/videos/scene_86.mp4",
+        "source": "stock",
+        "downgraded_from": null
+      },
+      "overlay": null
+    },
+    {
+      "id": 87,
+      "text": "Ek catch, ek jeet, aur ek desh ki kismat badal gayi. Ye tha 25 June 1983.",
+      "emphasis": [
+        "kismat badal gayi",
+        "25 June 1983"
+      ],
+      "visual": {
+        "type": "text_card",
+        "query": null,
+        "orientation": "portrait",
+        "motion": null,
+        "prompt": "Bold card with text: 25 June 1983 - Jab India ne duniya jeeti",
+        "fallback": null,
+        "template": null,
+        "params": {},
+        "file": null,
+        "source": null,
+        "downgraded_from": null
+      },
+      "overlay": null
+    },
+    {
+      "id": 88,
+      "text": "Lagataar chhe Olympic gold. Phir bhi aaj hum cricket ke deewane hain. Aisa kyun?",
+      "emphasis": [
+        "chhe Olympic gold",
+        "Aisa kyun"
+      ],
+      "visual": {
+        "type": "stat",
+        "query": null,
+        "orientation": "portrait",
+        "motion": null,
+        "prompt": null,
+        "fallback": null,
+        "template": null,
+        "params": {},
+        "file": null,
+        "source": null,
+        "downgraded_from": null
+      },
+      "overlay": {
+        "type": "stat",
+        "value": "6",
+        "label": "Olympic hockey golds in a row"
+      }
+    },
+    {
+      "id": 89,
+      "text": "1928 se 1956, India ki hockey team ka koi jawab nahi tha. Dhyan Chand The Wizard the.",
+      "emphasis": [
+        "1928",
+        "The Wizard"
+      ],
+      "visual": {
+        "type": "manual",
+        "query": null,
+        "orientation": "portrait",
+        "motion": null,
+        "prompt": "Archival public-domain photo of Dhyan Chand or the 1936 Indian Olympic hockey team (Wikimedia Commons)",
+        "fallback": "text_card",
+        "template": null,
+        "params": {},
+        "file": null,
+        "source": null,
+        "downgraded_from": null
+      },
+      "overlay": null
+    },
+    {
+      "id": 90,
+      "text": "Par cricket ko bas ek bat, ek ball aur ek deewar chahiye thi.",
+      "emphasis": [
+        "ek deewar"
+      ],
+      "visual": {
+        "type": "video",
+        "query": "kids playing cricket against wall",
+        "orientation": "portrait",
+        "motion": null,
+        "prompt": null,
+        "fallback": null,
+        "template": null,
+        "params": {},
+        "file": "assets/videos/scene_90.mp4",
+        "source": "stock",
+        "downgraded_from": null
+      },
+      "overlay": null
+    },
+    {
+      "id": 91,
+      "text": "Radio commentary ne Test match ko poore desh ka saajha soundtrack bana diya.",
+      "emphasis": [
+        "Radio commentary",
+        "saajha soundtrack"
+      ],
+      "visual": {
+        "type": "manual",
+        "query": "vintage radio men listening tea stall",
+        "orientation": "portrait",
+        "motion": "slow-zoom-in",
+        "prompt": "Auto-fetch found nothing relevant. Wanted: vintage radio men listening tea stall",
+        "fallback": "text_card",
+        "template": null,
+        "params": {},
+        "file": null,
+        "source": "stock",
+        "downgraded_from": "photo"
+      },
+      "overlay": null
+    },
+    {
+      "id": 92,
+      "text": "1976 mein artificial turf aaya, aur hockey ke liye naya khel mehenga pad gaya.",
+      "emphasis": [
+        "artificial turf",
+        "mehenga"
+      ],
+      "visual": {
+        "type": "photo",
+        "query": "artificial turf hockey pitch blue",
+        "orientation": "portrait",
+        "motion": "pan-right",
+        "prompt": null,
+        "fallback": null,
+        "template": null,
+        "params": {},
+        "file": "assets/images/scene_92.jpg",
+        "source": "stock",
+        "downgraded_from": null
+      },
+      "overlay": null
+    },
+    {
+      "id": 93,
+      "text": "Cricket ke paas hero the, paisa tha, aur kahaniyan. Hockey se nazar dheere dheere hatne lagi.",
+      "emphasis": [
+        "hero",
+        "nazar"
+      ],
+      "visual": {
+        "type": "photo",
+        "query": "empty stadium seats dim light",
+        "orientation": "portrait",
+        "motion": "slow-zoom-out",
+        "prompt": null,
+        "fallback": null,
+        "template": null,
+        "params": {},
+        "file": "assets/images/scene_93.jpg",
+        "source": "stock",
+        "downgraded_from": null
+      },
+      "overlay": null
+    },
+    {
+      "id": 94,
+      "text": "Desh ne hockey se pyaar nahi chhoda. Bas usse dekhna chhod diya.",
+      "emphasis": [
+        "dekhna chhod diya"
+      ],
+      "visual": {
+        "type": "video",
+        "query": "village boys playing hockey field",
+        "orientation": "portrait",
+        "motion": null,
+        "prompt": null,
+        "fallback": null,
+        "template": null,
+        "params": {},
+        "file": "assets/videos/scene_94.mp4",
+        "source": "stock",
+        "downgraded_from": null
+      },
+      "overlay": null
+    },
+    {
+      "id": 95,
+      "text": "Aur phir aaya 1983. Wahan se sab badal gaya.",
+      "emphasis": [
+        "1983"
+      ],
+      "visual": {
+        "type": "text_card",
+        "query": null,
+        "orientation": "portrait",
+        "motion": null,
+        "prompt": "Bold card with text: Phir aaya 1983",
+        "fallback": null,
+        "template": null,
+        "params": {},
+        "file": null,
+        "source": null,
+        "downgraded_from": null
+      },
+      "overlay": null
+    },
+    {
+      "id": 96,
+      "text": "Ek league ne cricket ki taaqat ka center London se India shift kar diya.",
+      "emphasis": [
+        "London",
+        "India"
+      ],
+      "visual": {
+        "type": "manual",
+        "query": "stadium floodlights night crowd neon",
+        "orientation": "portrait",
+        "motion": null,
+        "prompt": "Auto-fetch found nothing relevant. Wanted: stadium floodlights night crowd neon",
+        "fallback": "text_card",
+        "template": null,
+        "params": {},
+        "file": null,
+        "source": "stock",
+        "downgraded_from": "video"
+      },
+      "overlay": null
+    },
+    {
+      "id": 97,
+      "text": "2008, Bangalore. McCullum ke 158 not out ne pehle hi match mein cricket ko tyohaar bana diya.",
+      "emphasis": [
+        "158 not out",
+        "tyohaar"
+      ],
+      "visual": {
+        "type": "photo",
+        "query": "stadium fireworks night crowd",
+        "orientation": "portrait",
+        "motion": "slow-zoom-in",
+        "prompt": null,
+        "fallback": null,
+        "template": null,
+        "params": {},
+        "file": "assets/images/scene_97.jpg",
+        "source": "stock",
+        "downgraded_from": null
+      },
+      "overlay": {
+        "type": "stat",
+        "value": "158*",
+        "label": "first IPL match"
+      }
+    },
+    {
+      "id": 98,
+      "text": "Broadcast rights lagbhag ek billion dollar se badhkar takriban 6 billion dollar tak pahunch gaye.",
+      "emphasis": [
+        "broadcast rights",
+        "6 billion"
+      ],
+      "visual": {
+        "type": "chart",
+        "query": null,
+        "orientation": "portrait",
+        "motion": null,
+        "prompt": null,
+        "fallback": null,
+        "template": null,
+        "params": {
+          "kind": "bar",
+          "title": "IPL broadcast rights (approx.)",
+          "unit": "USD billion",
+          "labels": [
+            "First 10-year deal",
+            "2023-2027 package"
+          ],
+          "values": [
+            1,
+            6
+          ]
+        },
+        "file": null,
+        "source": null,
+        "downgraded_from": null
+      },
+      "overlay": null
+    },
+    {
+      "id": 99,
+      "text": "Chhote shehron ke bachche ek season mein star ban gaye, duniya ke best players ke saath khelte hue.",
+      "emphasis": [
+        "chhote shehron",
+        "best players"
+      ],
+      "visual": {
+        "type": "manual",
+        "query": "young cricketer practicing nets sunrise",
+        "orientation": "portrait",
+        "motion": null,
+        "prompt": "Auto-fetch found nothing relevant. Wanted: young cricketer practicing nets sunrise",
+        "fallback": "text_card",
+        "template": null,
+        "params": {},
+        "file": null,
+        "source": "stock",
+        "downgraded_from": "video"
+      },
+      "overlay": null
+    },
+    {
+      "id": 100,
+      "text": "2011 World Cup ghar par, 2024 T20 World Cup, 2025 Champions Trophy. Jeet ka silsila.",
+      "emphasis": [
+        "2011",
+        "Jeet ka silsila"
+      ],
+      "visual": {
+        "type": "photo",
+        "query": "trophy lift team celebration confetti",
+        "orientation": "portrait",
+        "motion": "slow-zoom-in",
+        "prompt": null,
+        "fallback": null,
+        "template": null,
+        "params": {},
+        "file": "assets/images/scene_100.jpg",
+        "source": "stock",
+        "downgraded_from": null
+      },
+      "overlay": null
+    },
+    {
+      "id": 101,
+      "text": "Jay Shah aaj ICC ke chairman hain, aur 2028 Olympics mein India favourite hoga.",
+      "emphasis": [
+        "Jay Shah",
+        "2028"
+      ],
+      "visual": {
+        "type": "photo",
+        "query": "dubai skyline night",
+        "orientation": "portrait",
+        "motion": "pan-right",
+        "prompt": null,
+        "fallback": null,
+        "template": null,
+        "params": {},
+        "file": "assets/images/scene_101.jpg",
+        "source": "stock",
+        "downgraded_from": null
+      },
+      "overlay": null
+    },
+    {
+      "id": 102,
+      "text": "Jo desh kabhi guest tha, wo aaj khel ke niyam likhta hai.",
+      "emphasis": [
+        "guest",
+        "niyam likhta hai"
+      ],
+      "visual": {
+        "type": "video",
+        "query": "cricket stadium aerial night lights",
+        "orientation": "portrait",
+        "motion": null,
+        "prompt": null,
+        "fallback": null,
+        "template": null,
+        "params": {},
+        "file": "assets/videos/scene_102.mp4",
+        "source": "stock",
+        "downgraded_from": null
+      },
+      "overlay": null
+    },
+    {
+      "id": 103,
+      "text": "Ek tennis ball, ek deewar, aur ek poora samrajya. Follow karo poori kahani ke liye.",
+      "emphasis": [
+        "tennis ball",
+        "poori kahani"
+      ],
+      "visual": {
+        "type": "manual",
+        "query": "child hitting tennis ball wall",
+        "orientation": "portrait",
+        "motion": null,
+        "prompt": "Auto-fetch found nothing relevant. Wanted: child hitting tennis ball wall",
+        "fallback": "text_card",
+        "template": null,
+        "params": {},
+        "file": null,
+        "source": "stock",
+        "downgraded_from": "video"
+      },
+      "overlay": null
     }
   ]
 }

@@ -18,6 +18,8 @@ from werkzeug.utils import secure_filename
 
 from . import manual_inbox
 from .jobs import Runner
+from .lib import recording_check, sources
+from .lib.voice import read_voice
 from .lib.config import PROJECTS_DIR
 from .lib.schema import load_scenes
 from .lib.state import env_warnings, next_step, project_state, stage_label
@@ -46,6 +48,26 @@ def job_script_manual(project: Path, force: bool = False):
 
         sf = generate_manual(project, force=force, log=log)
         return "prompt ready: paste it into claude.ai" if sf is None else f"imported {len(sf.scenes)} scenes"
+    return run
+
+
+def job_retry_missing(project: Path):
+    def run(log):
+        from .fetch_assets import retry_missing
+
+        summary = retry_missing(project, log=log)
+        return ", ".join(f"{v} {k}" for k, v in sorted(summary.items())) or "nothing to search for"
+    return run
+
+
+def job_package(project: Path):
+    def run(log):
+        from .lib.targets import list_targets
+        from .package import write
+
+        sf = load_scenes(project / "script" / "scenes.json")
+        done = [write(project, sf, t, log) for t in list_targets(sf) if (project / t.out).exists()]
+        return f"{len(done)} package(s) written"
     return run
 
 
@@ -157,9 +179,29 @@ def _articles(project: Path) -> list[dict]:
         if f.suffix.lower().lstrip(".") not in ARTICLE_EXTS or f.name.startswith("."):
             continue
         text = f.read_text(errors="replace")
-        src = text.split("\n", 1)[0].removeprefix("SOURCE: ") if f.name.startswith("_url_") else f.name
-        out.append({"name": f.name, "source": src, "words": len(text.split()),
-                    "downloaded": f.name.startswith("_url_")})
+        downloaded = f.name.startswith("_url_")
+        via, body = sources.parse_cached(text) if downloaded else (None, text)
+        src = text.split("\n", 1)[0].removeprefix("SOURCE: ") if downloaded else f.name
+        n = sources.words(body)
+        out.append({"name": f.name, "source": src, "words": n, "downloaded": downloaded,
+                    "via": {"youtube": "YouTube captions", "jina": "Jina Reader"}.get(via or ""), "thin": downloaded and n < sources.MIN_WORDS})
+    return out
+
+
+def _packages(project: Path) -> list[dict]:
+    """The written package of each rendered video, to show and copy on the project page."""
+    from .lib.targets import list_targets
+    from .package import package_path
+
+    try:
+        sf = load_scenes(project / "script" / "scenes.json")
+    except Exception:
+        return []
+    out = []
+    for t in list_targets(sf):
+        f = project / package_path(t)
+        if f.exists():
+            out.append({"label": t.label, "rel": package_path(t), "text": f.read_text()})
     return out
 
 
@@ -200,6 +242,7 @@ def _videos(project: Path) -> list[dict]:
             "srt": t.out.rsplit(".", 1)[0] + ".srt" if (project / t.out).with_suffix(".srt").exists() else None,
             "draft": f"out/draft_{t.id}.mp4" if (project / f"out/draft_{t.id}.mp4").exists() else None,
             "minutes": round(words / 150, 1), "scenes": len(t.scene_ids),
+            "check": recording_check.cached_check(project, t.audio, t.kind),
             "reading": [{"id": i, "text": sf.scene(i).text} for i in t.scene_ids],
         })
     return out
@@ -279,6 +322,26 @@ def create_app(projects_dir: Path = PROJECTS_DIR, runner: Runner | None = None) 
 
     # ---- pages -------------------------------------------------------
 
+    @app.get("/voice")
+    def voice_page():
+        from .lib.voice import VOICE_FILE, filled
+
+        text = VOICE_FILE.read_text() if VOICE_FILE.exists() else ""
+        return render_template("voice.html", text=text, active=filled(text) is not None, path=str(VOICE_FILE),
+                               msg=request.args.get("msg"), err=request.args.get("err") == "1")
+
+    @app.post("/voice")
+    def voice_save():
+        from .lib.voice import VOICE_FILE, filled
+
+        text = request.form.get("text", "").replace("\r\n", "\n")
+        if not text.strip():
+            return redirect(url_for("voice_page", msg="Not saved: the file can't be empty.", err=1))
+        VOICE_FILE.write_text(text.rstrip() + "\n")
+        msg = ("Saved. The next script prompt includes your voice." if filled(text)
+               else "Saved, but only the hints are there: write something outside the <!-- --> markers.")
+        return redirect(url_for("voice_page", msg=msg))
+
     @app.get("/")
     def home():
         rows = []
@@ -295,7 +358,7 @@ def create_app(projects_dir: Path = PROJECTS_DIR, runner: Runner | None = None) 
             rows.append({"slug": p.name, "stage": stage_label(steps), "next": nxt.title if nxt else None,
                          "mtime": max((f.stat().st_mtime for f in p.rglob("*") if f.is_file()), default=0)})
         rows.sort(key=lambda r: -r["mtime"])
-        return render_template("home.html", projects=rows, warnings=env_warnings(),
+        return render_template("home.html", projects=rows, warnings=env_warnings(), voice_active=read_voice() is not None,
                                msg=request.args.get("msg"), err=request.args.get("err") == "1")
 
     @app.post("/new")
@@ -331,15 +394,23 @@ def create_app(projects_dir: Path = PROJECTS_DIR, runner: Runner | None = None) 
         from . import music as music_mod
         from .generate_script import parse_brief
 
+        from .fetch_assets import retryable
+        from .lib.schema import load_scenes
+
         p = project(slug)
         steps = project_state(p)
+        try:
+            retry_count = len(retryable(load_scenes(p / "script" / "scenes.json"), p))
+        except (OSError, ValueError):
+            retry_count = 0
         brief = parse_brief((p / "input" / "brief.md").read_text()) if (p / "input" / "brief.md").exists() else {}
         prompt_path = p / "script" / "prompt.md"
         jobs = runner.recent(slug, 8)
         return render_template(
             "project.html", slug=slug, path=str(p), steps=steps, next=next_step(steps),
             stage=stage_label(steps), brief=brief, articles=_articles(p), videos=_videos(p),
-            music_licenses=music_mod.LICENSES,
+            music_licenses=music_mod.LICENSES, retry_count=retry_count, packages=_packages(p),
+            voice_active=read_voice() is not None,
             prompt=prompt_path.read_text() if prompt_path.exists() else None,
             facts=(p / "script" / "facts.md").read_text() if (p / "script" / "facts.md").exists() else "",
             warnings=env_warnings(), jobs=[j.to_dict(tail=0) for j in jobs],
@@ -514,6 +585,10 @@ def create_app(projects_dir: Path = PROJECTS_DIR, runner: Runner | None = None) 
             return start(slug, "script", "Import claude.ai reply", job_script_manual(p), "script")
         if step == "fetch":
             return start(slug, "fetch", "Fetch visuals", job_fetch(p, force), "fetch")
+        if step == "package":
+            return start(slug, "package", "Write packages", job_package(p), "publish")
+        if step == "retry_missing":
+            return start(slug, "retry_missing", "Search again for missing scenes", job_retry_missing(p), "manual")
         if step in ("stills", "align", "parts", "assemble"):
             from . import parts as parts_mod
             from .lib.state import _load_timeline

@@ -1,5 +1,6 @@
 import React, {useMemo} from 'react';
 import {AbsoluteFill, spring, useCurrentFrame, useVideoConfig} from 'remotion';
+import {useTheme} from '../theme';
 import type {Brand, ReelProps} from '../types';
 import {REEL_SAFE, clamp} from '../utils/safeZones';
 
@@ -48,6 +49,7 @@ export const WordCaptions: React.FC<{
   brand: Brand;
 }> = ({scenes, marks, brand}) => {
   const frame = useCurrentFrame();
+  const t = useTheme();
   const {fps, width, height} = useVideoConfig();
   const now = frame / fps;
 
@@ -65,7 +67,7 @@ export const WordCaptions: React.FC<{
   const hideAt = Math.min(last.end + 0.35, next ? next[0].t : Infinity);
   if (now > hideAt) return null;
 
-  const fontSize = 88;
+  const fontSize = t.captionUpper ? 96 : 76;
   // vertical center sits in the lower-middle of the frame, clamped inside the safe zone
   const boxHeight = fontSize * 2.4;
   const top = clamp(height * 0.62, REEL_SAFE.top, height - REEL_SAFE.bottom - boxHeight);
@@ -83,12 +85,20 @@ export const WordCaptions: React.FC<{
           flexWrap: 'wrap',
           justifyContent: 'center',
           alignContent: 'center',
-          fontFamily: brand.fonts.latin,
-          fontWeight: 900,
+          // the gap grows with the type, and words only grow a little, so neighbours never touch
+          columnGap: '0.3em',
+          rowGap: '0.08em',
+          fontFamily: t.captionFont,
+          fontWeight: t.captionWeight,
           fontSize,
-          lineHeight: 1.2,
+          letterSpacing: '0.01em',
+          lineHeight: 1.15,
+          // on light paper the captions need a strip behind them to stay readable
+          background: t.captionBacking ?? undefined,
+          padding: t.captionBacking ? '18px 28px' : undefined,
+          boxSizing: 'border-box',
           textAlign: 'center',
-          textTransform: 'uppercase',
+          textTransform: t.captionUpper ? 'uppercase' : 'none',
           textShadow: '0 4px 14px rgba(0,0,0,0.85), 0 0 3px rgba(0,0,0,0.9)',
         }}
       >
@@ -97,21 +107,23 @@ export const WordCaptions: React.FC<{
           const pop = active
             ? spring({frame: frame - Math.round(w.t * fps), fps, config: {damping: 14, stiffness: 220}})
             : 0;
-          const scale = 1 + 0.12 * pop + (w.emph && active ? 0.1 : 0);
-          const color = w.emph
-            ? brand.colors.accent
-            : now >= w.t && now <= w.end + 0.05
-              ? brand.colors.captionActive
-              : brand.colors.captionInactive;
+          const speaking = now >= w.t && now <= w.end + 0.05;
+          const scale = 1 + 0.06 * pop;
+          const boxed = w.emph && active; // stressed words get a highlight box instead of growing
+          const color = boxed ? brand.colors.background : speaking ? brand.colors.captionActive : brand.colors.captionInactive;
           return (
             <span
               key={`${idx}-${i}`}
               style={{
                 display: 'inline-block',
-                margin: '0 24px',
+                padding: boxed ? '0 0.14em' : 0,
+                margin: boxed ? '0 -0.14em' : 0,
+                borderRadius: '0.08em',
+                background: boxed ? brand.colors.accent : 'transparent',
+                textShadow: boxed ? 'none' : undefined,
                 color,
                 opacity: active ? 1 : 0.55,
-                transform: `scale(${scale})`,
+                transform: `scale(${scale}) rotate(${boxed ? -2 : 0}deg)`,
               }}
             >
               {w.w}

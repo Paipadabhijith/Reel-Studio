@@ -8,11 +8,13 @@ from pathlib import Path
 
 import httpx
 
-from .lib import cache
-from .lib.schema import ScenesFile, dump_json, load_scenes
+from .lib import cache, sources
+from .lib.voice import read_voice
+from .animation import GRAPHIC_TEMPLATES, STYLES, TITLE3D, clean_graphic
+from .lib.schema import ENERGIES, GRADES, PACKS, ScenesFile, dump_json, load_scenes
 
 MODEL = "claude-opus-5-5"
-PROMPT_VERSION = "script-v3"
+PROMPT_VERSION = "script-v5"
 MAX_TOKENS = 64000
 USER_AGENT = "Mozilla/5.0 (Macintosh; video-pipeline personal research tool)"
 
@@ -68,20 +70,18 @@ def load_articles(project: Path, urls: list[str], http: httpx.Client | None = No
             name = f"_url_{hashlib.sha1(url.encode()).hexdigest()[:10]}.txt"
             fetched_names.add(name)
             path = art_dir / name
-            if not path.exists():
-                try:
-                    r = http.get(url)
-                    r.raise_for_status()
-                    text = _extract(r.text, url)
-                except httpx.HTTPError as e:
-                    log(f"articles: could not download {url}: {e}")
+            via, body = sources.parse_cached(path.read_text()) if path.exists() else (None, "")
+            # saved before YouTube captions and Jina existed, and thin (a menu or a footer): read it again
+            if not path.exists() or (via is None and sources.words(body) < sources.MIN_WORDS):
+                body, via = sources.fetch_source(url, http, _extract, log)
+                if not body.strip():
+                    log(f"articles: no readable text in {url}; paste the article text in the Studio instead")
+                    path.unlink(missing_ok=True)
                     continue
-                if not text.strip():
-                    log(f"articles: no readable text in {url}; save it as a .txt in input/articles/ instead")
-                    continue
-                path.write_text(f"SOURCE: {url}\n\n{text}")
-                log(f"articles: saved {url} -> {name}")
-            body = path.read_text().split("\n\n", 1)[-1]
+                path.write_text(f"{sources.header(url, via)}\n\n{body}")
+                log(f"articles: saved {url} -> {name} ({sources.words(body)} words, via {via})")
+            if sources.words(body) < sources.MIN_WORDS:
+                log(f"articles: {url} has only {sources.words(body)} words of text; paste the article text if it matters")
             articles.append({"source": url, "text": body})
     finally:
         if own:
@@ -100,38 +100,106 @@ def load_articles(project: Path, urls: list[str], http: httpx.Client | None = No
 
 # ---------------------------------------------------------------- prompt
 
-SYSTEM = """You write narration scripts and shot lists for a solo creator's Instagram Reels and YouTube videos.
+SYSTEM = """You are the writer AND the art director for a solo creator's Instagram Reels and YouTube videos.
 Topics span current affairs, explainers, sports and Bollywood. The creator records the narration in their own voice,
-then a pipeline pulls stock visuals and renders the video. Your output is machine-read, so follow the schema exactly.
+then a pipeline pulls stock visuals and renders the video with motion graphics (Remotion) and 3D shots (Blender).
+Your output is machine-read, so follow the schema exactly.
 
-Writing
+Work in this order: first decide the creative direction, then write every scene to fit it.
+
+1. Creative direction (`direction`, decided before any scene)
+Read the topic, angle, audience, tone and articles and decide what this video should FEEL like. Two videos on different
+topics must not look alike: an IPL hype reel, a 1983 nostalgia story and a monsoon-delay explainer each get their own look.
+- `pack` is the visual system:
+  * "broadcast": live sports TV. Scoreboards, stat bars, skewed panels, stingers, Anton-style condensed type, dark stadium
+    backgrounds. For current sport, rivalries, records, auctions, anything hype or competitive.
+  * "archival": documentary and history. Paper texture, newsprint, typewriter labels, serif headlines, black-and-white or
+    sepia photos. For anything set in the past, origin stories, nostalgia, "how it started".
+  * "editorial": clean explainer. Flat colour, bold sans type, simple geometry. For policy, economy, science, news
+    explainers, and anything that is neither of the above.
+- `vibe`: one sentence on the feeling, e.g. "underdog nostalgia: grainy, proud, a little wistful".
+- `energy`: "calm" (slow dissolves, long holds), "steady", or "punchy" (fast whips and flashes, quick cuts). Match the tone
+  in the brief: peppy, hype or angry is punchy; reflective or sad is calm.
+- `grade` for all photos and clips: neutral, warm, cool, mono (black and white), sepia.
+- `accent` and `accent2`: two hex colours that fit the topic (team colours, era, mood). They must read on a dark or paper
+  background; never pure white or black.
+- `motifs`: 3-5 concrete recurring visual ideas for this topic (e.g. "floodlights", "scoreboard", "newspaper clippings",
+  "1980s TV static"). Use them in your search queries and graphics so the video feels like one piece.
+- `avoid`: 2-4 things that would make this video generic or wrong (e.g. "modern stadium shots in a 1983 story",
+  "generic office stock photos", "smiling business people").
+
+2. Writing
 - One scene = one sentence or two short ones (about 6-25 words), which is what's on screen while it is spoken.
 - Reels: 30-60 seconds spoken (about 75-150 words at 150 wpm). Scene 1 of every reel is a hook that makes someone stop scrolling.
 - Long-form: 8-15 minutes (about 1200-2200 words), split into 4-8 chapters.
 - Only state facts that the supplied articles support. Every figure, date and claim that a viewer could check goes into `facts`,
   with the URL or filename of the article it came from. If you use something the articles don't support, set
   verified_in_sources to false so the creator checks it before recording.
-- `emphasis` lists 1-3 words or short phrases from the scene text that the speaker should stress.
+- `emphasis` lists 1-3 words or short phrases from the scene text that the speaker should stress. The first one becomes
+  the on-screen headline of graphic scenes, so make it the takeaway, not a filler word.
+- If a <creator_voice> block is given, write every line in that voice: their phrases, never the words they don't use,
+  never a claim they won't make, aimed at the viewer they describe.
 
-Visuals (be concrete; these are search queries and shot requests)
-- photo/video: `query` is a short stock-photo search (3-6 plain English words describing what is visible, e.g.
-  "crowd queue polling booth india"). Use `source: "wikimedia"` for landmarks, historical events and public figures
-  photographed at public events; otherwise `source: "stock"`.
-- For sports and Bollywood prefer charts, stats and generic stock scenes (stadium crowd, film set lights).
-  Never plan scraped celebrity photos or match footage.
+Hooks (scene 1 of every reel, and the alternatives in `hooks`)
+A Reel hook is the first 2-3 seconds; a long-form hook the first 15. It must confirm what the title promises, open a
+question the viewer can't close without watching, and show the payoff exists. Build each one on a formula:
+Statistic (a number they didn't know, then the consequence), Someone Else's Result (a named person's outcome),
+The Mistake (the error the viewer is making now), Contrarian Flip (accepted wisdom, rejected), The Reveal (promise a
+specific thing, then show it early), Superlative (the best/worst/first, naming what it beat), The Clock (payoff bounded
+in time), The Question (the exact question a fan would type), Before and After (two states, one cut; needs visuals),
+The Teardown (a real thing taken apart), The Warning (a real cost about to be paid), The List (an exact count in the
+first line), The Receipt (show the screenshot or scorecard first), Impossible Claim (sounds untrue, proved within
+seconds), The Comparison (two named sides, one winner), The Origin (where it really started), The Deadline (a real,
+checkable date), Direct Address (name the exact viewer in the first few words).
+Rules: one idea per hook; specific beats big ("66 to 1" beats "nobody believed"); never open with who the creator is
+or a greeting; never invent the number a formula needs; if the facts can't support a formula, pick another.
+Start every entry in `hooks` with its formula in square brackets, e.g. "[Statistic] 66 to 1. Itne odds the India par."
+
+3. Visuals (concrete, in the direction you set)
+- photo/video: `query` is a short stock search (3-6 plain English words of what is VISIBLE). Bake the direction into it:
+  era, colour, light and motifs ("black and white cricket crowd 1980s", "stadium floodlights night crowd"), not bland
+  words ("people happy"). Use `source: "wikimedia"` for landmarks, historical events and public figures photographed at
+  public events; otherwise "stock". Prefer "video" for motion moments (crowds, celebrations, travel, weather).
+- For sports and Bollywood, never plan scraped celebrity photos or match footage; use graphics, stats and atmosphere
+  (crowds, floodlights, a ball, a bat, a film set) instead.
 - Recent events, screenshots, documents, or a specific person that stock sites won't have: `type: "manual"` with a
   `prompt` telling the creator exactly what to find (e.g. "Screenshot of the ministry's press release headline").
+- animation: a motion-graphic scene with no photo. Pick the `template` that fits what is SAID:
+  * "headline": one strong takeaway. `headline` 1-4 words, optional `kicker` (small label above, e.g. "1983 WORLD CUP")
+    and `subline`.
+  * "versus": two sides compared. `items` = exactly 2, each {label: side, value: its figure or one word}.
+  * "timeline": events in order. `items` = 2-5, {label: year or date, value: what happened, 2-5 words}.
+  * "list": reasons, steps, names. `items` = 3-5, {label: the item, value: null or a short detail}.
+  * "quote": something someone said. `quote` (under 20 words) and `attribution`. Only real quotes from the articles.
+  * "scorecard": a match result or a small table of numbers. `headline` as the title, `items` = 2-5 {label, value}.
+  `style` is the entrance motion of a headline: "kinetic" (words rise), "burst" (rays), "rings" (pulses); null otherwise.
+  Graphics should be used where they ADD meaning (a comparison, a sequence, a number), not to fill time.
 - chart: an animated bar, line or pie chart; fill `chart` with numbers taken from the articles only (2-6 values, short labels).
 - stat: one big count-up number on its own card (`value` like "76%" or "1,20,000", plus a short `label`), put in `overlay`.
   An `overlay` of type stat on a photo or video scene shows the same number as a small badge over the picture.
-- blender: a 3D map of India; only for a scene about places. `template: "india_map"`, `blender.highlight_states` lists the
-  states to light up in order, as 2-letter codes (e.g. KA, TN, KL, TS, MH, UP; Telangana is TS, Odisha is OD, Uttarakhand is UK),
-  `camera` is one of top_down_tilt, top_down, orbit. Use at most one or two per video.
-- animation: an animated headline graphic (no stock photo). Use it for abstract ideas, concepts and numbers that no photo
-  shows; `animation.headline` is 1-3 strong words, `subline` the supporting phrase. Pictures that cannot be found are
-  turned into animations automatically, so prefer a photo when one clearly exists.
+- blender (slow to render, so use it for the hero shots only, at most 2 per reel):
+  * "title3d": a 3D title for the hook or the single biggest moment. `blender.headline` 1-3 words.
+  * "india_map": a 3D map of India for a scene about Indian states. `blender.highlight_states` lists 2-letter codes
+    (e.g. KA, TN, KL, TS, MH, UP; Telangana is TS, Odisha is OD, Uttarakhand is UK), `camera` is one of
+    top_down_tilt, top_down, orbit.
 - Never plan AI-generated likenesses of real people.
 - Orientation: "portrait" for scenes used in a reel, "landscape" for long-form-only scenes.
+
+4. Rhythm (what keeps it from looking like a template)
+- Never put the same graphic template, or two stat cards, in consecutive scenes.
+- Alternate footage and graphics; at most two graphic scenes in a row.
+- The hook scene gets the strongest visual of the reel: a striking clip, a big number, or the 3D title.
+- Each reel should use at least three different visual kinds.
+
+5. Packaging (`packaging`: one entry per video, `video` = the reel id, or "long" for the long-form)
+- `titles`: 5 options, each built on a hook formula, under 60 characters with the subject in the first 40, at most two
+  ALL-CAPS words, carrying a number, a name or a date, no vague hype words (amazing, insane, crazy, epic, shocking).
+  Write them in the video's language.
+- `thumbnail_text`: at most 3 words that ADD to the best title instead of repeating its words.
+- `description_lead`: the two lines shown above "...more": what the viewer gets, in the words they would search.
+- `hashtags`: 3-6, specific (#IPL2026 #RCB), no generic ones (#viral #trending #fyp).
+- `search_queries`: the 3 searches this video should win; the best title and the description lead must contain
+  their key words.
 
 Structure
 - Scene ids are unique integers starting at 1. Reels list their scene ids in the order they are spoken and may reuse
@@ -146,19 +214,24 @@ LANGUAGE_RULES = {
 }
 
 
-def build_user_prompt(brief_text: str, brief: dict, articles: list[dict]) -> str:
+def build_user_prompt(brief_text: str, brief: dict, articles: list[dict], voice: str | None = None) -> str:
     fmt = brief["formats"]
     wants = {
         "reel": f"{brief['reel_count']} Reel(s), no long-form (return an empty chapters list).",
         "long": "One long-form video, no reels (return an empty reels list).",
         "both": f"One long-form video and {brief['reel_count']} Reel(s).",
     }[fmt]
+    vibe = [f"{k}: {brief[k]}" for k in ("topic", "angle", "target_audience", "audience", "tone") if brief.get(k)]
     parts = [
         f"Produce: {wants}",
+        "Decide `direction` from these first" + ("" if brief.get("tone") else " (no tone given: infer it from the topic and angle)")
+        + ":\n" + "\n".join(vibe),
         LANGUAGE_RULES[brief["language"]],
         "Search queries, prompts and fact claims stay in English.",
         f"<brief>\n{brief_text.strip()}\n</brief>",
     ]
+    if voice:
+        parts.append(f"<creator_voice>\n{voice}\n</creator_voice>")
     for i, a in enumerate(articles, 1):
         parts.append(f'<article index="{i}" source="{a["source"]}">\n{a["text"].strip()}\n</article>')
     if not articles:
@@ -177,6 +250,16 @@ def _obj(props: dict) -> dict:
 STR, INT, NUM = {"type": "string"}, {"type": "integer"}, {"type": "number"}
 
 OUTPUT_SCHEMA = _obj({
+    # first, so the model settles the look before it writes a single scene
+    "direction": _obj({
+        "pack": {"type": "string", "enum": list(PACKS)},
+        "vibe": STR,
+        "energy": {"type": "string", "enum": list(ENERGIES)},
+        "grade": {"type": "string", "enum": list(GRADES)},
+        "accent": STR, "accent2": STR,
+        "motifs": {"type": "array", "items": STR},
+        "avoid": {"type": "array", "items": STR},
+    }),
     "title": STR,
     "hooks": {"type": "array", "items": STR},
     "facts": {"type": "array", "items": _obj({
@@ -186,6 +269,10 @@ OUTPUT_SCHEMA = _obj({
     "chapters": {"type": "array", "items": _obj({"title": STR, "scene_ids": {"type": "array", "items": INT}})},
     "reels": {"type": "array", "items": _obj({
         "id": STR, "scene_ids": {"type": "array", "items": INT}, "hook_scene": INT,
+    })},
+    "packaging": {"type": "array", "items": _obj({
+        "video": STR, "titles": {"type": "array", "items": STR}, "thumbnail_text": STR, "description_lead": STR,
+        "hashtags": {"type": "array", "items": STR}, "search_queries": {"type": "array", "items": STR},
     })},
     "scenes": {"type": "array", "items": _obj({
         "id": INT,
@@ -204,10 +291,16 @@ OUTPUT_SCHEMA = _obj({
                 "labels": {"type": "array", "items": STR}, "values": {"type": "array", "items": NUM},
             })),
             "animation": _nullable(_obj({
-                "style": {"type": "string", "enum": ["kinetic", "burst", "rings"]}, "headline": STR, "subline": _nullable(STR),
+                "template": {"type": "string", "enum": list(GRAPHIC_TEMPLATES)},
+                "style": _nullable({"type": "string", "enum": list(STYLES)}),
+                "headline": STR, "kicker": _nullable(STR), "subline": _nullable(STR),
+                "items": {"type": "array", "items": _obj({"label": STR, "value": _nullable(STR)})},
+                "quote": _nullable(STR), "attribution": _nullable(STR),
             })),
             "blender": _nullable(_obj({
-                "template": STR, "highlight_states": {"type": "array", "items": STR}, "camera": _nullable(STR),
+                "template": {"type": "string", "enum": ["title3d", "india_map"]},
+                "headline": _nullable(STR),
+                "highlight_states": {"type": "array", "items": STR}, "camera": _nullable(STR),
             })),
         }),
         "overlay": _nullable(_obj({
@@ -281,10 +374,13 @@ def to_scenes_file(slug: str, brief: dict, data: dict) -> ScenesFile:
             params = chart
         if blender:
             v["template"] = blender.pop("template")
-            params = {k: val for k, val in blender.items() if val is not None}
+            if v["template"] == TITLE3D:
+                params = {"headline": blender.get("headline") or "", "subline": ""}
+            else:
+                params = {k: val for k, val in blender.items() if val not in (None, "", []) and k != "headline"}
         anim = v.pop("animation", None)
         if anim:
-            params = {k: val for k, val in anim.items() if val not in (None, "", [])}
+            params = clean_graphic(anim)
         v["params"] = params
         scenes.append({**s, "visual": {k: val for k, val in v.items() if val is not None}})
     fmt = brief["formats"]
@@ -293,6 +389,8 @@ def to_scenes_file(slug: str, brief: dict, data: dict) -> ScenesFile:
         "format": fmt,
         "brand": "default",
         "language": brief["language"],
+        "direction": data.get("direction"),
+        "packaging": data.get("packaging") or [],
         "long_form": {"chapters": data["chapters"]} if data["chapters"] and fmt != "reel" else None,
         "reels": data["reels"] if fmt != "long" else [],
         "scenes": scenes,
@@ -334,7 +432,7 @@ def _prepare(project: Path, log) -> tuple[dict, str, str]:
     articles = load_articles(project, brief["source_urls"], log=log)
     log(f"script: {len(articles)} article(s), formats={brief['formats']}, reels={brief['reel_count']}, "
         f"language={brief['language']}")
-    user = build_user_prompt(brief_text, brief, articles)
+    user = build_user_prompt(brief_text, brief, articles, read_voice())
     return brief, user, cache.hash_inputs(SYSTEM, user, OUTPUT_SCHEMA, PROMPT_VERSION)
 
 
@@ -372,6 +470,7 @@ def _write_outputs(project: Path, brief: dict, text: str, digest: str, raw_label
     (script_dir / "hooks.md").write_text("# Alternative hooks\n\n" + "\n".join(f"- {h}" for h in hooks) + "\n")
     (script_dir / "facts.md").write_text(render_facts_md(facts))
     cache.mark(project / "build" / "cache", "script", digest)
+    (project / "build" / "cache" / "script.version").write_text(PROMPT_VERSION)  # which prompt wrote this script
     unverified = sum(1 for f in facts if not f.get("verified_in_sources"))
     log(f"script: {len(sf.scenes)} scenes, {len(sf.reels)} reel(s), "
         f"{len(sf.long_form.chapters) if sf.long_form else 0} chapter(s); "

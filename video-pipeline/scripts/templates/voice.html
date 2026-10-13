@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block body %}
+<div class="row" style="justify-content:space-between; margin-bottom:12px">
+  <div><h1>Your voice</h1>
+    <div class="muted">Every script prompt includes this, so every script sounds like you. Status:
+      {% if active %}<strong style="color:var(--done)">in use</strong>{% else %}<strong>not filled in yet</strong> (only the hints are there){% endif %}</div></div>
+  <a class="btn" href="{{ url_for('home') }}">← Projects</a>
+</div>
+<section class="card">
+  <p class="muted" style="margin-top:0">Write under each heading. Text between <code>&lt;!--</code> and <code>--&gt;</code> is a hint and is ignored.
+    The most useful part is "How I actually talk": paste the transcript of your best Reel. Saved in <code>{{ path }}</code>.
+    A changed voice makes the next script prompt new, so regenerate the script to use it.</p>
+  <form method="post" action="{{ url_for('voice_save') }}">
+    <textarea name="text" style="min-height:560px; font-family: ui-monospace, Menlo, monospace; font-size:13px">{{ text }}</textarea>
+    <div class="row" style="margin-top:10px"><button class="primary">Save voice</button></div>
+  </form>
+</section>
+{% endblock %}

@@ -12,8 +12,13 @@ from dataclasses import dataclass, field
 from .lib import india
 from .lib.schema import Overlay, Scene
 
-STYLES = ("kinetic", "burst", "rings")
+STYLES = ("kinetic", "burst", "rings")  # entrance motion of a "headline" graphic
 STYLE_LABELS = {"kinetic": "Kinetic words", "burst": "Burst", "rings": "Rings"}
+# What a graphic scene shows. Each style pack (broadcast, archival, editorial) draws every template in its own way.
+GRAPHIC_TEMPLATES = ("headline", "versus", "timeline", "list", "quote", "scorecard")
+TEMPLATE_LABELS = {"headline": "Headline", "versus": "Versus (A vs B)", "timeline": "Timeline", "list": "List",
+                   "quote": "Quote", "scorecard": "Scorecard"}
+ITEM_LIMITS = {"versus": (2, 2), "timeline": (2, 5), "list": (3, 5), "scorecard": (2, 5)}
 TITLE3D = "title3d"
 MAX_HEADLINE_WORDS = 3
 SUBLINE_CHARS = 110
@@ -43,6 +48,22 @@ def headline_for(scene: Scene) -> str:
     return " ".join(strong[:MAX_HEADLINE_WORDS]) or text[:30]
 
 
+CARD_MAX_WORDS = 5
+
+
+def card_headline(scene: Scene) -> str:
+    """Headline for a text card: the stressed phrase, else a short first sentence, else the strong words.
+
+    The captions already show every spoken word, so the card must not repeat the whole sentence.
+    """
+    if scene.emphasis:
+        return scene.emphasis[0].strip()
+    first = re.split(r"(?<=[.!?])\s+", " ".join(scene.text.split()), maxsplit=1)[0].strip(" .!?")
+    if first and len(first.split()) <= CARD_MAX_WORDS:
+        return first
+    return headline_for(scene)
+
+
 def keywords_for(scene: Scene, headline: str) -> list[str]:
     seen = {headline.lower()}
     out = []
@@ -61,8 +82,35 @@ def subline_for(scene: Scene) -> str:
 def auto_params(scene: Scene, style: str | None = None) -> dict:
     """Parameters for an animation made from the scene's own words. Style varies with the scene id."""
     head = headline_for(scene)
-    return {"style": style if style in STYLES else STYLES[scene.id % len(STYLES)], "headline": head,
+    return {"template": "headline", "style": style if style in STYLES else STYLES[scene.id % len(STYLES)], "headline": head,
             "subline": subline_for(scene), "keywords": keywords_for(scene, head)}
+
+
+def clean_graphic(raw: dict) -> dict:
+    """Graphic params from the model (or a form): drop empties, check the template has what it needs.
+
+    A template without enough items falls back to a headline, so a sloppy reply never breaks a render.
+    """
+    p = {k: v for k, v in raw.items() if v not in (None, "", [])}
+    tpl = p.get("template") if p.get("template") in GRAPHIC_TEMPLATES else "headline"
+    items = [{"label": str(i.get("label", "")).strip(), "value": (str(i["value"]).strip() if i.get("value") not in (None, "") else None)}
+             for i in p.get("items", []) if isinstance(i, dict) and str(i.get("label", "")).strip()]
+    lo, hi = ITEM_LIMITS.get(tpl, (0, 0))
+    if tpl in ITEM_LIMITS:
+        if len(items) < lo:
+            tpl = "headline"
+        else:
+            p["items"] = items[:hi]
+    if tpl == "quote" and not p.get("quote"):
+        tpl = "headline"
+    if tpl != "headline":
+        p.pop("style", None)
+    elif p.get("style") not in STYLES:
+        p.pop("style", None)
+    if tpl in ("headline", "quote"):
+        p.pop("items", None)
+    p["template"] = tpl
+    return p
 
 
 def title3d_params(scene: Scene) -> dict:
@@ -214,6 +262,19 @@ def _pair_with_states(text: str, figs: list[Figure]) -> list[tuple[Figure, str]]
     return out
 
 
+def _timeline_items(text: str) -> list[dict]:
+    """Each distinct year with the strong words that follow it: "1983 mein World Cup" -> {1983, "World Cup"}."""
+    out, seen = [], set()
+    years = list(_YEAR.finditer(text))
+    for y, nxt in zip(years, years[1:] + [None]):
+        if y.group(1) in seen:
+            continue
+        seen.add(y.group(1))
+        words = _strong_words(text[y.end():nxt.start() if nxt else len(text)])[:3]
+        out.append({"label": y.group(1), "value": " ".join(words) or None})
+    return out[:5]
+
+
 def _motion_score(text: str) -> tuple[int, list[str]]:
     words = {w.lower() for w in re.findall(r"[A-Za-z]+", text)}
     strong, weak = sorted(words & _STRONG_MOTION), sorted(words & _WEAK_MOTION)
@@ -266,11 +327,14 @@ def decide(scene: Scene, sf=None) -> Decision:
     items = _list_items(text)
     if len(items) >= 3:
         return Decision("remotion", "list", f"a list of {len(items)} points: tagged animated text",
-                        {"type": "animation", "params": {"style": "kinetic", "headline": f"{len(items)} points" if not scene.emphasis else head,
-                                                         "subline": subline_for(scene), "keywords": items}})
+                        {"type": "animation", "params": {"template": "list", "headline": f"{len(items)} points" if not scene.emphasis else head,
+                                                         "subline": subline_for(scene), "items": [{"label": i, "value": None} for i in items[:5]],
+                                                         "keywords": items}})
     if len(set(years)) >= 2:
         return Decision("remotion", "timeline", f"a timeline ({years[0]}–{years[-1]}): years shown as tags",
-                        {"type": "animation", "params": {"style": "kinetic", "headline": f"{years[0]}–{years[-1]}", "subline": subline_for(scene),
+                        {"type": "animation", "params": {"template": "timeline", "headline": f"{years[0]}–{years[-1]}",
+                                                         "subline": subline_for(scene),
+                                                         "items": _timeline_items(text),
                                                          "keywords": list(dict.fromkeys(years))[:5]}})
     words = {w.lower() for w in re.findall(r"[A-Za-z]+", text)}
     trend = sorted(words & (_TREND - {"se", "than", "vs"}))
@@ -350,7 +414,9 @@ def describe(scene: Scene) -> str:
     if v.params.get("why"):
         return str(v.params["why"])
     if v.type == "animation":
-        return f"{STYLE_LABELS.get(v.params.get('style'), 'Animated graphic')}: “{v.params.get('headline', '')}”"
+        tpl = v.params.get("template") or "headline"
+        what = STYLE_LABELS.get(v.params.get("style"), "Headline") if tpl == "headline" else TEMPLATE_LABELS.get(tpl, "Graphic")
+        return f"{what} graphic: “{v.params.get('headline') or v.params.get('quote') or ''}”"
     if v.type == "blender" and v.template == TITLE3D:
         return f"3D title: “{v.params.get('headline', '')}”"
     return ""

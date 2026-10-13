@@ -1,7 +1,8 @@
 import React from 'react';
 import {AbsoluteFill, interpolate, spring, useCurrentFrame, useVideoConfig} from 'remotion';
 import type {Brand} from '../types';
-import {PALETTE} from '../utils/format';
+import {Backdrop} from '../packs/Backdrop';
+import {useTheme} from '../theme';
 import {safeFor} from '../utils/safeZones';
 
 type Params = {
@@ -16,7 +17,9 @@ type Params = {
 const fmt = (v: number, unit?: string | null, decimals = 0) => `${v.toFixed(decimals)}${unit ?? ''}`;
 
 /** Bars grow, lines draw, pies sweep, in sequence. Layout stays inside the format's safe zone. */
-export const ChartScene: React.FC<{params: Params; brand: Brand; kind: 'reel' | 'long'}> = ({params, brand, kind}) => {
+export const ChartScene: React.FC<{params: Params; brand: Brand; kind: 'reel' | 'long'; seed: number}> = ({params, brand, kind, seed}) => {
+  const th = useTheme();
+  const colors = [th.accent, th.accent2, th.text, th.muted];
   const frame = useCurrentFrame();
   const {fps, width, height} = useVideoConfig();
   const safe = safeFor(kind);
@@ -36,10 +39,11 @@ export const ChartScene: React.FC<{params: Params; brand: Brand; kind: 'reel' | 
   const t = (i: number) => spring({frame: frame - 6 - i * 7, fps, config: {damping: 18, stiffness: 90}});
 
   return (
-    <AbsoluteFill style={{background: `linear-gradient(160deg, ${brand.colors.background}, #1c1c2b)`, fontFamily: brand.fonts.latin}}>
+    <AbsoluteFill style={{fontFamily: brand.fonts.latin}}>
+      <Backdrop seed={seed} />
       {params.title ? (
         <div style={{position: 'absolute', top: safe.top, left: safe.left, right: safe.right, textAlign: 'center',
-                     color: brand.colors.text, fontWeight: 800, fontSize: titleSize, opacity: interpolate(frame, [0, 12], [0, 1], {extrapolateRight: 'clamp'})}}>
+                     color: brand.colors.text, fontFamily: th.display, fontWeight: th.displayWeight, textTransform: th.displayUpper ? 'uppercase' : 'none', fontSize: titleSize, opacity: interpolate(frame, [0, 12], [0, 1], {extrapolateRight: 'clamp'})}}>
           {params.title}
         </div>
       ) : null}
@@ -52,7 +56,7 @@ export const ChartScene: React.FC<{params: Params; brand: Brand; kind: 'reel' | 
           const y = chart.y + chart.h - h;
           return (
             <g key={i}>
-              <rect x={x} y={y} width={bw} height={Math.max(h, 0)} rx={14} fill={PALETTE[i % PALETTE.length]} />
+              <rect x={x} y={y} width={bw} height={Math.max(h, 0)} rx={14} fill={colors[i % colors.length]} />
               <text x={x + bw / 2} y={y - 16} textAnchor="middle" fill={brand.colors.text} fontWeight={800}
                     fontSize={labelSize + 6} opacity={t(i)}>{fmt(v * Math.min(t(i), 1), params.unit, decimals)}</text>
               <text x={x + bw / 2} y={chart.y + chart.h + labelSize + 14} textAnchor="middle" fill={brand.colors.text}
@@ -103,7 +107,7 @@ export const ChartScene: React.FC<{params: Params; brand: Brand; kind: 'reel' | 
                 const mid = a0 + full / 2;
                 return (
                   <g key={i}>
-                    {a1 - a0 > 0.001 && <path d={`M${cx},${cy} L${x0},${y0} A${r},${r} 0 ${large} 1 ${x1},${y1} Z`} fill={PALETTE[i % PALETTE.length]} />}
+                    {a1 - a0 > 0.001 && <path d={`M${cx},${cy} L${x0},${y0} A${r},${r} 0 ${large} 1 ${x1},${y1} Z`} fill={colors[i % colors.length]} />}
                     <text x={cx + (r + 56) * Math.cos(mid)} y={cy + (r + 56) * Math.sin(mid)} textAnchor="middle" fill={brand.colors.text}
                           fontSize={labelSize} fontWeight={700} opacity={sweepAll * n - i > 0.9 ? 1 : 0}>{labels[i]} {fmt(v, params.unit, decimals)}</text>
                   </g>

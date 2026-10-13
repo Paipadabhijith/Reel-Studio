@@ -65,13 +65,36 @@ def article_count(project: Path, brief_urls: list[str]) -> int:
     return len(local) + len(brief_urls)
 
 
+def thin_sources(project: Path) -> tuple[int, list[str]]:
+    """(usable sources, warnings): a downloaded link that gave only a menu or a footer is not a source."""
+    from .sources import MIN_WORDS, parse_cached, words
+
+    d = project / "input" / "articles"
+    usable, out = 0, []
+    for f in sorted(d.glob("*")) if d.exists() else []:
+        if f.suffix.lower() not in (".txt", ".md", ".html", ".htm") or f.name.startswith("."):
+            continue
+        if not f.name.startswith("_url_"):
+            usable += 1  # text you pasted or added yourself counts, however short
+            continue
+        raw = f.read_text(errors="replace")
+        n = words(parse_cached(raw)[1])
+        if n >= MIN_WORDS:
+            usable += 1
+            continue
+        src = raw.split("\n", 1)[0].removeprefix("SOURCE: ")
+        out.append(f"{src} gave only {n} words of text. Paste the article text (Add article text) or remove it.")
+    return usable, out
+
+
 def env_warnings() -> list[str]:
     out = []
-    if not any(os.getenv(k) for k in ("PEXELS_API_KEY", "PIXABAY_API_KEY", "UNSPLASH_ACCESS_KEY")):
-        out.append("No PEXELS_API_KEY, PIXABAY_API_KEY or UNSPLASH_ACCESS_KEY in .env: stock photos and videos "
-                   "can't be fetched (Wikimedia and charts still work).")
-    elif not any(os.getenv(k) for k in ("PEXELS_API_KEY", "PIXABAY_API_KEY")):
-        out.append("No Pexels or Pixabay key: stock video scenes can't be fetched (Unsplash is photos only).")
+    if not any(os.getenv(k) for k in ("PEXELS_API_KEY", "PIXABAY_API_KEY", "COVERR_API_KEY", "UNSPLASH_ACCESS_KEY")):
+        out.append("No PEXELS_API_KEY, PIXABAY_API_KEY, COVERR_API_KEY or UNSPLASH_ACCESS_KEY in .env: stock photos and videos "
+                   "will only come from the keyless sources (Wikimedia, Openverse, NASA, Internet Archive); expect more manual scenes.")
+    elif not any(os.getenv(k) for k in ("PEXELS_API_KEY", "PIXABAY_API_KEY", "COVERR_API_KEY")):
+        out.append("No Pexels, Pixabay or Coverr key: stock video scenes only come from NASA and the Internet Archive "
+                   "(Unsplash is photos only).")
     return out
 
 
@@ -91,10 +114,13 @@ def project_state(project: Path) -> list[Step]:
 
     # 1 brief ------------------------------------------------------------
     n_art = article_count(project, brief.get("source_urls", []))
+    usable, thin = thin_sources(project)
     if brief.get("topic"):
-        steps.append(Step("brief", "Brief & sources", "done",
+        # every saved source is thin: the script would be written from menus and footers, so stop here
+        all_thin = bool(thin) and not usable
+        steps.append(Step("brief", "Brief & sources", "todo" if all_thin else "done",
                           f"{brief.get('topic')} · {n_art} source(s) · {brief.get('formats')} · {brief.get('language')}",
-                          [] if n_art else ["Add at least one link or article so facts can be checked."],
+                          ([] if n_art else ["Add at least one link or article so facts can be checked."]) + thin,
                           ["input/brief.md", "input/articles/"]))
     elif (project / "audio" / "narration.m4a").exists() or (cache_dir / "fetch.json").exists():
         steps.append(Step("brief", "Brief & sources", "optional",
@@ -109,12 +135,24 @@ def project_state(project: Path) -> list[Step]:
         st = Step("script", "Script", "waiting", "Prompt is ready for claude.ai.",
                   ["Paste the prompt into a new claude.ai chat, then paste Claude's reply back here."], script_outs)
     elif script_done:
-        inputs = [brief_path, *(project / "input" / "articles").glob("*")]
-        stale = _newest(inputs) > _mtime(script_dir / "script.md")
-        st = Step("script", "Script", "stale" if stale else "done",
+        from . import voice as voice_mod
+        from ..generate_script import PROMPT_VERSION
+
+        written = _mtime(script_dir / "script.md")
+        why = []
+        if _newest([brief_path, *(project / "input" / "articles").glob("*")]) > written:
+            why.append("the brief or sources changed")
+        if voice_mod.read_voice() and _mtime(voice_mod.VOICE_FILE) > written:
+            why.append("your voice profile changed")
+        version_file = cache_dir / "script.version"
+        generated = any(cache_dir.glob("script_*.json"))  # Claude's saved reply: the script wasn't hand-written
+        if (version_file.read_text().strip() != PROMPT_VERSION) if version_file.exists() else (
+                generated and sf and sf.direction is None and not sf.packaging):
+            why.append("it was written with an older prompt (no look & feel, hook formulas or titles)")
+        st = Step("script", "Script", "stale" if why else "done",
                   f"{len(sf.scenes) if sf else 0} scenes · {len(sf.reels) if sf else 0} reel(s)"
-                  + (" · brief or articles changed after the script was written" if stale else ""),
-                  ["Regenerate the script, or keep it if the change doesn't matter."] if stale else [], script_outs)
+                  + (f" · out of date: {'; '.join(why)}" if why else ""),
+                  ["Regenerate the script, or keep it if the change doesn't matter."] if why else [], script_outs)
     elif sf and not brief.get("topic"):
         st = Step("script", "Script", "optional", "Using a hand-written scenes.json.", [], ["script/scenes.json"])
     else:
@@ -166,12 +204,20 @@ def project_state(project: Path) -> list[Step]:
     if not sf:
         steps.append(Step("fetch", "Visuals", "blocked", "No valid scenes.json yet."))
     else:
-        complete = fetched or (visual_scenes and len(have) == len(visual_scenes))
+        empty_charts = [s for s in visual_scenes if s.visual.type == "chart" and s not in have]
+        complete = (fetched or (visual_scenes and len(have) == len(visual_scenes))) and not empty_charts
         animated = [x for x in sf.scenes if x.visual.type == "animation" and x.visual.downgraded_from]
-        steps.append(Step("fetch", "Visuals", "done" if complete else "todo",
-                          f"{len(have)}/{len(visual_scenes)} scenes have a visual."
-                          + (f" {len(animated)} animated instead of a picture." if animated else ""),
-                          ([] if complete else ["Fetch visuals."]) + (env_warnings() if not complete else []),
+        waiting = sum(1 for s in visual_scenes if s.visual.type == "manual" and s not in have)
+        summary = f"{len(have)}/{len(visual_scenes)} scenes have a visual."
+        if waiting:
+            summary += f" {waiting} wait for your file (Manual assets)."
+        if animated:
+            summary += f" {len(animated)} animated instead of a picture."
+        needs = [] if complete or empty_charts else ["Fetch visuals."]
+        needs += [f"Scene {s.id}: the chart has no numbers. Add labels and values in the plan, "
+                  "or change it to another visual." for s in empty_charts]
+        steps.append(Step("fetch", "Visuals", "done" if complete else "todo", summary,
+                          needs + (env_warnings() if not complete and not empty_charts else []),
                           ["assets/images/", "assets/videos/", "assets/credits.json"]))
 
     # 5 manual assets -----------------------------------------------------
@@ -301,8 +347,25 @@ def project_state(project: Path) -> list[Step]:
             if st.key in ("draft", "review") and st.status in ("todo", "stale"):
                 st.status, st.todos = "optional", []
 
-    steps.append(Step("publish", "Package & publish", "later", "Cover, captions, YouTube and Instagram upload arrive in Phase 4."))
+    steps.append(_package_step(project, sf))
     return steps
+
+
+def _package_step(project: Path, sf) -> Step:
+    """Titles, description, chapters and credits for each rendered video. Uploading stays with you."""
+    from ..package import package_path
+
+    finals = [t for t in (list_targets(sf) if sf else []) if (project / t.out).exists()]
+    if not finals:
+        return Step("publish", "Package", "blocked", "After the final render: titles, description, chapters, credits and hashtags.")
+    scenes_json = project / "script" / "scenes.json"
+    outs = [package_path(t) for t in finals]
+    stale = [t for t in finals if not (project / package_path(t)).exists()
+             or (project / package_path(t)).stat().st_mtime < max((project / t.out).stat().st_mtime, scenes_json.stat().st_mtime)]
+    if stale:
+        return Step("publish", "Package", "todo", f"{len(finals) - len(stale)}/{len(finals)} video(s) packaged.",
+                    [f"Write the package for {t.label}." for t in stale], outs)
+    return Step("publish", "Package", "done", "Ready to paste. Upload is up to you.", [], outs)
 
 
 def _load_timeline(project: Path, target: Target):

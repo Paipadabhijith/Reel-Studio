@@ -13,7 +13,7 @@ from pydantic import ValidationError
 
 from . import animation
 from .lib import india
-from .lib.schema import Scene, ScenesFile, dump_json, load_scenes
+from .lib.schema import Direction, Scene, ScenesFile, dump_json, load_scenes
 
 VISUAL_TYPES = ("photo", "video", "auto", "animation", "title3d", "chart", "stat", "blender", "manual", "text_card")
 MOTIONS = ("slow-zoom-in", "slow-zoom-out", "pan-left", "pan-right")
@@ -129,7 +129,18 @@ def apply_form(sf: ScenesFile, sid: int, form) -> Scene:
             v["template"] = animation.TITLE3D
         else:
             style = form.get("anim_style") if form.get("anim_style") in animation.STYLES else animation.STYLES[sid % len(animation.STYLES)]
-            params = {"style": style, "headline": headline, "subline": subline, "keywords": _csv(form.get("keywords", ""))[:5]}
+            tpl = form.get("template") if form.get("template") in animation.GRAPHIC_TEMPLATES else "headline"
+            raw = {"template": tpl, "style": style, "headline": headline, "subline": subline,
+                   "kicker": " ".join((form.get("kicker") or "").split()),
+                   "items": parse_items(form.get("items", "")),
+                   "quote": " ".join((form.get("quote") or "").split()),
+                   "attribution": " ".join((form.get("attribution") or "").split()),
+                   "keywords": _csv(form.get("keywords", ""))[:5]}
+            params = animation.clean_graphic(raw)
+            if params["template"] != tpl:
+                lo = animation.ITEM_LIMITS.get(tpl, (0, 0))[0]
+                need = "a quote" if tpl == "quote" else f"at least {lo} items, one per line"
+                raise PlanError(f"a {animation.TEMPLATE_LABELS[tpl].lower()} graphic needs {need}")
     if vtype not in ("blender", "title3d"):
         v["template"] = None
     v["params"] = params
@@ -265,3 +276,67 @@ def set_locked(project: Path, locked: bool) -> None:
     qc["plan_locked"] = locked
     qc["locked_at"] = time.time() if locked else None
     write_qc(project, qc)
+
+
+# ---------------------------------------------------------------- direction and rhythm
+
+
+def parse_items(text: str) -> list[dict]:
+    """One item per line, "label | value" (the value is optional): "1983 | India win at Lord's"."""
+    out = []
+    for line in (text or "").splitlines():
+        label, _, value = line.partition("|")
+        if label.strip():
+            out.append({"label": label.strip(), "value": value.strip() or None})
+    return out
+
+
+def items_text(items: list[dict] | None) -> str:
+    return "\n".join(f"{i['label']} | {i['value']}" if i.get("value") else i["label"] for i in items or [])
+
+
+def apply_direction(sf: ScenesFile, form) -> Direction:
+    """The direction card on the plan page: pack, energy, grade, colours and the words that describe the look."""
+    try:
+        d = Direction.model_validate({
+            "pack": form.get("pack") or "editorial",
+            "vibe": " ".join((form.get("vibe") or "").split()),
+            "energy": form.get("energy") or "steady",
+            "grade": form.get("grade") or "neutral",
+            "accent": form.get("accent") if form.get("use_accent") else None,
+            "accent2": form.get("accent2") if form.get("use_accent") else None,
+            "motifs": _csv(form.get("motifs", ""))[:6],
+            "avoid": _csv(form.get("avoid", ""))[:6],
+        })
+    except ValidationError as e:
+        raise PlanError(_first_error(e))
+    sf.direction = d
+    return d
+
+
+def _kind(scene) -> str:
+    v = scene.visual
+    if v.type == "animation":
+        return f"graphic:{v.params.get('template') or 'headline'}"
+    if v.type in ("photo", "video", "manual"):
+        return "footage"
+    return v.type
+
+
+def rhythm_warnings(sf: ScenesFile) -> list[str]:
+    """What makes a video feel like a template: the same graphic back to back, or a long run of graphics."""
+    out = []
+    orders = [(r.id, r.scene_ids) for r in sf.reels] + ([("long-form", [i for c in sf.long_form.chapters for i in c.scene_ids])] if sf.long_form else [])
+    for name, ids in orders:
+        kinds = [_kind(sf.scene(i)) for i in ids]
+        for a, b, ka, kb in zip(ids, ids[1:], kinds, kinds[1:]):
+            if ka == kb and ka != "footage":
+                out.append(f"{name}: scenes {a} and {b} are both {ka.replace('graphic:', '')} graphics in a row")
+        run = 0
+        for i, k in zip(ids, kinds):
+            run = run + 1 if k != "footage" else 0
+            if run == 3:
+                out.append(f"{name}: three graphic scenes in a row ending at scene {i}; put a photo or clip between them")
+        if len(ids) >= 5 and len(set(kinds)) < 3:
+            out.append(f"{name}: only {len(set(kinds))} kinds of visual in {len(ids)} scenes")
+    return out[:8]
